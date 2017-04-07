@@ -1,0 +1,81 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+rm(list = ls())
+#set WD manually
+```
+
+```{r}
+se <- function(x, ...) {
+sd(x, na.rm = TRUE)/sqrt(length(na.omit(x)))
+}
+ci <- function(x, ...) {
+1.96 * sd(x, na.rm = TRUE)
+}
+
+source("E:/Grad/Mothur/MothurTutorial.updated/MothurTutorial_updated/bin/DiversityFunctions.R")
+source("E:/Grad/Mothur/MothurTutorial.updated/MothurTutorial_updated/bin/MothurTools.R")
+```
+
+```{r}
+require("vegan")
+require("dplyr")
+require("nlme")
+require("reshape")
+require("BiodiversityR")
+require("ecodist")
+require("ggplot2")
+require("ade4")
+require("png")
+```
+
+```{r}
+design <- read.csv("E:/Grad/Mothur/mothur/design_CSI.csv", header=TRUE)
+design
+
+treatments <- design$Salinity
+levels(treatments) <- c("0","5","9","13")
+```
+
+```{r}
+CSIdata <- read.otu("E:/Grad/Mothur/mothur/CSI.15.trim.contigs.good.unique.good.filter.unique.precluster.pick.pick.pick.opti_mcc.unique_list.shared")
+
+library(plyr)
+library(dplyr)
+CSIdat <- ddply()
+
+CSIdat <- CSIdata[, which(rowSums(CSIdata) >= 20000)]
+
+CSIdat
+
+CSIdataPA <- (CSIdata > 0) * 1
+
+CSIdataREL <- CSIdata
+for (i in 1:dim(CSIdata)[1]) {
+CSIdataREL[i, ] <- CSIdata[i, ]/sum(CSIdata[i,
+2
+])
+}
+
+CSIdataREL.log <- decostand(CSIdataREL, method = "log", na.rm=TRUE)
+```
+
+
+```{r}
+CSI.tax <- read.tax(taxonomy = "C:/Users/astuc/Documents/mothur/CSI.15.trim.contigs.good.unique.good.filter.unique.precluster.pick.pick.pick.opti_mcc.unique_list.0.03.cons.taxonomy")
+
+CSI.tax
+
+write.table(CSI.tax, file = "tax.csv", sep = ",",
+col.names = NA)
+
+```
+
+```{r}
+a <- rowSums(CSIdata)
+a
+```
+
