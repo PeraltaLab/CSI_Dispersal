@@ -47,7 +47,7 @@ library(plyr)
 library(dplyr)
 CSIdat <- ddply()
 
-CSIdat <- CSIdata[, which(rowSums(CSIdata) >= 20000)]
+CSIdata <- CSIdata[which(rowSums(CSIdata) >= 20000), ]
 
 CSIdat
 
