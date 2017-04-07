@@ -1,0 +1,423 @@
+---
+title: "Crop diversity influences disease suppression in soils"
+author: "Ariane L. Peralta, Yanmei Sun, Marshall McDaniel, Jay T. Lennon" - acknowledge Mario for analyses help!
+date: "Last updated on `r format(Sys.time(), '%d %B, %Y')`"
+header-includes:
+  - \usepackage{array}
+  - \usepackage{graphics}
+output: 
+  pdf_document:
+  fig_caption: true
+---
+
+Project Description: 
+
+```{r}
+#Crop Diversity - redo stats to double check for publication
+
+#based on 0.03 taxonomy of 16S rRNA Illumina sequences
+#(1) Run diversity analyses (Hdiversity, richness, evenness)
+#-need to re-run
+#(2) PERMANOVA -completed for treatment and for soil factors
+#(3) PCoA 
+#(4) Mantel test to compare total bacterial and PHLD communities (16S rRNA related to plant path suppression?) - we ran and no relationship 
+
+#Functional Gene Analysis (disease suppression)
+#(1) PRND gene qPCR ANOVA and boxplot
+#(2) PHLD gene TRFLP -PERMANOVA and PCoA 
+```
+
+# Initial Setup
+```{r}
+rm(list=ls())
+setwd("~/GitHub/test/Boxplot_Example")
+se <- function(x, ...){sd(x, na.rm = TRUE)/sqrt(length(na.omit(x)))}
+ci <- function(x, ...){1.96 * sd(x,na.rm = TRUE)}
+
+# Code Dependencies
+source("../bin/DiversityFunctions.R")
+source("../bin/MothurTools.R")
+require("vegan")
+require("nlme")
+require("reshape")
+#require("BiodiversityR")
+# require("ecodist")
+require("ggplot2")
+require("ade4")
+require("png")
+```
+
+# Environmental Data
+```{r}
+# Import Environmental Data
+design.in <- read.csv("../data/BDsoil_exptdesign.csv", row.names = 1)
+
+# ID S and W treatments
+SnW <- rownames(design.in[which(design.in$rotation == "S" | 
+                                  design.in$rotation == "W"), ])
+
+# Remove S and W treatments
+design <- design.in[-(which(rownames(design.in) %in% SnW)), ]
+design <- droplevels(design)
+
+# Define Treatments
+treatments <- design$rotation
+levels(treatments) <- c("fallow", "CSW-2cov", "CSW-1cov", "CSW", 
+                        "CS", "C-1cov", "C")
+
+```
+
+# Microbial Data
+```{r}
+# Import OTU data
+# Import Raw Data
+BDdata.in <- read.otu("../data/BD.shared")
+
+# Remove Mock Community, Blank and Undetermined
+BDdata.in2 <- BDdata.in[grepl("BD[0-9][0-9]", rownames(BDdata.in)), ]
+
+# Remove S and W Treatments
+SnW2 <- gsub("-", "", SnW)
+BDdata.in2 <- BDdata.in2[-(which(rownames(BDdata.in2) %in% SnW2)), ]
+
+# Remove OTUs with less than two occurences across all sites
+BDdata <- BDdata.in2[, which(colSums(BDdata.in2) >= 2)]
+
+# Make Presence Absence Matrix
+BDdataPA <- (BDdata > 0) * 1
+
+# Make Relative Abundence Matrices
+BDdataREL <- BDdata
+for(i in 1:dim(BDdata)[1]){
+  BDdataREL[i,] <- BDdata[i,]/sum(BDdata[i,])
+}
+
+# Log Transform Relative Abundances
+BDdataREL.log <- decostand(BDdataREL, method="log")
+
+# Import Taxonomy File
+BD.tax <- read.tax(taxonomy = "../data/BD.0.03.cons.taxonomy")
+```
+
+# Plant Data
+```{r}
+BDveg.in <- read.csv("../data/BDveg.csv", row.names = 1)
+
+# Remove S and W Treatments
+BDveg <- BDveg.in[-(which(rownames(BDveg.in) %in% SnW)), ]
+
+# plant data as discrete and continuous biomass data: rotation	crop_numb	covercrop_g	weeds_g	crop_g	biomass_total	covercrop_prop	weeds_prop	crop_prop
+```
+
+# Diversity Metrics - Hypothesis Testing
+```{r}
+# Rarefy Abundances (min abundance is 267,170. We sampling to 200,000)
+min(rowSums(BDdata))
+BDdata.r <- rrarefy(BDdata, 200000)
+
+# Fisher's Alpha
+fisher <- fisher.alpha(BDdata.r)
+fisher
+
+# Species Richness
+richness <- rowSums((BDdata.r >= 1))
+
+# Shannon Diversity (my function gets the same answer)
+shannon <- diversity(BDdata.r, "shannon")
+
+# Simpson's Evenness
+simp.even <- apply(BDdata.r, 1, simp_even)
+
+# Alternative way for evenness (note: uses D = sum[p_i^2] not corrected D)
+#simp.even2 <- diversity(BDdata.r, "invsimpson")/specnumber(BDdata.r)
+
+#Pielou’s evenness
+J <- shannon/log(specnumber(BDdata.r[,-c(1:1)]))
+
+#combined richness, diversity, evenness
+BD.DIVsoilmicrobes <- cbind(design,richness,shannon,simp.even,J)
+write.table(BD.DIVsoilmicrobes, file="BD.DIVsoilmicrobes.csv", sep=",", col.names=NA)
+
+
+# Hypothesis Testing
+# First Check the order
+length(design$rotation) == length(fisher)
+all.equal(gsub("-", "", rownames(design)), names(fisher))
+
+fisher.lm <- lme(fisher ~ rotation, random = ~1|block, data = design)
+anova(fisher.lm)
+
+richness.lm <- lme(richness ~ rotation, random = ~1|block, data = design)
+anova(richness.lm)
+
+evenness.lm <- lme(simp.even ~ rotation, random = ~1|block, data = design)
+anova(evenness.lm)
+
+shannon.lm <- lme(shannon ~ rotation, random = ~1|block, data = design)
+anova(shannon.lm)
+
+library(agricolae)
+summary(shannon.lm)
+shannon.lm2 <- lm(shannon ~ rotation, data = BD.DIVsoilmicrobes)
+HSD <- HSD.test(shannon.lm2,"rotation", console=TRUE)
+```
+#boxplot H' over crop diversity gradient
+```{r}
+p <- ggplot(BD.DIVsoilmicrobes, aes(rotation,shannon))
+p + geom_boxplot() + theme_bw()
+p + geom_boxplot() + theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor =     element_blank(), axis.line = element_line(colour = "black")) +   
+  theme(axis.title=element_text(vjust=1,size=16,face="bold"), axis.text=element_text(size=14), 
+  axis.text.x = element_text(vjust=0.65, hjust=0.5, angle=30, size=14), panel.border =   
+  element_rect(colour = "black",size=1.25)) + theme(axis.ticks.length=unit(0.3,"cm")) + 
+  xlab("Crop Diversity") + ylab("Shannon Diversity Index (H')") +
+  scale_x_discrete(breaks=c("fallow", "CSW-2cov", "CSW-1cov", "CSW", "CS", "C-1cov", "C"),   
+  labels=c("fallow", "CSW_2cov", "CSW_1cov", "CSW", "CS","C_1cov", "mC"))
+
+ggsave("shannonRplot.pdf", plot=last_plot(), device=NULL, path=NULL, scale=1, width=NA, height=NA, dpi=300, limitsize=TRUE)
+```
+
+#prnD disease suppression gene abundance - hyp testing and plot
+```{r}
+data.prnd <- read.csv("../data/PRND gene_NoSW.csv", header=TRUE)
+
+prnd.lm <- lme(copies ~ Rotation, random = ~1|Block, data = data.prnd)
+anova(prnd.lm)
+
+library(agricolae)
+prnd.lm2 <- lm(copies~Rotation,data=data.prnd)
+summary(prnd.lm2)
+HSD <- HSD.test(prnd.lm2,"Rotation", console=TRUE)
+
+p <- ggplot(data.prnd, aes(Rotation,copies))
+p + geom_boxplot() + theme_bw()
+p + geom_boxplot() + theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.line = element_line(colour = "black")) +theme(axis.title=element_text(vjust=1,size=16,face="bold"), axis.text=element_text(size=14), axis.text.x = element_text(vjust=0.65, hjust=0.5, angle=30, size=14), panel.border = element_rect(colour = "black",size=1.25)) + theme(axis.ticks.length=unit(0.3,"cm")) + xlab("Crop Diversity") + ylab("Log copy number of prnD gene/g soil") +scale_x_discrete(breaks=c("fallow", "CSW-2cov", "CSW-1cov", "CSW", "CS", "C-1cov", "C"), labels=c("fallow", "CSW_2cov", "CSW_1cov", "CSW", "CS","C_1cov", "mC"))
+
+ggsave("prnDabundanceRplot.pdf", plot=last_plot(), device=NULL, path=NULL, scale=1, width=NA, height=NA, dpi=300, limitsize=TRUE)
+
+reg <- lm(copies~crop+carbon+moisture, data=data.prnd)
+summary(reg)
+
+```
+
+# Simple Hypothesis Testing - 
+```{r}
+# Check that Bac and Plant data have same structure as design
+row.names(BDdataREL) == row.names(design)
+
+#PERMANOVA on rotation effect - no S and W
+new.data <-cbind(design,BDdataREL)
+adonis = adonis(new.data[,-c(1:15)] ~ rotation+block, method = "bray", data = new.data, perm=1000)
+adonis
+```
+# Microbial Ordinations
+
+## Principal Coordinates Ordination
+```{r}
+#png(filename="../figures/WL.bac.PCoA.png",
+    #width = 1200, height = 800, res = 96*2)
+# Create Distance Matrix
+sampleREL.dist <- vegdist(BDdataREL, method="bray")
+
+# Principal Coordinates Analysis
+BD_pcoa <- cmdscale(sampleREL.dist, k=3, eig=TRUE, add=FALSE)
+  # Classical (Metric) Multidimensional Scaling; returns PCoA coordinates
+  # eig=TRUE returns eigenvalues; k = # of dimensions to calculate
+
+explainvar1 <- round(BD_pcoa$eig[1] / sum(BD_pcoa$eig), 3) * 100
+explainvar2 <- round(BD_pcoa$eig[2] / sum(BD_pcoa$eig), 3) * 100
+sum.eig <- sum(explainvar1, explainvar2)
+```
+
+# Plot
+```{r}
+points <- cbind(as.data.frame(BD_pcoa$points), treatments)
+L.centroids <- melt(points, id="treatments", measure.vars = c("V1", "V2"))
+centroids <- cast(L.centroids, variable ~ treatments, mean)
+centroids.se <- cast(L.centroids, variable ~ treatments, se)
+centroids.sd <- cast(L.centroids, variable ~ treatments, sd)
+
+cent.dataframe <- t(data.frame(rbind(centroids[1,-1], centroids[2,-1],
+                             centroids.sd[1,-1],centroids.sd[2,-1])))
+colnames(cent.dataframe) <- c("V1", "V2", "V1e", "V2e")
+cent.treats <- rownames(cent.dataframe)
+
+explainvar1 #Include in PCoA 1 axis label 29.3%
+explainvar2 #Include in PCoA 2 axis label 14.0%
+                                        
+df <- as.data.frame(cent.dataframe)
+p <- ggplot(df, aes(x=V1, y=V2, colour=cent.treats)) + theme_bw() 
+p + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.line = element_line(colour = "black")) + 
+theme(panel.background = element_blank()) + 
+  geom_errorbarh(aes(xmax=V1+V1e, xmin=V1-V1e, height=0.01), colour="black") +    
+  geom_errorbar(aes(ymax=V2+V2e, ymin=V2-V2e, width=0.01), colour="black") + 
+  geom_point(size=5) +
+  scale_colour_manual(labels = c("mC", "C_1cov", "CS", "CSW", "CSW_1cov", "CSW_2cov", "fallow"),   values = c("#FFFFCC", "#FFFF00", "#FF9933", "#66CC00", "#339900", "#336633", "#00CCFF")) +
+  geom_point(shape=1, size = 5,colour = "black") +
+theme(axis.title=element_text(size=18), axis.text=element_text(size=14), axis.text.x   = element_text(size=14), panel.border = element_rect(colour = "black",size=1.25)) + 
+  theme(axis.ticks.length=unit(0.3,"cm")) + 
+  xlab("PCoA 1 (29.3%)") + ylab("PCoA 2 (14.0%)") + 
+  labs(color = "Crop diversity") +
+  guides(colour = guide_legend(override.aes = list(pch=21, size = 4, colour="black",    
+  fill=c("#FFFFCC", "#FFFF00", "#FF9933", "#66CC00", "#339900", "#336633", "#00CCFF")))) 
+
+ggsave("16SrRNA_BCC_Rplot.pdf", plot=last_plot(), device=NULL, path=NULL, scale=1, width=NA, height=NA, dpi=300, limitsize=TRUE)
+
+
+
+```
+#PERMANOVA on soil factors - no S and W
+#check for correlations among soil factors
+#drop Total.N NA value
+```{r}
+new.data <- new.data[complete.cases(new.data),]
+soil.factors <- new.data[,7:15]
+cor(soil.factors)
+
+#in soil model, include GWC, Total.C, ammonium, nitrate, pH, sand; note: GWC correlated to texture and Total.C, but included anyway
+
+adonis = adonis(new.data[,-c(1:15)] ~ GWC + Total.C + Total.N + NH4 + NO3 + pHH2O + Clay + Silt + Sand, method = "bray", data = new.data, perm=1000)
+adonis
+# Terms added sequentially (first to last)
+
+adonis = adonis(new.data[,-c(1:15)] ~ Sand + GWC + Total.C + Total.N + NH4 + NO3 + pHH2O + Clay + Silt, method = "bray", data = new.data, perm=1000)
+adonis
+# Terms added sequentially (first to last)
+
+adonis = adonis(new.data[,-c(1:15)] ~ Silt + Sand  + GWC + Total.C + Total.N + NH4 + NO3 + pHH2O + Clay, method = "bray", data = new.data, perm=1000)
+adonis
+# Terms added sequentially (first to last)
+
+adonis = adonis(new.data[,-c(1:15)] ~ Clay + Silt + Sand  + GWC + Total.C + Total.N + NH4 + NO3 + pHH2O, method = "bray", data = new.data, perm=1000)
+adonis
+# Terms added sequentially (first to last)
+
+adonis = adonis(new.data[,-c(1:15)] ~ pHH2O + Clay + Silt + Sand  + GWC + Total.C + Total.N + NH4 + NO3, method = "bray", data = new.data, perm=1000)
+adonis
+# Terms added sequentially (first to last)
+
+adonis = adonis(new.data[,-c(1:15)] ~ NO3 + pHH2O + Clay + Silt + Sand  + GWC + Total.C + Total.N + NH4, method = "bray", data = new.data, perm=1000)
+adonis
+# Terms added sequentially (first to last)
+
+adonis = adonis(new.data[,-c(1:15)] ~  NH4 +NO3 + pHH2O + Clay + Silt + Sand  + GWC + Total.C + Total.N, method = "bray", data = new.data, perm=1000)
+adonis
+# Terms added sequentially (first to last)
+
+adonis = adonis(new.data[,-c(1:15)] ~  Total.N + NH4 +NO3 + pHH2O + Clay + Silt + Sand  + GWC + Total.C, method = "bray", data = new.data, perm=1000)
+adonis
+# Terms added sequentially (first to last)
+
+adonis = adonis(new.data[,-c(1:15)] ~ Total.C +  Total.N + NH4 +NO3 + pHH2O + Clay + Silt + Sand  + GWC, method = "bray", data = new.data, perm=1000)
+adonis
+# Terms added sequentially (first to last)
+```
+
+#PERMANOVA associated with soil biology
+```{r}
+#Import soil biology - PMN, POXC data
+soilbio <- read.csv("../data/BDsoilbio.csv", row.names = 1)
+soil.bio.microbes <- cbind(soilbio,BDdataREL)
+
+adonis = adonis(soil.bio.microbes[,-c(1:6)] ~ POXC +  PMC + PMN, method = "bray", data = soil.bio.microbes, perm=1000)
+adonis
+
+adonis = adonis(soil.bio.microbes[,-c(1:6)] ~ PMN + POXC +  PMC, method = "bray", data = nsoil.bio.microbes, perm=1000)
+adonis
+
+adonis = adonis(soil.bio.microbes[,-c(1:6)] ~ PMC + PMN + POXC, method = "bray", data = nsoil.bio.microbes, perm=1000)
+adonis
+```
+
+#PERMANOVA associated with plant factors
+```{r}
+new.data <- read.csv("newdataOTUsP.csv", header=TRUE)
+plant.factors <- new.data[,24:27]
+cor(plant.factors)
+
+adonis = adonis(new.data[,-c(1:32)] ~   crop_numb + covercrop_g + weeds_g + crop_g , method = "bray", data = new.data, perm=1000)
+adonis
+
+adonis = adonis(new.data[,-c(1:32)] ~  crop_g + crop_numb + covercrop_g + weeds_g, method = "bray", data = new.data, perm=1000)
+adonis
+
+adonis = adonis(new.data[,-c(1:32)] ~ weeds_g + crop_g + crop_numb + covercrop_g, method = "bray", data = new.data, perm=1000)
+adonis
+
+adonis = adonis(new.data[,-c(1:32)] ~ covercrop_g + weeds_g + crop_g + crop_numb, method = "bray", data = new.data, perm=1000)
+adonis
+```
+
+#PERMANOVA on PHLD gene TRFLP - PPS TRFLP - need to check
+```{r}
+data.phld <- read.csv("../data/PHLD_TRFLP.csv", header=TRUE)
+str(data.phld)
+adonis = adonis(data.phld[,-c(1:9)] ~ trt, method = "bray", data = data.phld, perm=1000)
+adonis
+adonis = adonis(data.phld[,-c(1:9)] ~ rotation, method = "bray", data = data.phld, perm=1000)
+adonis
+```
+
+#Ordination of PHLD disease suppression functional gene - need to drop S and W
+```{r}
+phld.in <- read.csv("../data/PHLD_TRFLP.csv", header=TRUE)
+
+# Remove S and W treatments
+phld <- phld.in[-(which(rownames(design.in) %in% SnW)), ]
+phld <- droplevels(design)
+
+
+## Principal Coordinates Ordination
+```{r}
+#png(filename="../figures/WL.bac.PCoA.png",
+    #width = 1200, height = 800, res = 96*2)
+# Create Distance Matrix
+sampleREL.dist <- vegdist(decostand((phld[,-c(1:9)]),method="log"),method="bray")
+
+# Principal Coordinates Analysis
+phld_pcoa <- cmdscale(sampleREL.dist,k=3,eig=TRUE,add=FALSE)
+  # Classical (Metric) Multidimensional Scaling; returns PCoA coordinates
+  # eig=TRUE returns eigenvalues; k = # of dimensions to calculate
+
+explainvar1 <- round(phld_pcoa$eig[1]/sum(phld_pcoa$eig)*100,2)
+explainvar2 <- round(phld_pcoa$eig[2]/sum(phld_pcoa$eig)*100,2)
+explainvar3 <- round(phld_pcoa$eig[3]/sum(phld_pcoa$eig)*100,2)
+explainvar1 #PCoA 1 (59.7%)
+explainvar2 #PCoA 2 (32.3%)
+explainvar3
+
+sum.eig <- sum(explainvar1, explainvar2)
+```
+
+# Plot - need to drop S and W
+```{r}
+points <- cbind(as.data.frame(phld_pcoa$points), treatments)
+L.centroids <- melt(points, id="treatments", measure.vars = c("V1", "V2"))
+centroids <- cast(L.centroids, variable ~ treatments, mean)
+centroids.se <- cast(L.centroids, variable ~ treatments, se)
+centroids.sd <- cast(L.centroids, variable ~ treatments, sd)
+
+cent.dataframe2 <- t(data.frame(rbind(centroids[1,-1], centroids[2,-1],
+                             centroids.sd[1,-1],centroids.sd[2,-1])))
+colnames(cent.dataframe2) <- c("V1", "V2", "V1e", "V2e")
+cent.treats <- rownames(cent.dataframe2)
+
+df <- as.data.frame(cent.dataframe2)
+p2 <- ggplot(df, aes(x=V1, y=V2, colour=cent.treats)) + theme_bw() 
+p2 + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.line = element_line(colour = "black")) + theme(panel.background = element_blank()) + 
+  geom_errorbarh(aes(xmax=V1+V1e, xmin=V1-V1e, height=0.001), colour="black") +    
+  geom_errorbar(aes(ymax=V2+V2e, ymin=V2-V2e, width=0.001), colour="black") + 
+  geom_point(size=6) +
+  scale_colour_manual(labels = c("mC", "C_1cov", "CS", "CSW", "CSW_1cov", "CSW_2cov", "fallow"),   values = c("#FFFFCC", "#FFFF00", "#FF9933", "#66CC00", "#339900", "#336633", "#00CCFF")) +
+  geom_point(shape=1, size = 6,colour = "black") +
+theme(axis.title=element_text(size=18), axis.text=element_text(size=14), axis.text.x   = element_text(size=14), panel.border = element_rect(colour = "black",size=1.25)) + 
+  theme(axis.ticks.length=unit(0.3,"cm")) + 
+  xlab("PCoA 1 (29.3%)") + ylab("PCoA 2 (14.0%)") + 
+  labs(color = "Crop diversity") +
+  guides(colour = guide_legend(override.aes = list(pch=21, size = 6, colour="black",    
+  fill=c("#FFFFCC", "#FFFF00", "#FF9933", "#66CC00", "#339900", "#336633", "#00CCFF")))) 
+
+ggsave("PHLD_Rplot.pdf", plot=last_plot(), device=NULL, path=NULL, scale=1, width=NA, height=NA, dpi=300, limitsize=TRUE)
+
+```
+
+
