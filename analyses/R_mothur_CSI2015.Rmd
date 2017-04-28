@@ -1,5 +1,6 @@
 ---
-title: "R Notebook"
+title: "Mothur - with possible extraneous samples"
+author: "Alex Stucy"
 output: html_notebook
 ---
 
@@ -37,12 +38,14 @@ require("png")
 
 ```{r}
 #load design file
-design <- read.csv("E:/Grad/Mothur/mothur/design_CSI.csv", header=TRUE)
+design <- read.csv("E:/Grad/Mothur/mothur/design_CSI.csv", row.names=1)
 design
 
 #set treatments (salinity levels)
-treatments <- design$Salinity
-levels(treatments) <- c("0","5","9","13")
+treatments1 <- design$Salinity
+levels(treatments1) <- c("0","5","9","13")
+treatments2 <- design$Dispersal
+levels(treatments2) <- c("0","1","2","3")
 ```
 
 ```{r}
@@ -51,19 +54,16 @@ CSIdata <- read.otu("E:/Grad/Mothur/mothur/CSI.15.trim.contigs.good.unique.good.
 
 #removed low samples (CSI033 had 7,204 and CSI101 had 77), remove blank and undetermined, remove OTUs w/ <2 occurrences across all sites
 CSIdat <- CSIdata[which(rowSums(CSIdata) >= 20000), ]
-CSIdata_use <- CSIdat[grepl("CSI[0-9][0-9]", rownames(CSI.dat)), ]
-CSI.dat <- CSIdata_use[, which(colSums(CSIdat) >= 2)]
-
-CSIdat
+CSIdata2 <- CSIdat[grepl("CSI[0-9][0-9]", rownames(CSIdat)), ]
+CSI.dat <- CSIdata2[, which(colSums(CSIdata2) >= 2)]
 
 #create presence-absence matrix
 CSIdataPA <- (CSI.dat > 0) * 1
 
 #create relative abundance matrices
 CSIdataREL <- CSI.dat
-for (i in 1:dim(CSIdat)[1]) {
+for (i in 1:dim(CSI.dat)[1]) {
 CSIdataREL[i, ] <- CSI.dat[i, ]/sum(CSI.dat[i,
-2
 ])
 }
 
@@ -73,22 +73,59 @@ CSIdataREL.log <- decostand(CSIdataREL, method = "log")
 
 
 ```{r}
+install.packages("mass")
+library(MASS)
+
+d <- dist(CSIdataREL)
+fit <- metaMDS(d,k=2)
+fit
+
+x <- fit$points[,1]
+y <- fit$points[,2]
+
+plot(x,y, xlab="Coordinate 1", ylab="Coordinate 2",
+     main="Nonmetric MDS", type="n")
+text(x,y,labels = row.names(CSI.dat), cex=0.7)
+
+ggsave("E:/Grad/Mothur/mothur/NMDS.pdf", plot=last_plot(), device=NULL, path=NULL, scale=1, width=NA, height=NA, dpi=300, limitsize=TRUE)
+```
+
+
+```{r}
 #import taxonomy file
 CSI.tax <- read.tax(taxonomy = "C:/Users/astuc/Documents/mothur/CSI.15.trim.contigs.good.unique.good.filter.unique.precluster.pick.pick.pick.opti_mcc.unique_list.0.03.cons.taxonomy")
 
-CSI.tax
-
-#create tax table .csv and export)
+#create tax table .csv and export
 write.table(CSI.tax, file = "tax.csv", sep = ",",
 col.names = NA)
-
 ```
 
 ```{r}
 #find minimum abundance to set rarefy
 a <- min(rowSums(CSI.dat))
 a
+design
 ```
+
+```{r}
+
+newCSIdat <- cbind(design,CSIdataREL)
+row.names(CSIdataREL) == row.names(design)
+head(newCSIdat)
+
+
+salinity_adonis = adonis(newCSIdat[,-c(1:15)] ~ Salinity, method = "bray", data = newCSIdat, perm=1000)
+
+dispersal_adonis = adonis(newCSIdat[,-c(1:15)] ~ Dispersal, method = "bray", data = newCSIdat, perm=1000)
+
+disper_sal_adonis = adonis(newCSIdat[,-c(1:15)] ~ Dispersal*Salinity, method = "bray", data = newCSIdat, perm=1000)
+dispersal_adonis
+salinity_adonis
+
+capture.output(adonis(newCSIdat[,-c(1:15)] ~ Dispersal, method = "bray", data = newCSIdat, perm=1000), file="disp_permanova.doc")
+capture.output(adonis(newCSIdat[,-c(1:15)] ~ Salinity, method = "bray", data = newCSIdat, perm=1000), file="sal_permanova.doc")
+```
+
 
 ```{r}
 require("vegan")
@@ -125,17 +162,21 @@ write.table(CSI.DIVaquamicrobes, file="CSI.DIVaquamicrobes.csv", sep=",", col.na
 length(design$Salinity) == length(fisher)
 all.equal(gsub("-", "", rownames(design)), names(fisher))
 
-fisher.lm <- lme(fisher ~ Salinity, random = ~1|Tank_., data = design)
+fisher.lm <- lme(fisher ~ Salinity, random = ~1|Treatment, data = design)
 anova(fisher.lm)
+capture.output(anova(fisher.lm), file="fisher.lm.doc")
 
-richness.lm <- lme(richness ~ Salinity, random = ~1|Tank_., data = design)
+richness.lm <- lme(richness ~ Salinity, random = ~1|Treatment, data = design)
 anova(richness.lm)
+capture.output(anova(richness.lm), file="richness.lm.doc")
 
-evenness.lm <- lme(simp.even ~ Salinity, random = ~1|Tank_., data = design)
+evenness.lm <- lme(simp.even ~ Salinity, random = ~1|Treatment, data = design)
 anova(evenness.lm)
+capture.output(anova(evenness.lm), file="evenness.lm.doc")
 
-shannon.lm <- lme(shannon ~ Salinity, random = ~1|Tank_., data = design)
+shannon.lm <- lme(shannon ~ Salinity, random = ~1|Treatment, data = design)
 anova(shannon.lm)
+capture.output(anova(shannon.lm), file="shannon.lm.doc")
 
 install.packages("agricolae")
 library(agricolae)
@@ -151,16 +192,13 @@ p + geom_boxplot() + theme_bw() + theme(panel.grid.major = element_blank(), pane
   theme(axis.title=element_text(vjust=1,size=16,face="bold"), axis.text=element_text(size=14), 
   axis.text.x = element_text(vjust=0.65, hjust=0.5, angle=30, size=14), panel.border =   
   element_rect(colour = "black",size=1.25)) + theme(axis.ticks.length=unit(0.3,"cm")) + 
-  xlab("Microbial Diversity") + ylab("Shannon Diversity Index (H')") + 
+  xlab("Salinity") + ylab("Shannon Diversity Index (H')") + 
   scale_x_discrete(breaks=c("0","5","9","13"),   
   labels=c("0","5","9","13"))
+
+ggsave("E:/Grad/Mothur/mothur/shannondiv.pdf", plot=last_plot(), device=NULL, path=NULL, scale=1, width=NA, height=NA, dpi=300, limitsize=TRUE)
 ```
 
-```{r}
-new.data <-cbind(design,CSIdataREL)
-adonis = adonis(new.data[,-c(1:15)] ~ Salinity+Tank_., method = "bray", data = new.data, perm=1000)
-adonis
-```
 
 ```{r}
 sampleREL.dist <- vegdist(CSIdataREL, method="bray")
@@ -179,19 +217,52 @@ explainvar2
 ```
 
 ```{r}
-points <- cbind(as.data.frame(CSI_pcoa$points), treatments)
-L.centroids <- melt(points, id="treatments", measure.vars = c("V1", "V2"))
-centroids <- cast(L.centroids, variable ~ treatments, mean)
-centroids.se <- cast(L.centroids, variable ~ treatments, se)
-centroids.sd <- cast(L.centroids, variable ~ treatments, sd)
+points <- cbind(as.data.frame(CSI_pcoa$points), treatments1)
+L.centroids <- melt(points, id="treatments1", measure.vars = c("V1", "V2"))
+centroids <- cast(L.centroids, variable ~ treatments1, mean)
+centroids.se <- cast(L.centroids, variable ~ treatments1, se)
+centroids.sd <- cast(L.centroids, variable ~ treatments1, sd)
 
 cent.dataframe <- t(data.frame(rbind(centroids[1,-1], centroids[2,-1],
                              centroids.sd[1,-1],centroids.sd[2,-1])))
 colnames(cent.dataframe) <- c("V1", "V2", "V1e", "V2e")
 cent.treats <- rownames(cent.dataframe)
+
+
+##########################
+
+
+points2 <- cbind(as.data.frame(CSI_pcoa$points), treatments2)
+L.centroids2 <- melt(points2, id="treatments2", measure.vars = c("V1", "V2"))
+centroids2 <- cast(L.centroids2, variable ~ treatments2, mean)
+centroids.se2 <- cast(L.centroids2, variable ~ treatments2, se)
+centroids.sd2 <- cast(L.centroids2, variable ~ treatments2, sd)
+
+cent.dataframe2 <- t(data.frame(rbind(centroids2[1,-1], centroids2[2,-1],
+                             centroids.sd2[1,-1],centroids.sd2[2,-1])))
+colnames(cent.dataframe2) <- c("V1", "V2", "V1e", "V2e")
+cent.treats2 <- rownames(cent.dataframe2)
 ```
 
 ```{r}
+df2 <- as.data.frame(cent.dataframe2)
+p2 <- ggplot(df2, aes(x=V1, y=V2, colour=cent.treats2)) + theme_bw() 
+p2 + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.line = element_line(colour = "black")) + 
+theme(panel.background = element_blank()) + 
+  geom_errorbarh(aes(xmax=V1+V1e, xmin=V1-V1e, height=0.01), colour="black") +    
+  geom_errorbar(aes(ymax=V2+V2e, ymin=V2-V2e, width=0.01), colour="black") + 
+  geom_point(size=5) +
+  scale_colour_manual(labels = c("0","1","2","3"),   values = c("#FFFFCC", "#FFFF00", "#FF9933", "#66CC00")) +
+  geom_point(shape=1, size = 5,colour = "black") +
+theme(axis.title=element_text(size=18), axis.text=element_text(size=14), axis.text.x   = element_text(size=14), panel.border = element_rect(colour = "black",size=1.25)) + 
+  theme(axis.ticks.length=unit(0.3,"cm")) + 
+  xlab("PCoA 1 (20.9%)") + ylab("PCoA 2 (6.3%)") + 
+  labs(color = "Dispersal Method") +
+  guides(colour = guide_legend(override.aes = list(pch=21, size = 4, colour="black",    
+  fill=c("#FFFFCC", "#FFFF00", "#FF9933", "#66CC00")))) 
+
+####################################
+
 df <- as.data.frame(cent.dataframe)
 p <- ggplot(df, aes(x=V1, y=V2, colour=cent.treats)) + theme_bw() 
 p + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.line = element_line(colour = "black")) + 
@@ -203,9 +274,11 @@ theme(panel.background = element_blank()) +
   geom_point(shape=1, size = 5,colour = "black") +
 theme(axis.title=element_text(size=18), axis.text=element_text(size=14), axis.text.x   = element_text(size=14), panel.border = element_rect(colour = "black",size=1.25)) + 
   theme(axis.ticks.length=unit(0.3,"cm")) + 
-  xlab("PCoA 1 (19.4%)") + ylab("PCoA 2 (6.0%)") + 
-  labs(color = "Microbial Diversity") +
+  xlab("PCoA 1 (20.9%)") + ylab("PCoA 2 (6.3%)") + 
+  labs(color = "Salinity") +
   guides(colour = guide_legend(override.aes = list(pch=21, size = 4, colour="black",    
   fill=c("#FFFFCC", "#FFFF00", "#FF9933", "#66CC00")))) 
+
+ggsave("E:/Grad/Mothur/mothur/16SrRNA_CSI_Rplot.pdf", plot=last_plot(), device=NULL, path=NULL, scale=1, width=NA, height=NA, dpi=300, limitsize=TRUE)
 ```
 
