@@ -1,264 +1,125 @@
 Sample_Code,Date,Site,Sample_Type,Treatment,Tank_#,Tank_Name,Salinity,Dispersal
-ECU_CSI_001,11-Jun-2015,CSI_Dispersal (CSI),W,A,1,A1_2015-June11,13,
-ECU_CSI_002,11-Jun-2015,CSI_Dispersal (CSI),W,A,2,A2_2015-June11,0,
-ECU_CSI_003,11-Jun-2015,CSI_Dispersal (CSI),W,A,3,A3_2015-June11,0,1
-ECU_CSI_004,11-Jun-2015,CSI_Dispersal (CSI),W,A,4,A4_2015-June11,0,3
-ECU_CSI_005,11-Jun-2015,CSI_Dispersal (CSI),W,A,5,A5_2015-June11,5,2
-ECU_CSI_006,11-Jun-2015,CSI_Dispersal (CSI),W,A,6,A6_2015-June11,5,3
-ECU_CSI_007,11-Jun-2015,CSI_Dispersal (CSI),W,A,7,A7_2015-June11,9,2
-ECU_CSI_008,11-Jun-2015,CSI_Dispersal (CSI),W,A,8,A8_2015-June11,9,3
-ECU_CSI_009,11-Jun-2015,CSI_Dispersal (CSI),W,A,9,A9_2015-June11,13,2
-ECU_CSI_010,11-Jun-2015,CSI_Dispersal (CSI),W,A,10,A10_2015-June11,13,3
-ECU_CSI_011,11-Jun-2015,CSI_Dispersal (CSI),W,A,11,A11_2015-June11,0,2
-ECU_CSI_012,11-Jun-2015,CSI_Dispersal (CSI),W,B,1,B1_2015-June11,13,
-ECU_CSI_013,11-Jun-2015,CSI_Dispersal (CSI),W,B,2,B2_2015-June11,0,
-ECU_CSI_014,11-Jun-2015,CSI_Dispersal (CSI),W,B,3,B3_2015-June11,0,1
-ECU_CSI_015,11-Jun-2015,CSI_Dispersal (CSI),W,B,4,B4_2015-June11,0,3
-ECU_CSI_016,11-Jun-2015,CSI_Dispersal (CSI),W,B,5,B5_2015-June11,5,2
-ECU_CSI_017,11-Jun-2015,CSI_Dispersal (CSI),W,B,6,B6_2015-June11,5,3
-ECU_CSI_018,11-Jun-2015,CSI_Dispersal (CSI),W,B,7,B7_2015-June11,9,2
-ECU_CSI_019,11-Jun-2015,CSI_Dispersal (CSI),W,B,8,B8_2015-June11,9,3
-ECU_CSI_020,11-Jun-2015,CSI_Dispersal (CSI),W,B,9,B9_2015-June11,13,2
-ECU_CSI_021,11-Jun-2015,CSI_Dispersal (CSI),W,B,10,B10_2015-June11,13,3
-ECU_CSI_022,11-Jun-2015,CSI_Dispersal (CSI),W,B,11,B11_2015-June11,0,2
-ECU_CSI_023,11-Jun-2015,CSI_Dispersal (CSI),W,C,1,C1_2015-June11,13,
-ECU_CSI_024,11-Jun-2015,CSI_Dispersal (CSI),W,C,2,C2_2015-June11,0,
-ECU_CSI_025,11-Jun-2015,CSI_Dispersal (CSI),W,C,3,C3_2015-June11,0,1
-ECU_CSI_026,11-Jun-2015,CSI_Dispersal (CSI),W,C,4,C4_2015-June11,0,3
-ECU_CSI_027,11-Jun-2015,CSI_Dispersal (CSI),W,C,5,C5_2015-June11,5,2
-ECU_CSI_028,11-Jun-2015,CSI_Dispersal (CSI),W,C,6,C6_2015-June11,5,3
-ECU_CSI_029,11-Jun-2015,CSI_Dispersal (CSI),W,C,7,C7_2015-June11,9,2
-ECU_CSI_030,11-Jun-2015,CSI_Dispersal (CSI),W,C,8,C8_2015-June11,9,3
-ECU_CSI_031,11-Jun-2015,CSI_Dispersal (CSI),W,C,9,C9_2015-June11,13,2
-ECU_CSI_032,11-Jun-2015,CSI_Dispersal (CSI),W,C,10,C10_2015-June11,13,3
-ECU_CSI_033,11-Jun-2015,CSI_Dispersal (CSI),W,C,11,C11_2015-June11,0,2
-ECU_CSI_034,11-Jun-2015,CSI_Dispersal (CSI),W,D,1,D1_2015-June11,13,
-ECU_CSI_035,11-Jun-2015,CSI_Dispersal (CSI),W,D,2,D2_2015-June11,0,
-ECU_CSI_036,11-Jun-2015,CSI_Dispersal (CSI),W,D,3,D3_2015-June11,0,1
-ECU_CSI_037,11-Jun-2015,CSI_Dispersal (CSI),W,D,4,D4_2015-June11,0,3
-ECU_CSI_038,11-Jun-2015,CSI_Dispersal (CSI),W,D,5,D5_2015-June11,5,2
-ECU_CSI_039,11-Jun-2015,CSI_Dispersal (CSI),W,D,6,D6_2015-June11,5,3
-ECU_CSI_040,11-Jun-2015,CSI_Dispersal (CSI),W,D,7,D7_2015-June11,9,2
-ECU_CSI_042,11-Jun-2015,CSI_Dispersal (CSI),W,D,9,D9_2015-June11,13,2
-ECU_CSI_043,11-Jun-2015,CSI_Dispersal (CSI),W,D,10,D10_2015-June11,13,3
-ECU_CSI_044,11-Jun-2015,CSI_Dispersal (CSI),W,D,11,D11_2015-June11,0,2
-ECU_CSI_045,20-Jun-2015,CSI_Dispersal (CSI),W,A,1,A1_2015-June20,13,
-ECU_CSI_046,20-Jun-2015,CSI_Dispersal (CSI),W,A,2,A2_2015-June20,0,
-ECU_CSI_047,20-Jun-2015,CSI_Dispersal (CSI),W,A,3,A3_2015-June20,0,1
-ECU_CSI_048,20-Jun-2015,CSI_Dispersal (CSI),W,A,4,A4_2015-June20,0,3
-ECU_CSI_049,20-Jun-2015,CSI_Dispersal (CSI),W,A,5,A5_2015-June20,5,2
-ECU_CSI_050,20-Jun-2015,CSI_Dispersal (CSI),W,A,6,A6_2015-June20,5,3
-ECU_CSI_051,20-Jun-2015,CSI_Dispersal (CSI),W,A,7,A7_2015-June20,9,2
-ECU_CSI_052,20-Jun-2015,CSI_Dispersal (CSI),W,A,8,A8_2015-June20,9,3
-ECU_CSI_053,20-Jun-2015,CSI_Dispersal (CSI),W,A,9,A9_2015-June20,13,2
-ECU_CSI_054,20-Jun-2015,CSI_Dispersal (CSI),W,A,10,A10_2015-June20,13,3
-ECU_CSI_055,20-Jun-2015,CSI_Dispersal (CSI),W,A,11,A11_2015-June20,0,2
-ECU_CSI_056,20-Jun-2015,CSI_Dispersal (CSI),W,B,1,B1_2015-June20,13,
-ECU_CSI_057,20-Jun-2015,CSI_Dispersal (CSI),W,B,2,B2_2015-June20,0,
-ECU_CSI_058,20-Jun-2015,CSI_Dispersal (CSI),W,B,3,B3_2015-June20,0,1
-ECU_CSI_059,20-Jun-2015,CSI_Dispersal (CSI),W,B,4,B4_2015-June20,0,3
-ECU_CSI_060,20-Jun-2015,CSI_Dispersal (CSI),W,B,5,B5_2015-June20,5,2
-ECU_CSI_061,20-Jun-2015,CSI_Dispersal (CSI),W,B,6,B6_2015-June20,5,3
-ECU_CSI_062,20-Jun-2015,CSI_Dispersal (CSI),W,B,7,B7_2015-June20,9,2
-ECU_CSI_063,20-Jun-2015,CSI_Dispersal (CSI),W,B,8,B8_2015-June20,9,3
-ECU_CSI_064,20-Jun-2015,CSI_Dispersal (CSI),W,B,9,B9_2015-June20,13,2
-ECU_CSI_065,20-Jun-2015,CSI_Dispersal (CSI),W,B,10,B10_2015-June20,13,3
-ECU_CSI_066,20-Jun-2015,CSI_Dispersal (CSI),W,B,11,B11_2015-June20,0,2
-ECU_CSI_067,20-Jun-2015,CSI_Dispersal (CSI),W,C,1,C1_2015-June20,13,
-ECU_CSI_068,20-Jun-2015,CSI_Dispersal (CSI),W,C,2,C2_2015-June20,0,
-ECU_CSI_069,20-Jun-2015,CSI_Dispersal (CSI),W,C,3,C3_2015-June20,0,1
-ECU_CSI_070,20-Jun-2015,CSI_Dispersal (CSI),W,C,4,C4_2015-June20,0,3
-ECU_CSI_071,20-Jun-2015,CSI_Dispersal (CSI),W,C,5,C5_2015-June20,5,2
-ECU_CSI_072,20-Jun-2015,CSI_Dispersal (CSI),W,C,6,C6_2015-June20,5,3
-ECU_CSI_073,20-Jun-2015,CSI_Dispersal (CSI),W,C,7,C7_2015-June20,9,2
-ECU_CSI_074,20-Jun-2015,CSI_Dispersal (CSI),W,C,8,C8_2015-June20,9,3
-ECU_CSI_075,20-Jun-2015,CSI_Dispersal (CSI),W,C,9,C9_2015-June20,13,2
-ECU_CSI_076,20-Jun-2015,CSI_Dispersal (CSI),W,C,10,C10_2015-June20,13,3
-ECU_CSI_077,20-Jun-2015,CSI_Dispersal (CSI),W,C,11,C11_2015-June20,0,2
-ECU_CSI_078,20-Jun-2015,CSI_Dispersal (CSI),W,D,1,D1_2015-June20,13,
-ECU_CSI_079,20-Jun-2015,CSI_Dispersal (CSI),W,D,2,D2_2015-June20,0,
-ECU_CSI_080,20-Jun-2015,CSI_Dispersal (CSI),W,D,3,D3_2015-June20,0,1
-ECU_CSI_081,20-Jun-2015,CSI_Dispersal (CSI),W,D,4,D4_2015-June20,0,3
-ECU_CSI_082,20-Jun-2015,CSI_Dispersal (CSI),W,D,5,D5_2015-June20,5,2
-ECU_CSI_083,20-Jun-2015,CSI_Dispersal (CSI),W,D,6,D6_2015-June20,5,3
-ECU_CSI_084,20-Jun-2015,CSI_Dispersal (CSI),W,D,7,D7_2015-June20,9,2
-ECU_CSI_085,20-Jun-2015,CSI_Dispersal (CSI),W,D,8,D8_2015-June20,9,3
-ECU_CSI_086,20-Jun-2015,CSI_Dispersal (CSI),W,D,9,D9_2015-June20,13,2
-ECU_CSI_087,20-Jun-2015,CSI_Dispersal (CSI),W,D,10,D10_2015-June20,13,3
-ECU_CSI_088,20-Jun-2015,CSI_Dispersal (CSI),W,D,11,D11_2015-June20,0,2
-ECU_CSI_089,29-Jun-2015,CSI_Dispersal (CSI),W,A,1,A1_2015-June29,13,
-ECU_CSI_090,29-Jun-2015,CSI_Dispersal (CSI),W,A,2,A2_2015-June29,0,
-ECU_CSI_091,29-Jun-2015,CSI_Dispersal (CSI),W,A,3,A3_2015-June29,0,1
-ECU_CSI_092,29-Jun-2015,CSI_Dispersal (CSI),W,A,4,A4_2015-June29,0,3
-ECU_CSI_093,29-Jun-2015,CSI_Dispersal (CSI),W,A,5,A5_2015-June29,5,2
-ECU_CSI_094,29-Jun-2015,CSI_Dispersal (CSI),W,A,6,A6_2015-June29,5,3
-ECU_CSI_095,29-Jun-2015,CSI_Dispersal (CSI),W,A,7,A7_2015-June29,9,2
-ECU_CSI_096,29-Jun-2015,CSI_Dispersal (CSI),W,A,8,A8_2015-June29,9,3
-ECU_CSI_097,29-Jun-2015,CSI_Dispersal (CSI),W,A,9,A9_2015-June29,13,2
-ECU_CSI_098,29-Jun-2015,CSI_Dispersal (CSI),W,A,10,A10_2015-June29,13,3
-ECU_CSI_099,29-Jun-2015,CSI_Dispersal (CSI),W,A,11,A11_2015-June29,0,2
-ECU_CSI_100,29-Jun-2015,CSI_Dispersal (CSI),W,B,1,B1_2015-June29,13,
-ECU_CSI_101,29-Jun-2015,CSI_Dispersal (CSI),W,B,2,B2_2015-June29,0,
-ECU_CSI_102,29-Jun-2015,CSI_Dispersal (CSI),W,B,3,B3_2015-June29,0,1
-ECU_CSI_103,29-Jun-2015,CSI_Dispersal (CSI),W,B,4,B4_2015-June29,0,3
-ECU_CSI_104,29-Jun-2015,CSI_Dispersal (CSI),W,B,5,B5_2015-June29,5,2
-ECU_CSI_105,29-Jun-2015,CSI_Dispersal (CSI),W,B,6,B6_2015-June29,5,3
-ECU_CSI_105,29-Jun-2015,CSI_Dispersal (CSI),W,B,7,B7_2015-June29,9,2
-ECU_CSI_107,29-Jun-2015,CSI_Dispersal (CSI),W,B,8,B8_2015-June29,9,3
-ECU_CSI_108,29-Jun-2015,CSI_Dispersal (CSI),W,B,9,B9_2015-June29,13,2
-ECU_CSI_109,29-Jun-2015,CSI_Dispersal (CSI),W,B,10,B10_2015-June29,13,3
-ECU_CSI_110,29-Jun-2015,CSI_Dispersal (CSI),W,B,11,B11_2015-June29,0,2
-ECU_CSI_111,29-Jun-2015,CSI_Dispersal (CSI),W,C,1,C1_2015-June29,13,
-ECU_CSI_112,29-Jun-2015,CSI_Dispersal (CSI),W,C,2,C2_2015-June29,0,
-ECU_CSI_113,29-Jun-2015,CSI_Dispersal (CSI),W,C,3,C3_2015-June29,0,1
-ECU_CSI_114,29-Jun-2015,CSI_Dispersal (CSI),W,C,4,C4_2015-June29,0,3
-ECU_CSI_115,29-Jun-2015,CSI_Dispersal (CSI),W,C,5,C5_2015-June29,5,2
-ECU_CSI_116,29-Jun-2015,CSI_Dispersal (CSI),W,C,6,C6_2015-June29,5,3
-ECU_CSI_117,29-Jun-2015,CSI_Dispersal (CSI),W,C,7,C7_2015-June29,9,2
-ECU_CSI_118,29-Jun-2015,CSI_Dispersal (CSI),W,C,8,C8_2015-June29,9,3
-ECU_CSI_119,29-Jun-2015,CSI_Dispersal (CSI),W,C,9,C9_2015-June29,13,2
-ECU_CSI_120,29-Jun-2015,CSI_Dispersal (CSI),W,C,10,C10_2015-June29,13,3
-ECU_CSI_121,29-Jun-2015,CSI_Dispersal (CSI),W,C,11,C11_2015-June29,0,2
-ECU_CSI_122,29-Jun-2015,CSI_Dispersal (CSI),W,D,1,D1_2015-June29,13,
-ECU_CSI_123,29-Jun-2015,CSI_Dispersal (CSI),W,D,2,D2_2015-June29,0,
-ECU_CSI_124,29-Jun-2015,CSI_Dispersal (CSI),W,D,3,D3_2015-June29,0,1
-ECU_CSI_125,29-Jun-2015,CSI_Dispersal (CSI),W,D,4,D4_2015-June29,0,3
-ECU_CSI_126,29-Jun-2015,CSI_Dispersal (CSI),W,D,5,D5_2015-June29,5,2
-ECU_CSI_127,29-Jun-2015,CSI_Dispersal (CSI),W,D,6,D6_2015-June29,5,3
-ECU_CSI_128,29-Jun-2015,CSI_Dispersal (CSI),W,D,7,D7_2015-June29,9,2
-ECU_CSI_129,29-Jun-2015,CSI_Dispersal (CSI),W,D,8,D8_2015-June29,9,3
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
-,,,,,,,,
+CSI001,11-Jun-15,CSI_Dispersal (CSI),W,A,1,A1_2015-June11,13,
+CSI002,11-Jun-15,CSI_Dispersal (CSI),W,A,2,A2_2015-June11,0,
+CSI003,11-Jun-15,CSI_Dispersal (CSI),W,A,3,A3_2015-June11,0,1
+CSI004,11-Jun-15,CSI_Dispersal (CSI),W,A,4,A4_2015-June11,0,3
+CSI005,11-Jun-15,CSI_Dispersal (CSI),W,A,5,A5_2015-June11,5,2
+CSI006,11-Jun-15,CSI_Dispersal (CSI),W,A,6,A6_2015-June11,5,3
+CSI007,11-Jun-15,CSI_Dispersal (CSI),W,A,7,A7_2015-June11,9,2
+CSI008,11-Jun-15,CSI_Dispersal (CSI),W,A,8,A8_2015-June11,9,3
+CSI009,11-Jun-15,CSI_Dispersal (CSI),W,A,9,A9_2015-June11,13,2
+CSI010,11-Jun-15,CSI_Dispersal (CSI),W,A,10,A10_2015-June11,13,3
+CSI011,11-Jun-15,CSI_Dispersal (CSI),W,A,11,A11_2015-June11,0,2
+CSI012,11-Jun-15,CSI_Dispersal (CSI),W,B,1,B1_2015-June11,13,
+CSI013,11-Jun-15,CSI_Dispersal (CSI),W,B,2,B2_2015-June11,0,
+CSI014,11-Jun-15,CSI_Dispersal (CSI),W,B,3,B3_2015-June11,0,1
+CSI015,11-Jun-15,CSI_Dispersal (CSI),W,B,4,B4_2015-June11,0,3
+CSI016,11-Jun-15,CSI_Dispersal (CSI),W,B,5,B5_2015-June11,5,2
+CSI017,11-Jun-15,CSI_Dispersal (CSI),W,B,6,B6_2015-June11,5,3
+CSI018,11-Jun-15,CSI_Dispersal (CSI),W,B,7,B7_2015-June11,9,2
+CSI019,11-Jun-15,CSI_Dispersal (CSI),W,B,8,B8_2015-June11,9,3
+CSI020,11-Jun-15,CSI_Dispersal (CSI),W,B,9,B9_2015-June11,13,2
+CSI021,11-Jun-15,CSI_Dispersal (CSI),W,B,10,B10_2015-June11,13,3
+CSI022,11-Jun-15,CSI_Dispersal (CSI),W,B,11,B11_2015-June11,0,2
+CSI023,11-Jun-15,CSI_Dispersal (CSI),W,C,1,C1_2015-June11,13,
+CSI024,11-Jun-15,CSI_Dispersal (CSI),W,C,2,C2_2015-June11,0,
+CSI025,11-Jun-15,CSI_Dispersal (CSI),W,C,3,C3_2015-June11,0,1
+CSI026,11-Jun-15,CSI_Dispersal (CSI),W,C,4,C4_2015-June11,0,3
+CSI027,11-Jun-15,CSI_Dispersal (CSI),W,C,5,C5_2015-June11,5,2
+CSI028,11-Jun-15,CSI_Dispersal (CSI),W,C,6,C6_2015-June11,5,3
+CSI029,11-Jun-15,CSI_Dispersal (CSI),W,C,7,C7_2015-June11,9,2
+CSI030,11-Jun-15,CSI_Dispersal (CSI),W,C,8,C8_2015-June11,9,3
+CSI031,11-Jun-15,CSI_Dispersal (CSI),W,C,9,C9_2015-June11,13,2
+CSI032,11-Jun-15,CSI_Dispersal (CSI),W,C,10,C10_2015-June11,13,3
+CSI034,11-Jun-15,CSI_Dispersal (CSI),W,D,1,D1_2015-June11,13,
+CSI035,11-Jun-15,CSI_Dispersal (CSI),W,D,2,D2_2015-June11,0,
+CSI036,11-Jun-15,CSI_Dispersal (CSI),W,D,3,D3_2015-June11,0,1
+CSI037,11-Jun-15,CSI_Dispersal (CSI),W,D,4,D4_2015-June11,0,3
+CSI038,11-Jun-15,CSI_Dispersal (CSI),W,D,5,D5_2015-June11,5,2
+CSI039,11-Jun-15,CSI_Dispersal (CSI),W,D,6,D6_2015-June11,5,3
+CSI040,11-Jun-15,CSI_Dispersal (CSI),W,D,7,D7_2015-June11,9,2
+CSI042,11-Jun-15,CSI_Dispersal (CSI),W,D,9,D9_2015-June11,13,2
+CSI043,11-Jun-15,CSI_Dispersal (CSI),W,D,10,D10_2015-June11,13,3
+CSI044,11-Jun-15,CSI_Dispersal (CSI),W,D,11,D11_2015-June11,0,2
+CSI045,20-Jun-15,CSI_Dispersal (CSI),W,A,1,A1_2015-June20,13,
+CSI046,20-Jun-15,CSI_Dispersal (CSI),W,A,2,A2_2015-June20,0,
+CSI047,20-Jun-15,CSI_Dispersal (CSI),W,A,3,A3_2015-June20,0,1
+CSI048,20-Jun-15,CSI_Dispersal (CSI),W,A,4,A4_2015-June20,0,3
+CSI049,20-Jun-15,CSI_Dispersal (CSI),W,A,5,A5_2015-June20,5,2
+CSI050,20-Jun-15,CSI_Dispersal (CSI),W,A,6,A6_2015-June20,5,3
+CSI051,20-Jun-15,CSI_Dispersal (CSI),W,A,7,A7_2015-June20,9,2
+CSI052,20-Jun-15,CSI_Dispersal (CSI),W,A,8,A8_2015-June20,9,3
+CSI053,20-Jun-15,CSI_Dispersal (CSI),W,A,9,A9_2015-June20,13,2
+CSI054,20-Jun-15,CSI_Dispersal (CSI),W,A,10,A10_2015-June20,13,3
+CSI055,20-Jun-15,CSI_Dispersal (CSI),W,A,11,A11_2015-June20,0,2
+CSI056,20-Jun-15,CSI_Dispersal (CSI),W,B,1,B1_2015-June20,13,
+CSI057,20-Jun-15,CSI_Dispersal (CSI),W,B,2,B2_2015-June20,0,
+CSI058,20-Jun-15,CSI_Dispersal (CSI),W,B,3,B3_2015-June20,0,1
+CSI059,20-Jun-15,CSI_Dispersal (CSI),W,B,4,B4_2015-June20,0,3
+CSI060,20-Jun-15,CSI_Dispersal (CSI),W,B,5,B5_2015-June20,5,2
+CSI061,20-Jun-15,CSI_Dispersal (CSI),W,B,6,B6_2015-June20,5,3
+CSI062,20-Jun-15,CSI_Dispersal (CSI),W,B,7,B7_2015-June20,9,2
+CSI063,20-Jun-15,CSI_Dispersal (CSI),W,B,8,B8_2015-June20,9,3
+CSI064,20-Jun-15,CSI_Dispersal (CSI),W,B,9,B9_2015-June20,13,2
+CSI065,20-Jun-15,CSI_Dispersal (CSI),W,B,10,B10_2015-June20,13,3
+CSI066,20-Jun-15,CSI_Dispersal (CSI),W,B,11,B11_2015-June20,0,2
+CSI067,20-Jun-15,CSI_Dispersal (CSI),W,C,1,C1_2015-June20,13,
+CSI068,20-Jun-15,CSI_Dispersal (CSI),W,C,2,C2_2015-June20,0,
+CSI069,20-Jun-15,CSI_Dispersal (CSI),W,C,3,C3_2015-June20,0,1
+CSI070,20-Jun-15,CSI_Dispersal (CSI),W,C,4,C4_2015-June20,0,3
+CSI071,20-Jun-15,CSI_Dispersal (CSI),W,C,5,C5_2015-June20,5,2
+CSI072,20-Jun-15,CSI_Dispersal (CSI),W,C,6,C6_2015-June20,5,3
+CSI073,20-Jun-15,CSI_Dispersal (CSI),W,C,7,C7_2015-June20,9,2
+CSI074,20-Jun-15,CSI_Dispersal (CSI),W,C,8,C8_2015-June20,9,3
+CSI075,20-Jun-15,CSI_Dispersal (CSI),W,C,9,C9_2015-June20,13,2
+CSI076,20-Jun-15,CSI_Dispersal (CSI),W,C,10,C10_2015-June20,13,3
+CSI077,20-Jun-15,CSI_Dispersal (CSI),W,C,11,C11_2015-June20,0,2
+CSI079,20-Jun-15,CSI_Dispersal (CSI),W,D,2,D2_2015-June20,0,
+CSI080,20-Jun-15,CSI_Dispersal (CSI),W,D,3,D3_2015-June20,0,1
+CSI081,20-Jun-15,CSI_Dispersal (CSI),W,D,4,D4_2015-June20,0,3
+CSI082,20-Jun-15,CSI_Dispersal (CSI),W,D,5,D5_2015-June20,5,2
+CSI083,20-Jun-15,CSI_Dispersal (CSI),W,D,6,D6_2015-June20,5,3
+CSI084,20-Jun-15,CSI_Dispersal (CSI),W,D,7,D7_2015-June20,9,2
+CSI085,20-Jun-15,CSI_Dispersal (CSI),W,D,8,D8_2015-June20,9,3
+CSI086,20-Jun-15,CSI_Dispersal (CSI),W,D,9,D9_2015-June20,13,2
+CSI087,20-Jun-15,CSI_Dispersal (CSI),W,D,10,D10_2015-June20,13,3
+CSI088,20-Jun-15,CSI_Dispersal (CSI),W,D,11,D11_2015-June20,0,2
+CSI089,29-Jun-15,CSI_Dispersal (CSI),W,A,1,A1_2015-June29,13,
+CSI090,29-Jun-15,CSI_Dispersal (CSI),W,A,2,A2_2015-June29,0,
+CSI091,29-Jun-15,CSI_Dispersal (CSI),W,A,3,A3_2015-June29,0,1
+CSI092,29-Jun-15,CSI_Dispersal (CSI),W,A,4,A4_2015-June29,0,3
+CSI093,29-Jun-15,CSI_Dispersal (CSI),W,A,5,A5_2015-June29,5,2
+CSI094,29-Jun-15,CSI_Dispersal (CSI),W,A,6,A6_2015-June29,5,3
+CSI095,29-Jun-15,CSI_Dispersal (CSI),W,A,7,A7_2015-June29,9,2
+CSI096,29-Jun-15,CSI_Dispersal (CSI),W,A,8,A8_2015-June29,9,3
+CSI097,29-Jun-15,CSI_Dispersal (CSI),W,A,9,A9_2015-June29,13,2
+CSI098,29-Jun-15,CSI_Dispersal (CSI),W,A,10,A10_2015-June29,13,3
+CSI099,29-Jun-15,CSI_Dispersal (CSI),W,A,11,A11_2015-June29,0,2
+CSI100,29-Jun-15,CSI_Dispersal (CSI),W,B,1,B1_2015-June29,13,
+CSI102,29-Jun-15,CSI_Dispersal (CSI),W,B,3,B3_2015-June29,0,1
+CSI103,29-Jun-15,CSI_Dispersal (CSI),W,B,4,B4_2015-June29,0,3
+CSI104,29-Jun-15,CSI_Dispersal (CSI),W,B,5,B5_2015-June29,5,2
+CSI105,29-Jun-15,CSI_Dispersal (CSI),W,B,6,B6_2015-June29,5,3
+CSI106,29-Jun-15,CSI_Dispersal (CSI),W,B,7,B7_2015-June29,9,2
+CSI107,29-Jun-15,CSI_Dispersal (CSI),W,B,8,B8_2015-June29,9,3
+CSI108,29-Jun-15,CSI_Dispersal (CSI),W,B,9,B9_2015-June29,13,2
+CSI109,29-Jun-15,CSI_Dispersal (CSI),W,B,10,B10_2015-June29,13,3
+CSI110,29-Jun-15,CSI_Dispersal (CSI),W,B,11,B11_2015-June29,0,2
+CSI111,29-Jun-15,CSI_Dispersal (CSI),W,C,1,C1_2015-June29,13,
+CSI113,29-Jun-15,CSI_Dispersal (CSI),W,C,3,C3_2015-June29,0,1
+CSI114,29-Jun-15,CSI_Dispersal (CSI),W,C,4,C4_2015-June29,0,3
+CSI115,29-Jun-15,CSI_Dispersal (CSI),W,C,5,C5_2015-June29,5,2
+CSI116,29-Jun-15,CSI_Dispersal (CSI),W,C,6,C6_2015-June29,5,3
+CSI117,29-Jun-15,CSI_Dispersal (CSI),W,C,7,C7_2015-June29,9,2
+CSI118,29-Jun-15,CSI_Dispersal (CSI),W,C,8,C8_2015-June29,9,3
+CSI119,29-Jun-15,CSI_Dispersal (CSI),W,C,9,C9_2015-June29,13,2
+CSI120,29-Jun-15,CSI_Dispersal (CSI),W,C,10,C10_2015-June29,13,3
+CSI121,29-Jun-15,CSI_Dispersal (CSI),W,C,11,C11_2015-June29,0,2
+CSI122,29-Jun-15,CSI_Dispersal (CSI),W,D,1,D1_2015-June29,13,
+CSI123,29-Jun-15,CSI_Dispersal (CSI),W,D,2,D2_2015-June29,0,
+CSI124,29-Jun-15,CSI_Dispersal (CSI),W,D,3,D3_2015-June29,0,1
+CSI125,29-Jun-15,CSI_Dispersal (CSI),W,D,4,D4_2015-June29,0,3
+CSI126,29-Jun-15,CSI_Dispersal (CSI),W,D,5,D5_2015-June29,5,2
+CSI127,29-Jun-15,CSI_Dispersal (CSI),W,D,6,D6_2015-June29,5,3
+CSI128,29-Jun-15,CSI_Dispersal (CSI),W,D,7,D7_2015-June29,9,2
+CSI129,29-Jun-15,CSI_Dispersal (CSI),W,D,8,D8_2015-June29,9,3
