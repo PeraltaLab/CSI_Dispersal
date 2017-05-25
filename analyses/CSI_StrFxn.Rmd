@@ -1,12 +1,15 @@
 ---
-title: "Mothur - removed samples"
-author: "Alex Stucy"
-output: html_notebook
+title: "Bacterioplankton response to salinity (aka 2015 CSI Dispersal Experiment)"
+author: "Alex Stucy, Jo Werba, Mike McCoy, Ariane Peralta"
+date: "Last updated on `r format(Sys.time(), '%d %B, %Y')`"
+output: 
+  pdf_document:
+  fig_caption: true
 ---
 
 ```{r}
 rm(list = ls())
-#set WD manually
+setwd("~/GitHub/CSI_Dispersal/analyses") #set up by AP
 ```
 
 ```{r}
@@ -17,10 +20,12 @@ sd(x, na.rm = TRUE)/sqrt(length(na.omit(x)))
 ci <- function(x, ...) {
 1.96 * sd(x, na.rm = TRUE)
 }
+```
 
+```{r}
 #Set Source R Tools
-source("E:/Grad/Mothur/MothurTutorial.updated/MothurTutorial_updated/bin/DiversityFunctions.R")
-source("E:/Grad/Mothur/MothurTutorial.updated/MothurTutorial_updated/bin/MothurTools.R")
+source("../bin/DiversityFunctions.R")
+source("../bin/MothurTools.R")
 ```
 
 ```{r}
@@ -37,65 +42,66 @@ require("png")
 ```
 
 ```{r}
-#load design file
-design2 <- read.csv("E:/Grad/Mothur/mothur/design2_CSI.csv", row.names=1)
-design2
+#load design file - this is the real design file
+design <- read.csv("../data/CSI_Design_ENV_NoSourceTanks.csv", row.names=1)
+design
 
 #set treatments (salinity levels)
-treatments1 <- design2$Salinity
+treatments1 <- design$Salinity
 levels(treatments1) <- c("0","5","9","13")
-treatments2 <- design2$Dispersal
-levels(treatments2) <- c("0","1","2","3")
+treatments2 <- design$Dispersal
+levels(treatments2) <- c("2","3")
 ```
 
+# Microbial Data - Need Mario's help to subset
 ```{r}
-#import tax file
-CSIdataa <- read.otu("E:/Grad/Mothur/mothur/CSI.15.trim.contigs.good.unique.good.filter.unique.precluster.pick.pick.pick.opti_mcc.unique_list.shared")
+#load design file - this is the design file associated with microbes and needs to get subset
+design_crobes <- read.csv("../data/design_CSI.csv", row.names=1)
+design_crobes
 
+# Import OTU data
+# Import Raw Data
+CSIdata.in <- read.otu("../data/CSI.shared")
 
-#removed low samples (CSI033 had 7,204 and CSI101 had 77), remove blank and undetermined, remove OTUs w/ <2 occurrences across all sites
-CSIdatb <- CSIdataa[which(rowSums(CSIdataa) >= 20000), ]
-CSIdata2c <- CSIdatb[grepl("CSI[0-9][0-9]", rownames(CSIdatb)), ]
-CSI.datd <- CSIdata2c[, which(colSums(CSIdata2c) >= 2)]
+# Remove Mock Community, Blank and Undetermined
+CSIdata.in2 <- CSIdata.in[grepl("CSI[0-9][0-9]", rownames(CSIdata.in)), ]
 
-#create presence-absence matrix
-CSIdataPAa <- (CSI.datd > 0) * 1
+#this is where we need to change to CSI data set and remove Number 1,2,3 from each row for microbes only in order to match design
 
-#create relative abundance matrices
-CSIdataRELa <- CSI.datd
-for (i in 1:dim(CSI.datd)[1]) {
-CSIdataRELa[i, ] <- CSI.datd[i, ]/sum(CSI.datd[i,
-])
+# Remove source tanks where Number =1, 2, 3
+SnW <- rownames(design.in[which(design.in$rotation == "S" | 
+                                  design.in$rotation == "W"), ])
+
+# Remove S and W treatments
+design <- design.in[-(which(rownames(design.in) %in% SnW)), ]
+design <- droplevels(design)
+
+# Remove source tanks where Number =1, 2, 3
+SnW2 <- gsub("-", "", SnW)
+CSIdata.in2 <- CSIdata.in2[-(which(rownames(CSIdata.in2) %in% SnW2)), ]
+
+# Remove OTUs with less than two occurences across all sites
+BDdata <- BDdata.in2[, which(colSums(BDdata.in2) >= 2)]
+
+# Make Presence Absence Matrix
+BDdataPA <- (BDdata > 0) * 1
+
+# Make Relative Abundence Matrices
+BDdataREL <- BDdata
+for(i in 1:dim(BDdata)[1]){
+  BDdataREL[i,] <- BDdata[i,]/sum(BDdata[i,])
 }
 
-#log transform relative abundances
-CSIdataREL.loga <- decostand(CSIdataRELa, method = "log")
+# Log Transform Relative Abundances
+BDdataREL.log <- decostand(BDdataREL, method="log")
+
+# Import Taxonomy File
+BD.tax <- read.tax(taxonomy = "../data/BD.0.03.cons.taxonomy")
 ```
 
-
 ```{r}
-install.packages("mass")
-library(MASS)
-
-da <- dist(CSIdataRELa1)
-fita <- metaMDS(da,k=2)
-fita
-
-xx <- fita$points[,1]
-yy <- fita$points[,2]
-
-plot(xx,yy, xlab="Coordinate 1", ylab="Coordinate 2",
-     main="Nonmetric MDS", type="n")
-text(xx,yy,labels = row.names(CSI.datd), cex=0.7)
-
-ggsave("E:/Grad/Mothur/mothur/NMDS.pdf", plot=last_plot(), device=NULL, path=NULL, scale=1, width=NA, height=NA, dpi=300, limitsize=TRUE)
-```
-
-
-```{r}
-#import taxonomy file
-CSI.tax1 <- read.tax(taxonomy = "C:/Users/astuc/Documents/mothur/CSI.15.trim.contigs.good.unique.good.filter.unique.precluster.pick.pick.pick.opti_mcc.unique_list.0.03.cons.taxonomy")
-
+#import taxonomy file - simplified name
+CSI.tax1 <- read.tax(taxonomy = "../data/CSI.0.03.cons.taxonomy")
 #create tax table .csv and export
 write.table(CSI.tax1, file = "tax.csv", sep = ",",
 col.names = NA)
@@ -105,14 +111,14 @@ col.names = NA)
 #find minimum abundance to set rarefy
 aa <- min(rowSums(CSI.datd))
 aa
-design2
 ```
 
 ```{r}
-design3 <- read.csv("E:/Grad/Mothur/mothur/design_CSI.csv", row.names = 1)
+#design3 <- read.csv("../data/design2_CSI.csv", row.names = 1)
+#design3 <- read.csv("E:/Grad/Mothur/mothur/design_CSI.csv", row.names = 1)
 
 newCSIdatd <- cbind(design3,CSIdataRELa)
-row.names(CSIdataRELa) == row.names(design3)
+row.names(CSIdataRELa) == row.names(design3) #matrices don't match dimensions
 head(newCSIdatd)
 row.names(newCSIdatd)
 
