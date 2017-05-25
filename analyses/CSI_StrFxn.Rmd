@@ -47,9 +47,9 @@ design <- read.csv("../data/CSI_Design_ENV_NoSourceTanks.csv", row.names=1)
 design
 
 #set treatments (salinity levels)
-treatments1 <- design$Salinity
+treatments1 <- as.factor(design$Salinity)
 levels(treatments1) <- c("0","5","9","13")
-treatments2 <- design$Dispersal
+treatments2 <- as.factor(design$Dispersal)
 levels(treatments2) <- c("2","3")
 ```
 
@@ -68,35 +68,33 @@ CSIdata.in2 <- CSIdata.in[grepl("CSI[0-9][0-9]", rownames(CSIdata.in)), ]
 
 #this is where we need to change to CSI data set and remove Number 1,2,3 from each row for microbes only in order to match design
 
-# Remove source tanks where Number =1, 2, 3
-SnW <- rownames(design.in[which(design.in$rotation == "S" | 
-                                  design.in$rotation == "W"), ])
+# Identify source tanks where Number = 1, 2, 3
+temp <- rownames(design_crobes[which(design_crobes$Number %in% c(1, 2, 3)), ])
 
-# Remove S and W treatments
-design <- design.in[-(which(rownames(design.in) %in% SnW)), ]
-design <- droplevels(design)
+# Remove sampeles from tank numbers 1, 2, 3
+bac.design <- design_crobes[-(which(rownames(design_crobes) %in% temp)), ]
+design <- droplevels(bac.design)
 
-# Remove source tanks where Number =1, 2, 3
-SnW2 <- gsub("-", "", SnW)
-CSIdata.in2 <- CSIdata.in2[-(which(rownames(CSIdata.in2) %in% SnW2)), ]
+# Remove source tanks where Number = 1, 2, 3
+CSIdata.in2 <- CSIdata.in2[-(which(rownames(CSIdata.in2) %in% temp)), ]
 
 # Remove OTUs with less than two occurences across all sites
-BDdata <- BDdata.in2[, which(colSums(BDdata.in2) >= 2)]
+CSIdata <- CSIdata.in2[, which(colSums(CSIdata.in2) >= 2)]
 
 # Make Presence Absence Matrix
-BDdataPA <- (BDdata > 0) * 1
+CSIdataPA <- (CSIdata > 0) * 1
 
 # Make Relative Abundence Matrices
-BDdataREL <- BDdata
-for(i in 1:dim(BDdata)[1]){
-  BDdataREL[i,] <- BDdata[i,]/sum(BDdata[i,])
+CSIdataREL <- CSIdata
+for(i in 1:dim(CSIdata)[1]){
+  CSIdataREL[i,] <- CSIdata[i,]/sum(CSIdata[i,])
 }
 
 # Log Transform Relative Abundances
-BDdataREL.log <- decostand(BDdataREL, method="log")
+CSIdataREL.log <- decostand(CSIdataREL, method="log")
 
 # Import Taxonomy File
-BD.tax <- read.tax(taxonomy = "../data/BD.0.03.cons.taxonomy")
+#CSI.tax <- read.tax(taxonomy = "../data/BD.0.03.cons.taxonomy")
 ```
 
 ```{r}
