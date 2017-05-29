@@ -55,7 +55,7 @@ levels(treatments2) <- c("2","3")
 
 # Microbial Data - Need Mario's help to subset
 ```{r}
-#load design file - this is the design file associated with microbes and needs to get subset
+#load design file - this is the design file associated with microbes and need to get subset w/o mock
 design_crobes <- read.csv("../data/design_CSI.csv", row.names=1)
 design_crobes
 
@@ -63,8 +63,10 @@ design_crobes
 # Import Raw Data
 CSIdata.in <- read.otu("../data/CSI.shared")
 
-# Remove Mock Community, Blank and Undetermined
-CSIdata.in2 <- CSIdata.in[grepl("CSI[0-9][0-9]", rownames(CSIdata.in)), ]
+# Remove Mock Community=CSI130
+#CSIdata.in2 <- CSIdata.in[grepl("CSI[0-9][0-9]", rownames(CSIdata.in)), ] - not in data set
+
+#design_crobes and CSIdata.in are not the same number of rows (?) - unsure where the mismatch is
 
 #this is where we need to change to CSI data set and remove Number 1,2,3 from each row for microbes only in order to match design
 
@@ -77,6 +79,7 @@ design <- droplevels(bac.design)
 
 # Remove source tanks where Number = 1, 2, 3
 CSIdata.in2 <- CSIdata.in2[-(which(rownames(CSIdata.in2) %in% temp)), ]
+CSIdata.in2
 
 # Remove OTUs with less than two occurences across all sites
 CSIdata <- CSIdata.in2[, which(colSums(CSIdata.in2) >= 2)]
