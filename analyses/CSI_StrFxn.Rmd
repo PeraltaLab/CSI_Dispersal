@@ -53,22 +53,23 @@ treatments2 <- as.factor(design$Dispersal)
 levels(treatments2) <- c("2","3")
 ```
 
-# Microbial Data - Need Mario's help to subset
+# Microbial Data
 ```{r}
 #load design file - this is the design file associated with microbes and need to get subset w/o mock
 design_crobes <- read.csv("../data/design_CSI.csv", row.names=1)
-design_crobes
+design_crobes <- design_crobes[-c(grep("mock community", design_crobes$CSI_ID)), ]
+dim(design_crobes)
 
 # Import OTU data
 # Import Raw Data
 CSIdata.in <- read.otu("../data/CSI.shared")
+dim(CSIdata.in)
 
-# Remove Mock Community=CSI130
-#CSIdata.in2 <- CSIdata.in[grepl("CSI[0-9][0-9]", rownames(CSIdata.in)), ] - not in data set
+# Removing Extra Site in Design
+missing <- setdiff(rownames(design_crobes), rownames(CSIdata.in))
+design_crobes <- design_crobes[-(which(rownames(design_crobes) == missing)), ]
 
-#design_crobes and CSIdata.in are not the same number of rows (?) - unsure where the mismatch is
-
-#this is where we need to change to CSI data set and remove Number 1,2,3 from each row for microbes only in order to match design
+all.equal(rownames(design_crobes), rownames(CSIdata.in))
 
 # Identify source tanks where Number = 1, 2, 3
 temp <- rownames(design_crobes[which(design_crobes$Number %in% c(1, 2, 3)), ])
