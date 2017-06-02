@@ -107,6 +107,7 @@ levels(treatments1) <- c("0","5","9","13")
 treatments2 <- as.factor(design2$Dispersal)
 levels(treatments2) <- c("2","3")
 
+date_1 <- as.factor(design2$Date2)
 # Make Presence Absence Matrix
 CSIdataPA <- (CSIdata.in3 > 0) * 1
 
@@ -184,6 +185,18 @@ explainvar2a
 ```
 
 ```{r}
+#salinity = color, dispersal = shape; need to graph date x salinity x dispersal
+points1a <- cbind(as.data.frame(CSI_pcoa1$points), treatments1)
+L.centroids1a <- melt(points1a, id="treatments1", measure.vars = c("V1", "V2"))
+centroids1a <- cast(L.centroids1a, variable ~ treatments1, mean)
+centroids.se1a <- cast(L.centroids1a, variable ~ treatments1, se)
+centroids.sd1a <- cast(L.centroids1a, variable ~ treatments1, sd)
+
+cent.dataframe1a <- t(data.frame(rbind(centroids1a[1,-1], centroids1a[2,-1],
+                             centroids.sd1a[1,-1],centroids.sd1a[2,-1])))
+colnames(cent.dataframe1a) <- c("V1", "V2", "V1e", "V2e")
+cent.treats1a <- rownames(cent.dataframe1a)
+
 #salinity
 points1a <- cbind(as.data.frame(CSI_pcoa1$points), treatments1)
 L.centroids1a <- melt(points1a, id="treatments1", measure.vars = c("V1", "V2"))
@@ -219,7 +232,7 @@ plot1a + theme(panel.grid.major = element_blank(), panel.grid.minor = element_bl
 theme(panel.background = element_blank()) + 
   geom_errorbarh(aes(xmax=V1+V1e, xmin=V1-V1e, height=0.01), colour="black") +    
   geom_errorbar(aes(ymax=V2+V2e, ymin=V2-V2e, width=0.01), colour="black") + 
-  geom_point(size=5) +
+  geom_point(size=5,shape=as.factor(date_1)) +
   scale_colour_manual(labels = c("0","5","9","13"),   values = c("#FFFFCC", "#FFFF00", "#FF9933", "#66CC00")) +
   geom_point(size = 5,colour = "black") + 
   scale_shape_manual(labels = c("2","3"), values = c(1,5)) + 
