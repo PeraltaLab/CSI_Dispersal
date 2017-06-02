@@ -224,7 +224,7 @@ plot1a + theme(panel.grid.major = element_blank(),
                panel.grid.minor = element_blank(), 
                axis.line = element_line(colour = "black")) + 
 theme(panel.background = element_blank()) + 
-  geom_point(aes(fill=pcoa.col), colour = "black", size=5, stroke = 0.75) + 
+  geom_point(aes(fill=pcoa.col), colour = "black", size=6, stroke = 0.75) + 
   geom_errorbarh(aes(xmax=V1+V1e, xmin=V1-V1e, height=0.01), colour="black") +    
   geom_errorbar(aes(ymax=V2+V2e, ymin=V2-V2e, width=0.01), colour="black") + 
   scale_colour_manual(labels = c("0","5","9","13"), 
@@ -240,10 +240,10 @@ theme(panel.background = element_blank()) +
   theme(axis.ticks.length=unit(0.3,"cm")) + 
   xlab("PCoA 1 (21.7%)") + ylab("PCoA 2 (6.6%)") + 
   labs(fill = "Salinity", shape = "Date") +
-  guides(fill = guide_legend(override.aes = list(pch=21, size = 3.5, colour="black")),
-         shape = guide_legend(override.aes = list(size = 3, fill="black")))
+  guides(fill = guide_legend(override.aes = list(pch=21, size = 4, colour="black")),
+         shape = guide_legend(override.aes = list(size = 4, fill="black")))
 
-ggsave("16SrRNA_CSI_Rplot_Dispersal.pdf", plot=last_plot(), device=NULL, path=NULL, scale=1, width=NA, height=NA, dpi=300, limitsize=TRUE)
+ggsave("16SrRNA_CSI_Rplot_SalinityDispersal.pdf", plot=last_plot(), device=NULL, path=NULL, scale=1, width=NA, height=NA, dpi=900, limitsize=TRUE)
 
 
 
