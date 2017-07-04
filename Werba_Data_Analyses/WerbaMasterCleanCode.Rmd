@@ -1,0 +1,224 @@
+---
+title: "Werba_ Zooplankton Analyses"
+author: "Jo"
+date: "June 28, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(lme4)
+library(MASS)
+library(vegan)
+library(reshape2)
+library(tidyr)
+library(dplyr)
+load("msfinal.Rdata")
+
+```
+
+The first sets of analyses use the dataset "bigdata" found in the .Rdata file. This is all of the raw data for zooplankton, nitrogen, and salinity along with added columns for richness and abundances
+
+Alpha Diversity results:
+Effective diversity was used for estimating alpha community diversity in individual pools. There was no significant effect of salinity, dispersal or date on effective diversity (F = 0.59, df = 5; 180, p = 0.7).  For all treatments effective diversity was highest approximately half way through the experiment. 
+
+For all of the following: Dispersal is a factor in 2 levels, sreal is the actual measured salinity and Date2 is a number starting on day 0 until day 45 when the experiment ended. 
+
+```{r}
+trudiv<-lm(true~Dispersal+poly(sreal,2)*poly(Date2,2),data=bigdata)
+summary(trudiv)
+```
+
+Here I look at richness:
+The interaction between salinity and date provides a significant description of richness (t=2.3, p=0.02). Dispersal, salinity and date alone were not significant. In freshwater treatments richness declined over time while in all other treatments richness increased. 
+
+```{r}
+RichMod1<-glm(rich~Dispersal+poly(sreal,2)*poly(Date2,2),data = bigdata,family =quasipoisson)
+summary(RichMod1)
+```
+
+
+I also tested for differences in the total abundance of zooplankton independent of species and found that while diversity decreased, total abundance of zooplankton increased in all treatments over time. Salinity (z = -5.03, p < 0.01), the quadratic term for salinity (z= 2.98, p=0.002), date (z = 7.44, p < 0.01) and the interaction between date and salinity (z=2.62, p=0.008) were all significant descriptors of abundance. Dispersal treatment was not a significant factor (z= -1.046, p=0.29) Abundance decreased with increases in salinity 
+
+```{r}
+am1<-glm.nb(abundance ~ Dispersal+poly(sreal,2)*Date2, data=bigdata)
+summary(am1)
+```
+
+
+The next set of analyses are looking at beta diversity via NMDS. For all the following analyses the nmds results were pulled out to create data frames for graphining, these dataframes are found in the .Rdata file, for each analysis I will list the corresponding data frame. 
+
+First I look at all the treatments together at the first and last dates. Then I separate out by treatment. I include how I made these matrices since it isn't immediately clear how to get the graphs from the results of the NMDS
+
+```{r,message=FALSE}
+#subset of bigdata for day 1
+da1 <- bigdata[bigdata$Date=="42166",]
+
+#remove everything except community data, salinity, dispersal and treatment
+da2 <- da1[ , c(3,4,5:31,33)]
+
+#remove any rows with all zeros
+da3 <- da2[rowSums(da2[ , -c(1,2,30)]) != 0, ]
+
+#need only community matrix for nmds
+da4 <- da3[,-c(1,2,30)]
+
+first_nmds <- metaMDS(da4, distance="bray",k=9)
+
+# add points to same data frame with all salinity, treatment, dispersal information
+
+po <- cbind(as.data.frame(first_nmds$points), da3$Treatment,da3$Dispersal,da3$Salinity)
+
+# remove all MDS >2
+po1 <- po[ , -c(3:9)]
+
+colnames(po1) <- c("MDS1","MDS2", "Treatment", "Dispersal", "Salinity")
+
+#mean and sd of mds 1 and 2
+mean_mds1 <- aggregate(po1$MDS1, by = list(po1$Treatment), FUN = mean )
+sd_mds1 <- aggregate(po1$MDS1, by = list(po1$Treatment), FUN = sd )[[2]]
+
+
+mean_mds2 <- aggregate(po1$MDS2, by = list(po1$Treatment), FUN = mean )[[2]]
+sd_mds2 <- aggregate(po1$MDS2, by = list(po1$Treatment), FUN = sd )[[2]]
+
+agg <- cbind(mean_mds1,sd_mds1,mean_mds2,sd_mds2)
+colnames(agg) <- c("Treatment","mean_mds1","sd_mds1","mean_mds2", "sd_mds2")
+
+#add salinity and dispersal
+agg$salinity <- c("0","5","5","9","9","13","13","0")
+agg$dispersal <- rep(c("3","2"),4)  
+
+
+###now wash and repeat for final day
+
+d1<-bigdata[bigdata$Date=="42211",]
+
+#remove everything except community data, salinity, dispersal and treatment
+d2 <- d1[ , c(3,4,5:31,33)]
+
+#remove any rows with all zeros
+d3 <- d2[rowSums(d2[ , -c(1,2,30)]) != 0, ]
+
+#need only community matrix for nmds
+d4 <- d3[,-c(1,2,30)]
+
+last_nmds<-metaMDS(d4, distance="bray",k=9)
+
+# add points to same data frame with all salinity, treatment, dispersal information
+
+p <- cbind(as.data.frame(last_nmds$points), d3$Treatment,d3$Dispersal,d3$Salinity)
+
+# remove all MDS >2
+p1 <- p[ , -c(3:9)]
+
+colnames(p1)<- c("MDS1","MDS2", "Treatment", "Dispersal", "Salinity")
+
+#mean and sd of mds 1 and 2
+mean_mds11 <- aggregate(p1$MDS1, by = list(p1$Treatment), FUN = mean )
+sd_mds11 <- aggregate(p1$MDS1, by = list(p1$Treatment), FUN = sd )[[2]]
+
+
+mean_mds22 <- aggregate(p1$MDS2, by = list(p1$Treatment), FUN = mean )[[2]]
+sd_mds22 <- aggregate(p1$MDS2, by = list(p1$Treatment), FUN = sd )[[2]]
+
+agg1 <- cbind(mean_mds11,sd_mds11,mean_mds22,sd_mds22)
+colnames(agg1)<- c("Treatment","mean_mds1","sd_mds1","mean_mds2", "sd_mds2")
+
+#add salinity and dispersal
+agg1$salinity <- c("0","5","5","9","9","13","13","0")
+agg1$dispersal <- rep(c("3","2"),4) 
+
+
+
+### Now for first and last by salinity
+
+fl <- bigdata[bigdata$Date=="42166"| bigdata$Date == "42211",]
+
+#remove everything except community data, salinity, dispersal and date
+fl1 <- fl[ , c(1,4,5:31,33)]
+
+#each salinity gets its own data frame
+fresh <- fl1[fl1$Salinity == 0, ]
+five <- fl1[fl1$Salinity == 5, ]
+nine <- fl1[fl1$Salinity == 9, ]
+teen <- fl1[fl1$Salinity == 13, ]
+
+#need to remove all rows with zeros
+fresh_1 <- fresh[rowSums(fresh[, -c(1,2,30)]) != 0, ]
+five_1 <- five[rowSums(five[, -c(1,2,30)]) != 0, ]
+nine_1 <- nine[rowSums(nine[, -c(1,2,30)]) != 0, ]
+teen_1 <- teen[rowSums(teen[, -c(1,2,30)]) != 0, ]
+
+#run nmds for each salinity
+fresh_nmds <- metaMDS(fresh_1[ ,-c(1,2,30)], distance="bray",k=3)
+five_nmds <- metaMDS(five_1[ ,-c(1,2,30)], distance="bray",k=2)
+nine_nmds <- metaMDS(nine_1[ ,-c(1,2,30)], distance="bray",k=2)
+teen_nmds <- metaMDS(teen_1[ ,-c(1,2,30)], distance="bray",k=2)
+
+
+# combine the mds into a dataframe with dispersal
+fresh_2 <- cbind (as.data.frame(fresh_nmds$points)[,1:2], 
+                  fresh_1$Dispersal,fresh_1$Date)
+five_2 <- cbind (as.data.frame(five_nmds$points)[,1:2], 
+                five_1$Dispersal, five_1$Date)
+nine_2 <- cbind (as.data.frame(nine_nmds$points)[,1:2], 
+                 nine_1$Dispersal,nine_1$Date)
+teen_2 <- cbind (as.data.frame(teen_nmds$points)[,1:2], 
+                 teen_1$Dispersal, teen_1$Date)
+names <- c("Axis_1", "Axis_2", "Dispersal", "Date")
+colnames(fresh_2) <- names
+colnames(five_2) <- names
+colnames(nine_2) <- names
+colnames(teen_2) <- names
+
+## now need averages and standard deviation for each axis by dispersal
+
+
+fresh_3 <- fresh_2 %>%
+  group_by(Dispersal, Date) %>%
+  summarise (mean_axis1=mean(Axis_1),
+            sd_axis1=sd(Axis_1),
+            mean_axis2=mean(Axis_2),
+            sd_axis2=sd(Axis_2))
+five_3 <- five_2 %>%
+  group_by(Dispersal, Date) %>%
+  summarise (mean_axis1=mean(Axis_1),
+             sd_axis1=sd(Axis_1),
+             mean_axis2=mean(Axis_2),
+             sd_axis2=sd(Axis_2))
+
+nine_3 <- nine_2 %>%
+  group_by(Dispersal, Date) %>%
+  summarise (mean_axis1=mean(Axis_1),
+             sd_axis1=sd(Axis_1),
+             mean_axis2=mean(Axis_2),
+             sd_axis2=sd(Axis_2))
+
+teen_3 <- teen_2 %>%
+  group_by(Dispersal, Date) %>%
+  summarise (mean_axis1=mean(Axis_1),
+             sd_axis1=sd(Axis_1),
+             mean_axis2=mean(Axis_2),
+             sd_axis2=sd(Axis_2))
+
+```
+
+
+
+The next results are about the decomposition data. All this data is found in the dataframe decomp, also in the .Rdata file.
+
+I found a significant inverse relationship between salinity and the amount of decomposition for three leaf types; Acer rubrum leaves (F=6.7, df=2,28, p=0.004) (figure 14), Spartina sp (F=34.47, df=1,32, p<0.01) (figure 15), and Phragmites australis (F=7.04, df=1,32, p<0.01). I failed to find a significant effect of dispersal type on decomposition rate for any of the leaf types (Acer rubrum t=0.548,p=0.548; Spartina sp t=1.056,p=0.3), however decomposition of Phragmites australis was ~13% greater in the communities saltwater dispersal (t=1.82,p=0.07).
+
+```{r}
+maple<-lm(log(Maple/DryWt_Maple)~Salinity+Dispersal,data = decomp)
+spartina<-lm(log(Spartina/DryWt_Spartina)~Salinity+Dispersal,data=decomp)
+phrag<-lm(log(Phragmites/DryWt_Phragmites)~Salinity+Dispersal,data=decomp)
+```
+
+
+Ammonium increased with both salinity (t=20.255,p<0.001) and effective diversity (t=3.09,p=0.02). Neither dispersal treatment nor time had a significant affect on ammonium levels.
+```{r}
+nitmod1<-lm(log(nitr)~Dispersal+true+sreal*Date2,data = bigdata)
+```
+
