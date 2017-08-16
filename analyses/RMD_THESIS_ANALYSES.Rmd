@@ -1,0 +1,148 @@
+THESIS ANALYSES
+
+```{r}
+require("vegan")
+require("dplyr")
+require("nlme")
+install.packages("reshape2")
+require("reshape2")
+require("ecodist")
+require("ggplot2")
+require("ade4")
+require("png")
+require("MASS")
+```
+
+```{r}
+#load design file without source tanks
+
+design <- read.csv("C:/Users/astuc/Desktop/GitHub/CSI_Dispersal/data/CSI_Design_ENV_NoSourceTanks.csv",row.names=1)
+design
+
+#load design file with microbes 
+design_crobes <- read.csv("C:/Users/astuc/Desktop/GitHub/CSI_Dispersal/data/design_CSI.csv",row.names=1)
+
+#subset without mock community
+design_crobes <- design_crobes[-c(grep("mock community", design_crobes$CSI_ID)), ]
+dim(design_crobes)
+```
+
+ set treatments
+ 
+```{r}
+sal_trt <- design$Salinity
+levels(sal_trt) <- c("0","5","9","13")
+disp_trt <- design$Dispersal
+levels(disp_trt) <- c("2","3")
+```
+
+```{r}
+#set source mothur tools
+source("C:/Users/astuc/Desktop/GitHub/CSI_Dispersal/bin/DiversityFunctions.R")
+source("C:/Users/astuc/Desktop/GitHub/CSI_Dispersal/bin/MothurTools.R")
+
+csi_otu <- read.otu("C:/Users/astuc/Desktop/GitHub/CSI_Dispersal/data/CSI.shared")
+dim(csi_otu)
+```
+
+remove extra site in design (CSI041)
+
+```{r}
+missing <- setdiff(rownames(design_crobes), rownames(csi_otu))
+design_crobes <- design_crobes[-(which(rownames(design_crobes) == missing)), ]
+dim(design_crobes)
+
+design <- design[-(which(rownames(design) == missing)), ]
+dim(design)
+```
+
+id source tanks where number = 1,2,3
+
+```{r}
+temp <- rownames(design_crobes[which(design_crobes$Number %in% c(1,2,3)), ])
+```
+
+remove samples from tank numbers 1,2,3
+
+```{r}
+bac.design <- design_crobes[-(which(rownames(design_crobes) %in% temp)), ]
+design_crobes2 <- droplevels(bac.design)
+dim(design_crobes2)
+```
+
+remove source tanks where number = 1,2,3
+
+```{r}
+csi_otu_table <- csi_otu[-(which(rownames(csi_otu) %in% temp)), ]
+dim(csi_otu_table)
+```
+
+remove otu's w/ < 2 occurrences across all sites
+
+```{r}
+otu_removal <- csi_otu_table[, which(colSums(csi_otu_table) >= 2)]
+dim(otu_removal)
+```
+
+rarefy abundances
+
+```{r}
+rowSums(otu_removal)
+otu_rarefy <- rrarefy(otu_removal, 13000)
+```
+
+removed low abundance samples
+
+```{r}
+csi_low_remov <- otu_removal[which(rowSums(otu_removal) >= 13000), ]
+dim(csi_low_remov)
+```
+
+odd sites in bacterial composition data (101) and remove 041 in design file
+
+```{r}
+odd.sites <- c("CSI101")
+
+otu_final <- csi_low_remov[setdiff(rownames(csi_low_remov), odd.sites), ]
+design_final <- design[setdiff(rownames(design), odd.sites), ]
+
+all.equal(rownames(design_final), rownames(otu_final))
+```
+
+create presence absence matrix
+
+```{r}
+csi_pres_abs <- (otu_final > 0) * 1
+```
+
+create relative abundance matrices
+
+```{r}
+csi_relabun <- otu_final
+for (i in 1:dim(otu_final)[1]) {
+csi_relabun[i, ] <- otu_final[i, ]/sum(otu_final[i,
+])
+}
+```
+
+log transform rel abun's
+
+```{r}
+csi_log <- decostand(csi_relabun, method = "log")
+```
+
+import tax file (note: this won't work? 8/15)
+
+```{r}
+csi_tax <- read.tax(taxonomy = "C:/Users/astuc/Desktop/GitHub/CSI_Dispersal/data/CSI.0.03.cons.taxonomy")
+
+write.table(csi_tax, file = "tax.csv", sep ",", col.names = NA)
+```
+
+bind design and bact files
+
+```{r}
+new_csi <- cbind(design_final,csi_relabun)
+```
+
+
