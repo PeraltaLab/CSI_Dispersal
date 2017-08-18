@@ -4,7 +4,6 @@ THESIS ANALYSES
 require("vegan")
 require("dplyr")
 require("nlme")
-install.packages("reshape2")
 require("reshape2")
 require("ecodist")
 require("ggplot2")
@@ -132,17 +131,70 @@ csi_log <- decostand(csi_relabun, method = "log")
 ```
 
 import tax file (note: this won't work? 8/15)
+Error received when running line 138 code read.tax: Error in colsplit(tax_raw[, 3], split = "\\;", names = c("Domain", "Phylum", : unused argument (split = "\\;")
 
 ```{r}
-csi_tax <- read.tax(taxonomy = "C:/Users/astuc/Desktop/GitHub/CSI_Dispersal/data/CSI.0.03.cons.taxonomy")
+csi_tax <- read.tax(taxonomy="C:/Users/astuc/Desktop/GitHub/CSI_Dispersal/data/CSI.0.03.cons.taxonomy")
 
-write.table(csi_tax, file = "tax.csv", sep ",", col.names = NA)
+write.table(csi_tax, file = "tax.csv", sep ",",
+            col.names = NA)
 ```
 
 bind design and bact files
 
 ```{r}
 new_csi <- cbind(design_final,csi_relabun)
+df <- decostand(csi_relabun, method="hellinger")
 ```
+
+drop missing NA for salinity
+
+```{r}
+csi_dat <- na.omit(new_csi)
+
+df_bact <- csi_dat[,-c(1:15)]
+df_env <- csi_dat[,c(1:15)]
+df_nutr <- csi_dat[,c(9:11)]
+```
+
+make OTU relative?
+
+```{r}
+csi_fin <- df_bact[,colSums(df_bact) >0]
+```
+
+not sure about this?
+
+```{r}
+csi_fin_rel <- csi_fin
+	for (i in 1:26){
+		csi_fin_rel[i,]<-csi_fin[i,]/sum(csi_fin[i,])
+	}
+rowSums(csi_fin_rel)
+```
+
+```{r}
+bact_dist <- vegdist(csi_fin_rel)
+env_dist <- vegdist(scale(df_env), "euclid") #did not work
+nutr_dist <- vegdist(df_nutr)
+```
+
+alpha diversity (shannon weiner)
+
+```{r}
+a_div <- diversity(csi_fin)
+a_div
+```
+
+beta diversity - confusing
+
+"Function betadiver finds all indices reviewed by Koleff et al. (2003). All these indices could be found with function designdist which uses different notation, but the current function provides a conventional shortcut. The function only finds the indices. The proper analysis must be done with functions such as betadisper, adonis or mantel.""
+
+```{r}
+b_div <- betadiver(csi_fin, method = "w")
+b_div
+```
+
+
 
 
