@@ -10,6 +10,11 @@ require("ggplot2")
 require("ade4")
 require("png")
 require("MASS")
+require("grid")
+require("ape")
+require("png")
+require("picante")
+
 ```
 
 ```{r}
@@ -195,6 +200,9 @@ b_div <- betadiver(csi_fin, method = "w")
 b_div
 ```
 
+```{r}
+
+```
 
 
 
