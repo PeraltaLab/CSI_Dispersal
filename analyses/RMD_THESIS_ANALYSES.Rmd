@@ -15,10 +15,20 @@ require("ape")
 require("png")
 require("picante")
 
+myColors <- c("#448844", "#33CC33", "#CCFF00", "#FFF000", "#FF9933", "#A9A9A9")
+names(myColors) <- c("BalledBurlapped", "Bareroot", "Seedling",
+"Acorn", "Seedbank", "Reference")
 ```
 
 ```{r}
 #load design file without source tanks
+
+se <- function(x, ...) {
+sd(x, na.rm = TRUE)/sqrt(length(na.omit(x)))
+}
+ci <- function(x, ...) {
+1.96 * sd(x, na.rm = TRUE)
+}
 
 design <- read.csv("C:/Users/astuc/Desktop/GitHub/CSI_Dispersal/data/CSI_Design_ENV_NoSourceTanks.csv",row.names=1)
 design
@@ -140,9 +150,6 @@ Error received when running line 138 code read.tax: Error in colsplit(tax_raw[, 
 
 ```{r}
 csi_tax <- read.tax(taxonomy="C:/Users/astuc/Desktop/GitHub/CSI_Dispersal/data/CSI.0.03.cons.taxonomy")
-
-write.table(csi_tax, file = "tax.csv", sep ",",
-            col.names = NA)
 ```
 
 bind design and bact files
@@ -200,9 +207,97 @@ b_div <- betadiver(csi_fin, method = "w")
 b_div
 ```
 
+attempting diversity metrics (from stormwater) 
+THINK ABOUT LOOKING AT DIV ACCORDING TO BOTH SALINITY AND DISPERSAL
+HOW TO DO THIS?
+
 ```{r}
+fisher <- fisher.alpha(otu_rarefy)
+fisher
+
+richness <- rowSums((otu_rarefy >= 1))
+richness
+
+shannon <- diversity(otu_rarefy, "shannon")
+shannon
+
+simp.even <- apply(otu_rarefy, 1, simp_even)
+simp.even
+
+colnames(design.r)
 
 ```
 
+attempting diversity function plots (from stormwater)
 
+```{r}
+design_final
+otu_final
+
+otu_n_design <- cbind(design_final,otu_final)
+
+design.r <- design_final[which(rownames(design_final) %in% rownames(otu_final)), ]
+
+design.r
+
+design.disp <- design.r[design.r$Dispersal != "W", ]
+design.sal <- design.r[design.r$Salinity != "w", ]
+design.date <- design.r[design.r$Date2 != "W", ]
+
+disp.bac <- as.data.frame(matrix(NA, dim(design.disp)[1], 10))
+sal.bac <- as.data.frame(matrix(NA, dim(design.sal)[1], 10))
+date.bac <- as.data.frame(matrix(NA, dim(design.date)[1], 10))
+
+colnames(disp.bac) <- c("Field_ID","Replicate","Date2","Treatment","Salinity","Dispersal","S","F_Alpha","S_Even","Shannon")
+
+disp.bac$Sample <- rownames(design.disp)
+disp.bac$Field_ID <- design.disp$Field_ID
+disp.bac$Replicate <- design.disp$Replicate
+disp.bac$Date2 <- design.disp$Date2
+disp.bac$Treatment <- design.disp$Treatment
+disp.bac$Salinity <- design.disp$Salinity
+for(i in 1:length(rownames(design.disp))){
+  temp <- rownames(design.disp)[i]
+  disp.bac$S[i] <- richness[which(names(richness) == temp)]
+  disp.bac$F_Alpha[i] <- fisher[which(names(fisher) == temp)]
+  disp.bac$S_Even[i] <- simp.even[which(names(simp.even) == temp)]
+  disp.bac$Shannon[i] <- shannon[which(names(shannon) == temp)]
+}
+
+disp.bac.m <- melt(disp.bac, id = c("Sample","Date2","Replicate","Salinity"))
+disp.bac.c <- cast(data = disp.bac.m, Sample + Date2 ~ variable, c(mean,se), na.rm=T)
+
+disp.bac.c <- as.data.frame(disp.bac.c)
+disp.bac.m <- as.data.frame(disp.bac.m)
+
+png(filename="../analyses/TEST_Div_Fxn.png",
+    width = 1200, height = 800, res = 96*2)
+
+test_plot <- barplot(disp.bac.c[, 5],
+                     ylab="",xlab="",
+                     lwd=3,col="gray",cex.lab=1.25,cex.names = 1.25, 
+                     ylim = c(0,4500),yaxt="n",
+                     space=c(1,0.25,1,0.25,1,0.25),
+                     density=c(-1,15,-1,15,-1,15))
+arrows(x0=test_plot, y0=disp.bac.c[, 5], y1 = disp.bac.c[, 5] - disp.bac.c[, 6], angle=90, length=0.1, lwd=2)
+arrows(x0=test_plot, y0=disp.bac.c[, 5], y1 = disp.bac.c[, 5] + disp.bac.c[, 6], angle=90, length=0.1, lwd=2)
+axis(side=2, labels=T,lwd.ticks=2,las=2,lwd=2,at=c(seq(0,150,75)))
+abline(h=0,lwd=2,lty=3)
+
+#need to figure this out -- how to make diversity figures? very different from stormwater example... maybe need another method
+```
+
+CHANGING PACE - RELATIONSHIP B/T COMM COMP AND DECOMP RATES
+dbRDA and Mantel
+
+Mantel - similarity between crobe and zoop communities? (based off mantel test in IL Wetlands looking at crobe/plant)
+
+```{r}
+zoop_csi <- read.csv("../data/zoop_CSI.csv")
+
+all.equal(rownames(zoop_csi),rownames(csi_relabun))
+
+zoop_csi
+#which relabun matrix to use? may have to re-create
+```
 
