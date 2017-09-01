@@ -35,6 +35,7 @@ design
 
 #load design file with microbes 
 design_crobes <- read.csv("C:/Users/astuc/Desktop/GitHub/CSI_Dispersal/data/design_CSI.csv",row.names=1)
+design_crobes
 
 #subset without mock community
 design_crobes <- design_crobes[-c(grep("mock community", design_crobes$CSI_ID)), ]
@@ -57,6 +58,10 @@ source("C:/Users/astuc/Desktop/GitHub/CSI_Dispersal/bin/MothurTools.R")
 
 csi_otu <- read.otu("C:/Users/astuc/Desktop/GitHub/CSI_Dispersal/data/CSI.shared")
 dim(csi_otu)
+
+#adjusting data
+all.equal(rownames(csi_otu), rownames(design_crobes))
+
 ```
 
 remove extra site in design (CSI041)
@@ -145,8 +150,6 @@ log transform rel abun's
 csi_log <- decostand(csi_relabun, method = "log")
 ```
 
-import tax file (note: this won't work? 8/15)
-Error received when running line 138 code read.tax: Error in colsplit(tax_raw[, 3], split = "\\;", names = c("Domain", "Phylum", : unused argument (split = "\\;")
 
 ```{r}
 csi_tax <- read.tax(taxonomy="C:/Users/astuc/Desktop/GitHub/CSI_Dispersal/data/CSI.0.03.cons.taxonomy")
@@ -295,7 +298,11 @@ Mantel - similarity between crobe and zoop communities? (based off mantel test i
 ```{r}
 zoop_csi <- read.csv("../data/zoop_CSI.csv")
 
-all.equal(rownames(zoop_csi),rownames(csi_relabun))
+rownames(zoop_csi) <- rownames(design_final)
+
+all.equal(rownames(zoop_csi),rownames(design_final))
+
+design_final
 
 zoop_csi
 #which relabun matrix to use? may have to re-create
