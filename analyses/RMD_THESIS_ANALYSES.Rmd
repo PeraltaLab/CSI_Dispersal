@@ -10,6 +10,7 @@ Project Description:
 
 
 set working directory - Alex you can make a directory on your computer that has the same path so that we can use the same source code - use bash to mkdir GitHub and then clone repos
+
 ```{r}
 rm(list = ls())
 setwd("~/GitHub/CSI_Dispersal/analyses")
@@ -67,11 +68,12 @@ dim(csi_otu)
 
 load files Alex source (but change to match AP source and delete this chunk)
 ```{r}
-design <- read.csv("C:/Users/astuc/Desktop/GitHub/CSI_Dispersal/data/CSI_Design_ENV_NoSourceTanks.csv",row.names=1)
+design <- read.csv("../data/CSI_Design_ENV_NoSourceTanks.csv",row.names=1)
 design
 
 #load design file with microbes 
-design_crobes <- read.csv("C:/Users/astuc/Desktop/GitHub/CSI_Dispersal/data/design_CSI.csv",row.names=1)
+design_crobes <- read.csv("../data/design_CSI.csv",row.names=1)
+design_crobes
 
 #subset without mock community
 design_crobes <- design_crobes[-c(grep("mock community", design_crobes$CSI_ID)), ]
@@ -81,11 +83,13 @@ dim(design_crobes)
 Alex source mothur tools and otu file (but change to match AP source and delete this chunk)
 ```{r}
 #set source mothur tools
-source("C:/Users/astuc/Desktop/GitHub/CSI_Dispersal/bin/DiversityFunctions.R")
-source("C:/Users/astuc/Desktop/GitHub/CSI_Dispersal/bin/MothurTools.R")
+source("../bin/DiversityFunctions.R")
+source("../bin/MothurTools.R")
 
-csi_otu <- read.otu("C:/Users/astuc/Desktop/GitHub/CSI_Dispersal/data/CSI.shared")
+csi_otu <- read.otu("../data/CSI.shared")
 dim(csi_otu)
+
+
 ```
 
 remove extra site in design (CSI041)
@@ -157,23 +161,22 @@ import taxonomy file
 csi_tax <- read.tax(taxonomy = "../data/CSI.0.03.cons.taxonomy", format = "rdp", tax.levels = 6, col.tax = 3)
 ```        
 
-import tax file (note: this won't work? 8/15)
-Error received when running line 138 code read.tax: Error in colsplit(tax_raw[, 3], split = "\\;", names = c("Domain", "Phylum", : unused argument (split = "\\;")
 
-FIXED AP: This didn't work originally b/c of an error in the source("../bin/MothurTools.R"). I copied the most up-to-date version from the IL_Wetlands repo. 
-```{r}
-csi_tax <- read.tax(taxonomy="C:/Users/astuc/Desktop/GitHub/CSI_Dispersal/data/CSI.0.03.cons.taxonomy")
-```
 
 bind design and bact files
 ```{r}
 new_csi <- cbind(design_final,csi_relabun)
-df <- decostand(csi_relabun, method="hellinger") 
-#double check if you need hellinger transformation of relative abundance data
+df <- decostand(csi_relabun, method="standardize") 
+
+help(decostand)
+#double check if you need hellinger transformation of relative abundance data 
+#view details: i need to specify the method
 ```
 
 subset data so bact and nutrients match (only first and last dates)
 do not need to do this for salinity - need this???
+
+***ALEX NOTES: confused.. why do we do this step?***
 ```{r}
 csi_dat <- na.omit(new_csi)
 dim(new_csi)
@@ -241,6 +244,7 @@ for(i in 1:dim(otu_final.2)[1]){
 ```
 
 Is there a relationship between zooplankton and bacterial community composition?
+
 matrix comparison of zoop and bacterial communities using mantel test
 ```{r}
 dist.zoop <- vegdist(zoopREL, method = "bray")
@@ -257,7 +261,7 @@ rowSums(otu_final)
 otu_rarefy <- rrarefy(otu_final, 13000)
 ```
 
-for diversity metrics, use code from CropDiversity repo
+for diversity metrics, use code from **CropDiversity repo
 ```{r}
 # Fisher's Alpha
 fisher <- fisher.alpha(otu_rarefy)
@@ -277,7 +281,7 @@ J <- shannon/log(specnumber(otu_rarefy[,-c(1:1)]))
 
 #combined richness, diversity, evenness
 CSI.DIVsoilmicrobes <- cbind(design_final,richness,shannon,simp.even,J)
-write.table(CSI.DIVsoilmicrobes, file="CSI.DIVsoilmicrobes.csv", sep=",", col.names=NA)
+write.table(CSI.DIVsoilmicrobes, file="../analyses/CSI.DIVsoilmicrobes.csv", sep=",", col.names=NA)
 ```
 
 # Hypothesis Testing
@@ -317,7 +321,7 @@ p <- ggplot(CSI.DIVsoilmicrobes, aes(x=Salinity, y=shannon, color=Dispersal))+ge
 p1=p+geom_smooth(method="lm",aes(fill=Dispersal))
 p1 + theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.line = element_line(colour = "black")) +theme(axis.title=element_text(vjust=1,size=16,face="bold"), axis.text=element_text(size=14), axis.text.x = element_text(vjust=0.65, hjust=0.5, size=14), panel.border = element_rect(colour = "black",size=1.25)) + theme(axis.ticks.length=unit(0.3,"cm")) + xlab("Salinity") + ylab("Shannon Diversity Index") + scale_fill_discrete(name = "Dispersal",labels = c("Disp2", "Disp3"))
 
-ggsave("../figures/Cmin.pdf", plot=last_plot(), device=NULL, path=NULL, scale=1, width=NA, height=NA, dpi=300, limitsize=TRUE)
+ggsave("../analyses/Cmin.pdf", plot=last_plot(), device=NULL, path=NULL, scale=1, width=NA, height=NA, dpi=300, limitsize=TRUE)
 ```
 
 Alex extra code unused 
@@ -431,7 +435,11 @@ Mantel - similarity between crobe and zoop communities? (based off mantel test i
 ```{r}
 zoop_csi <- read.csv("../data/zoop_CSI.csv")
 
-all.equal(rownames(zoop_csi),rownames(csi_relabun))
+rownames(zoop_csi) <- rownames(design_final)
+
+all.equal(rownames(zoop_csi),rownames(design_final))
+
+design_final
 
 zoop_csi
 #which relabun matrix to use? may have to re-create
