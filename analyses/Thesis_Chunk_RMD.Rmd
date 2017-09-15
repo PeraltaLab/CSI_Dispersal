@@ -9,7 +9,7 @@ output:
 Project Description: TBD
 
 
-NOTE: FIGURE CODE IS IN ANOTHER RMD FILE IN ANALYSES FOLDER ON GITHUB
+NOTE: FIGURE CODE IS IN ANOTHER RMD FILE IN ANALYSES FOLDER ON GITHUB (Figure_Code_Chunks.Rmd)
 
 
 Chunk Description: (I) How does salinity and dispersal influence bacterial diversity?
