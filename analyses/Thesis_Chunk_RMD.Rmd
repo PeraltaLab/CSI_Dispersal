@@ -1,0 +1,147 @@
+---
+title: "Bacterioplankton response to salinity (aka 2015 CSI Dispersal Experiment)"
+author: "Alex Stucy, Jo Werba, Mike McCoy, Ariane Peralta"
+date: "Last updated on `r format(Sys.time(), '%d %B, %Y')`"
+output: 
+  pdf_document:
+  fig_caption: true
+---
+Project Description: TBD
+
+
+NOTE: FIGURE CODE IS IN ANOTHER RMD FILE IN ANALYSES FOLDER ON GITHUB
+
+
+Chunk Description: (I) How does salinity and dispersal influence bacterial diversity?
+-Use full data set (with source tanks)
+-Calculate Shannon's H' (diversity metric)
+-Run stat model diversity~dispersal + salinity + dispersal*salinity
+
+```{r (I)}
+#PC - set WD manually by Session -> Set Working Directory -> Choose Directory...
+rm(list = ls())
+setwd("~/GitHub/CSI_Dispersal/analyses")
+
+
+#Set source R tools
+source("../bin/DiversityFunctions.R")
+source("../bin/MothurTools.R")
+
+#load req'd packages
+require("vegan")
+require("dplyr")
+require("nlme")
+require("reshape2")
+require("ecodist")
+require("ggplot2")
+require("ade4")
+require("png")
+require("MASS")
+require("grid")
+require("ape")
+require("png")
+require("picante")
+
+#set std err
+se <- function(x, ...) {
+sd(x, na.rm = TRUE)/sqrt(length(na.omit(x)))
+}
+ci <- function(x, ...) {
+1.96 * sd(x, na.rm = TRUE)
+}
+
+#load design files
+design <- read.csv("../data/CSI_Design_ENV_NoSourceTanks.csv", row.names=1)
+head(design)
+str(design)
+
+design_crobes <- read.csv("../data/design_CSI.csv", row.names=1)
+design_crobes <- design_crobes[-c(grep("mock community", design_crobes$CSI_ID)), ]
+dim(design_crobes)
+
+#load OTU file
+csi_otu <- read.otu("../data/CSI.shared")
+dim(csi_otu)
+
+#load data source files
+design <- read.csv("../data/CSI_Design_ENV_NoSourceTanks.csv",row.names=1)
+design
+
+#load design file with microbes 
+design_crobes <- read.csv("../data/design_CSI.csv",row.names=1)
+design_crobes
+
+#subset without mock community
+design_crobes <- design_crobes[-c(grep("mock community", design_crobes$CSI_ID)), ]
+dim(design_crobes)
+
+#remove extra site
+missing <- setdiff(rownames(design_crobes), rownames(csi_otu))
+design_crobes <- design_crobes[-(which(rownames(design_crobes) == missing)), ]
+dim(design_crobes)
+
+design <- design[-(which(rownames(design) == missing)), ]
+dim(design)
+
+#ID and remove tanks 1,2,3
+temp <- rownames(design_crobes[which(design_crobes$Number %in% c(1,2,3)), ])
+bac.design <- design_crobes[-(which(rownames(design_crobes) %in% temp)), ]
+design_crobes2 <- droplevels(bac.design)
+dim(design_crobes2)
+csi_otu_table <- csi_otu[-(which(rownames(csi_otu) %in% temp)), ]
+dim(csi_otu_table)
+
+#remove otu's w/ < 2 occurrences across all sites
+otu_removal <- csi_otu_table[, which(colSums(csi_otu_table) >= 2)]
+dim(otu_removal)
+
+#removed low abundance samples
+csi_low_remov <- otu_removal[which(rowSums(otu_removal) >= 13000), ]
+dim(csi_low_remov)
+
+#odd sites in bacterial composition data (101) and remove 041 in design file
+odd.sites <- c("CSI101")
+
+otu_final <- csi_low_remov[setdiff(rownames(csi_low_remov), odd.sites), ]
+design_final <- design[setdiff(rownames(design), odd.sites), ]
+
+all.equal(rownames(design_final), rownames(otu_final))
+
+#create presence/absence and relative abundance matrices
+csi_pres_abs <- (otu_final > 0) * 1
+csi_relabun <- otu_final
+for (i in 1:dim(otu_final)[1]) {
+csi_relabun[i, ] <- otu_final[i, ]/sum(otu_final[i,
+])
+}
+
+#import tax file
+csi_tax <- read.tax(taxonomy = "../data/CSI.0.03.cons.taxonomy", format = "rdp", tax.levels = 6, col.tax = 3)
+
+#bind design and bact files
+new_csi <- cbind(design_final,csi_relabun)
+df <- decostand(csi_relabun, method="standardize")
+#NOTE need to specify method.. not sure if this one is right
+
+#set treatments
+treatments1 <- as.factor(design_final$Salinity)
+levels(treatments1) <- c("0","5","9","13")
+treatments2 <- as.factor(design_final$Dispersal)
+levels(treatments2) <- c("2","3")
+
+date_1 <- as.factor(design_final$Date2)
+
+#rarefy abundances --- am i missing a step?
+rowSums(otu_final)
+rarefyotu <- rrarefy(otu_final, 13000)
+
+#calculate Shannon H' (called shannon) using full data set (WITH source tanks)
+shannon <- diversity(rarefyotu, "shannon")
+
+#run stat model (diversity~dispersal + salinity + dispersal*salinity)
+shannon.lm <- lm(shannon ~ Dispersal + Salinity + Dispersal*Salinity, data = design_final)
+shannon.anova <- anova(shannon.lm)
+summary(shannon.lm)
+
+```
+
