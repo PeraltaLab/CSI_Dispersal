@@ -6,17 +6,10 @@ output:
   pdf_document:
   fig_caption: true
 ---
-Project Description: TBD
+Project Description: Analysis of salinity and dispersal of saline aquatic communities on bacterial community structure and function.
 
 
-NOTE: FIGURE CODE IS IN ANOTHER RMD FILE IN ANALYSES FOLDER ON GITHUB (Figure_Code_Chunks.Rmd)
-
-
-Chunk Description: (1) How does salinity and dispersal influence bacterial diversity?
--Use full data set (with source tanks)
--Calculate Shannon's H' (diversity metric)
--Run stat model diversity~dispersal + salinity + dispersal*salinity
-
+Setting up working directory, packages
 ```{r (1)}
 #PC - set WD manually by Session -> Set Working Directory -> Choose Directory...
 rm(list = ls())
@@ -40,72 +33,60 @@ require("ape")
 require("png")
 require("picante")
 
-#set std err
+# set std err
 se <- function(x, ...) {
 sd(x, na.rm = TRUE)/sqrt(length(na.omit(x)))
 }
 ci <- function(x, ...) {
 1.96 * sd(x, na.rm = TRUE)
 }
+```
 
-#load design files
-design <- read.csv("../data/CSI_Design_ENV_NoSourceTanks.csv", row.names=1)
-head(design)
-str(design)
+Loading data files and manipulate data files for statistical analyses and graphing
+```{r (2)}
+# load design file - no source tanks
+design.ns <- read.csv("../data/CSI_Design_ENV_NoSourceTanks.csv", row.names=1)
+head(design.ns)
+str(design.ns)
+dim(design.ns)
 
-design_crobes <- read.csv("../data/design_CSI.csv", row.names=1)
-design_crobes <- design_crobes[-c(grep("mock community", design_crobes$CSI_ID)), ]
-dim(design_crobes)
+# load design file - with source tanks but missing decomp, nutrients, sreal, Date2 columns
+design.full <- read.csv("../data/design_CSI.csv", row.names=1)
+design.full <- design.full[-c(grep("mock community", design.full$CSI_ID)), ]
+dim(design.full)
 
-#load OTU file
+# load OTU file
 csi_otu <- read.otu("../data/CSI.shared")
 dim(csi_otu)
 
-#load data source files
-design <- read.csv("../data/CSI_Design_ENV_NoSourceTanks.csv",row.names=1)
-design
+# remove extra site (no mock community)
 
-#load design file with microbes 
-design_crobes <- read.csv("../data/design_CSI.csv",row.names=1)
-design_crobes
+# design with source tanks
+missing <- setdiff(rownames(design.full), rownames(csi_otu))
+design.full <- design.full[-(which(rownames(design.full) == missing)), ]
+dim(design.full)
 
-#subset without mock community
-design_crobes <- design_crobes[-c(grep("mock community", design_crobes$CSI_ID)), ]
-dim(design_crobes)
-
-#remove extra site
-missing <- setdiff(rownames(design_crobes), rownames(csi_otu))
-design_crobes <- design_crobes[-(which(rownames(design_crobes) == missing)), ]
-dim(design_crobes)
-
-design <- design[-(which(rownames(design) == missing)), ]
-dim(design)
-
-#ID and remove tanks 1,2,3
-temp <- rownames(design_crobes[which(design_crobes$Number %in% c(1,2,3)), ])
-bac.design <- design_crobes[-(which(rownames(design_crobes) %in% temp)), ]
-design_crobes2 <- droplevels(bac.design)
-dim(design_crobes2)
-csi_otu_table <- csi_otu[-(which(rownames(csi_otu) %in% temp)), ]
-dim(csi_otu_table)
-
-#remove otu's w/ < 2 occurrences across all sites
-otu_removal <- csi_otu_table[, which(colSums(csi_otu_table) >= 2)]
+# OTU table - remove otu's w/ < 2 occurrences across all sites
+otu_removal <- csi_otu[, which(colSums(csi_otu) >= 2)]
 dim(otu_removal)
 
-#removed low abundance samples
+aa <- (rowSums(otu_removal))
+aa # CSI033-7180 reads CSI101=75 reads - removed
+
+# OTU table - removed low abundance samples
 csi_low_remov <- otu_removal[which(rowSums(otu_removal) >= 13000), ]
 dim(csi_low_remov)
 
-#odd sites in bacterial composition data (101) and remove 041 in design file
-odd.sites <- c("CSI101")
+# OTU table - odd sites in bacterial composition data and remove in design file
+odd.sites <- c("CSI033","CSI101")
 
 otu_final <- csi_low_remov[setdiff(rownames(csi_low_remov), odd.sites), ]
-design_final <- design[setdiff(rownames(design), odd.sites), ]
+design_final <- design.full[setdiff(rownames(design.full), odd.sites), ]
+design.ns <- design.ns[setdiff(rownames(design.ns), odd.sites), ]
 
 all.equal(rownames(design_final), rownames(otu_final))
 
-#create presence/absence and relative abundance matrices
+# create presence/absence and relative abundance matrices
 csi_pres_abs <- (otu_final > 0) * 1
 csi_relabun <- otu_final
 for (i in 1:dim(otu_final)[1]) {
@@ -113,55 +94,98 @@ csi_relabun[i, ] <- otu_final[i, ]/sum(otu_final[i,
 ])
 }
 
-#import tax file
+# import taxonomy file for later
 csi_tax <- read.tax(taxonomy = "../data/CSI.0.03.cons.taxonomy", format = "rdp", tax.levels = 6, col.tax = 3)
 
-#bind design and bact files
-new_csi <- cbind(design_final,csi_relabun)
-df <- decostand(csi_relabun, method="standardize")
-#NOTE need to specify method.. not sure if this one is right
+# bind design and bact files
+csi.full <- cbind(design_final,csi_relabun)
+# df <- decostand(csi_relabun, method="standardize")
+# NOTE need to specify method.. not sure if this one is right - do not need to run decostand b/c relative abundance calculated manually in lines 99-101
 
-#set treatments
-treatments1 <- as.factor(design_final$Salinity)
+# REMOVE source tanks from otu file
+# REMOVE source tanks Number 1,2,3 from otu_final and use design.ns (manually removed source tanks)
+temp <- rownames(design_final[which(design_final$Number %in% c(1,2,3)), ])
+otu_final.ns <- otu_final[-(which(rownames(otu_final) %in% temp)), ]
+dim(otu_final.ns)
+dim(design.ns)
+
+#drop missing data
+missing <- setdiff(rownames(design.ns), rownames(otu_final.ns))
+design.ns2 <- design.ns[-(which(rownames(design.ns) == missing)), ]
+dim(design.ns2)
+
+# Drop levels of factors that are no longer in data set 
+design.ns.final <- droplevels(design.ns2)
+
+all.equal(rownames(design.ns2), rownames(otu_final.ns))
+
+# Set treatments
+treatments1 <- as.factor(design.ns.final$Salinity)
 levels(treatments1) <- c("0","5","9","13")
-treatments2 <- as.factor(design_final$Dispersal)
+treatments2 <- as.factor(design.ns.final$Dispersal)
 levels(treatments2) <- c("2","3")
 
-date_1 <- as.factor(design_final$Date2)
+date_1 <- as.factor(design.ns.final$Date2)
+```
 
-#rarefy abundances --- am i missing a step?
-rowSums(otu_final)
-rarefyotu <- rrarefy(otu_final, 13000)
+Calculating Diversity Metrics
+```{r (3)}
+# Rarefy Abundances (min abundance is 13,240. We are sampling to 13,000)
+min(rowSums(otu_final.ns))
+otu.rarefy <- rrarefy(otu_final.ns, 13000)
 
-#calculate Shannon H' (called shannon) using full data set (WITH source tanks)
-shannon <- diversity(rarefyotu, "shannon")
+# Calculate Shannon H' (called shannon) using full data set (WITH source tanks)
+shannon <- diversity(otu.rarefy, "shannon")
 
-#run stat model (diversity~dispersal + salinity + dispersal*salinity)
-shannon.lm <- lm(shannon ~ Dispersal + Salinity + Dispersal*Salinity, data = design_final)
+# Species Richness
+richness <- rowSums((otu.rarefy >= 1))
 
-#QUESTION: should I be using this data, or the rarefied data used when calculating the shannon H'?
+# Pielou’s evenness
+J <- shannon/log(specnumber(otu.rarefy[,-c(1:1)]))
 
-shannon.anova <- anova(shannon.lm)
-summary(shannon.lm)
+# Dombined design,shannon,richness,evenness - no source tanks
+csi_otu.div <- cbind(design.ns.final,shannon,richness,J)
+```
+
+(1) How does salinity/dispersal/date influence bacterial diversity?
+-Calculate Shannon's H' (diversity metric) - no source tanks
+-Run stat model diversity~dispersal|salinity|date
+
+Supplemental Results:
+Use full data set (with source tanks) #Maybe just subset source tanks into a separate figure with no stats (just use as supplemental)
+
+Testing salinity x dispersal influence on DIVERSITY (no source tanks)
+```{r (4)}
+# run full parametric statistical model
+shannon.lm <- lm(shannon ~ Dispersal*Salinity*Date+Dispersal*Salinity+Salinity*Date+Dispersal*Date+Dispersal+Salinity+Date, data = csi_otu.div)
+shannon.lm
+anova(shannon.lm)
+
+# run linear regression measured salinity used instead of 'factor' salinity
+shannon.reg <- lm(shannon~Salinity_real, data = csi_otu.div)
+summary(shannon.reg)
+
+## maybe use Werba code - discuss with Jo and McCoy
 
 ```
 
-(3) How does salinity and dispersal influence bacterial evenness?
-Calculate Pielou's J (evenness metric)
-Graph evenness
-Run stat model evenness~dispersal + salinity + dispersal*salinity
-Write up results in bullet points
+Plotting diversity metrics
+```{r (5)}
+# Graphing Shannon Diversity - Treatment Salinity
+p <- ggplot(csi_otu.div, aes(x=Salinity, y=shannon, color=Dispersal))+geom_point()
+p1=p+geom_smooth(method="lm",aes(fill=Dispersal))
+p1 + theme_bw() 
+p1 + theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.line = element_line(colour = "black")) +theme(axis.title=element_text(vjust=1,size=16,face="bold"), axis.text=element_text(size=14), axis.text.x = element_text(vjust=0.65, hjust=0.5, size=14), panel.border = element_rect(colour = "black",size=1.25)) + theme(axis.ticks.length=unit(0.3,"cm")) + xlab("Salinity") + ylab("Shannon Diversity Index (H')") 
+ggsave("../figures/shannon.pdf", plot=last_plot(), device=NULL, path=NULL, scale=1, width=NA, height=NA, dpi=300, limitsize=TRUE)
 
-```{r (2)}
-#use formula for pielou's j -- vegan does not have its own evenness function -- Shannon H'/log(species #)
+# Graphing Shannon Diversity x MEASURED Salinity
 
-evenness <- shannon/log(specnumber(rarefyotu))
-evenness
-
-even.lm <- lm(evenness ~ Dispersal + Salinity + Dispersal*Salinity, data = design_final)
-
-even.anova <- anova(even.lm)
-summary(even.lm)
-
+p <- ggplot(csi_otu.div, aes(x=Salinity_real, y=shannon, color=Dispersal))+geom_point()
+p1=p+geom_smooth(method="lm",aes(fill=Dispersal))
+p1 + theme_bw() 
+p1 + theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.line = element_line(colour = "black")) +theme(axis.title=element_text(vjust=1,size=16,face="bold"), axis.text=element_text(size=14), axis.text.x = element_text(vjust=0.65, hjust=0.5, size=14), panel.border = element_rect(colour = "black",size=1.25)) + theme(axis.ticks.length=unit(0.3,"cm")) + xlab("Salinity (measured)") + ylab("Shannon Diversity Index (H')") 
+ggsave("../figures/shannon_SalReal.pdf", plot=last_plot(), device=NULL, path=NULL, scale=1, width=NA, height=NA, dpi=300, limitsize=TRUE)
 ```
+(2) How does salinity/dispersal/date influence bacterial evenness?
 
+(3) How does salinity/dispersal/date influence bacterial evenness?
