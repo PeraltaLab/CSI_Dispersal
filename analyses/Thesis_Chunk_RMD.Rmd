@@ -12,16 +12,14 @@ Project Description: TBD
 NOTE: FIGURE CODE IS IN ANOTHER RMD FILE IN ANALYSES FOLDER ON GITHUB (Figure_Code_Chunks.Rmd)
 
 
-Chunk Description: (I) How does salinity and dispersal influence bacterial diversity?
+Chunk Description: (1) How does salinity and dispersal influence bacterial diversity?
 -Use full data set (with source tanks)
 -Calculate Shannon's H' (diversity metric)
 -Run stat model diversity~dispersal + salinity + dispersal*salinity
 
-```{r (I)}
+```{r (1)}
 #PC - set WD manually by Session -> Set Working Directory -> Choose Directory...
 rm(list = ls())
-setwd("~/GitHub/CSI_Dispersal/analyses")
-
 
 #Set source R tools
 source("../bin/DiversityFunctions.R")
@@ -140,8 +138,30 @@ shannon <- diversity(rarefyotu, "shannon")
 
 #run stat model (diversity~dispersal + salinity + dispersal*salinity)
 shannon.lm <- lm(shannon ~ Dispersal + Salinity + Dispersal*Salinity, data = design_final)
+
+#QUESTION: should I be using this data, or the rarefied data used when calculating the shannon H'?
+
 shannon.anova <- anova(shannon.lm)
 summary(shannon.lm)
+
+```
+
+(3) How does salinity and dispersal influence bacterial evenness?
+Calculate Pielou's J (evenness metric)
+Graph evenness
+Run stat model evenness~dispersal + salinity + dispersal*salinity
+Write up results in bullet points
+
+```{r (2)}
+#use formula for pielou's j -- vegan does not have its own evenness function -- Shannon H'/log(species #)
+
+evenness <- shannon/log(specnumber(rarefyotu))
+evenness
+
+even.lm <- lm(evenness ~ Dispersal + Salinity + Dispersal*Salinity, data = design_final)
+
+even.anova <- anova(even.lm)
+summary(even.lm)
 
 ```
 
