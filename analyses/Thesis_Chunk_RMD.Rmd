@@ -99,8 +99,6 @@ csi_tax <- read.tax(taxonomy = "../data/CSI.0.03.cons.taxonomy", format = "rdp",
 
 # bind design and bact files
 csi.full <- cbind(design_final,csi_relabun)
-# df <- decostand(csi_relabun, method="standardize")
-# NOTE need to specify method.. not sure if this one is right - do not need to run decostand b/c relative abundance calculated manually in lines 99-101
 
 # REMOVE source tanks from otu file
 # REMOVE source tanks Number 1,2,3 from otu_final and use design.ns (manually removed source tanks)
@@ -118,6 +116,8 @@ dim(design.ns2)
 design.ns.final <- droplevels(design.ns2)
 
 all.equal(rownames(design.ns2), rownames(otu_final.ns))
+
+csi.ns <- cbind(design.ns.final,otu_final.ns)
 
 # Set treatments
 treatments1 <- as.factor(design.ns.final$Salinity)
@@ -286,4 +286,42 @@ p1 + theme_bw()
 p1 + theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.line = element_line(colour = "black")) +theme(axis.title=element_text(vjust=1,size=10,face="bold"), axis.text=element_text(size=8), axis.text.x = element_text(vjust=0.65, hjust=0.5, size=8), panel.border = element_rect(colour = "black",size=1.25)) + theme(axis.ticks.length=unit(0.3,"cm")) + xlab("Salinity") + ylab("Carbon Mineralization (ng CO2/mL/day)") 
 ggsave("../figures/carbon_mineralization_nosource.pdf", plot=last_plot(), device=NULL, path=NULL, scale=1, width=NA, height=NA, dpi=300, limitsize=TRUE)
 ```
+
+
+(5) Which bacterial taxa are driving bacterial community patterns in response to salinity only?
+Subset data (run without source tanks)
+Bray-Curtis dissimilarity matrix for bacterial community
+Run Species Indicator Analysis - see IL_Wetlands.Rmd file
+Create Table for Supplemental (includes all taxa and associated taxon contribution to bacterial response)
+Create subset in table format to highlight top 5-10 OTUs (with names) for each salinity tank type (or by whatever groupings seem interesting) - See AP's IL Wetlands paper
+
+```{r (5)}
+install.packages("labdsv")
+require("labdsv")
+
+#create distance matrix
+csi.ns.relabun <- vegdist(csi_relabun, method="bray")
+
+#PCoA
+csi.pcoa <- cmdscale(csi.ns.relabun, k=3, eig=TRUE, add=FALSE)
+explainvar1 <- round(csi.pcoa$eig[1] / sum(csi.pcoa$eig), 3) * 100
+explainvar2 <- round(csi.pcoa$eig[2] / sum(csi.pcoa$eig), 3) * 100
+sum.eig <- sum(explainvar1, explainvar2)
+
+#NOTHING BELOW THIS POINT WORKS AS OF 9/28
+treatment <- design_relabun$treatments1
+
+points <- cbind(as.data.frame(csi.pcoa$points), treatment)
+L.centroids <- melt(points, id="treatments1", measure.vars = c("0", "5","9","13"))
+centroids <- cast(L.centroids, variable ~ treatments1, mean)
+centroids.se <- cast(L.centroids, variable ~ treatments11, se)
+centroids.sd <- cast(L.centroids, variable ~ treatments, sd)
+cent.dataframe <- t(data.frame(rbind(centroids[1,-1], centroids[2,-1],
+centroids.sd[1,-1],centroids.sd[2,-1])))
+colnames(cent.dataframe) <- c("0", "5", "9", "13")
+cent.treats <- rownames(cent.dataframe)
+
+```
+
+
 
