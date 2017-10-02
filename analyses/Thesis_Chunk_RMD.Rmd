@@ -250,41 +250,36 @@ Graph C mineralization
 Run stat model Cmin~dispersal + salinity + dispersal*salinity
 
 ```{r (4 w source tanks)}
-#import C-mineralization CSV -- note that 0 dispersal is a source tank
-carbon_min <- read.csv("../data/Cmin-data.csv")
+#import C-mineralization CSV -- no source tanks
+carbon_min <- read.csv("../data/Cmin-data-NO-SOURCE.csv")
 
+#experimental salinity
 carbon.lm <- lm(ngCO2C_mL_day ~ Dispersal + Salinity + Dispersal*Salinity, data = carbon_min)
 anova(carbon.lm)
 
-# run linear regression (must use 'factor' salinity -- don't have real salinity for these tanks/samples)
+#real salinity
+real.carbon.lm <- lm(ngCO2C_mL_day ~ Dispersal + Sal_Real + Dispersal*Sal_Real, data = carbon_min)
+anova(real.carbon.lm)
+
+# run linear regression ('factor' salinity)
 carbon.reg <- lm(ngCO2C_mL_day~Salinity, data = carbon_min)
 summary(carbon.reg)
+
+#linear regression (real salinity)
+real.carbon.reg <- lm(ngCO2C_mL_day~Sal_Real, data = carbon_min)
+summary(real.carbon.reg)
 
 p <- ggplot(carbon_min, aes(x=Salinity, y=ngCO2C_mL_day, color=Dispersal))+geom_point()
 p1=p+geom_smooth(method="lm",aes(fill=Dispersal))
 p1 + theme_bw() 
 p1 + theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.line = element_line(colour = "black")) +theme(axis.title=element_text(vjust=1,size=10,face="bold"), axis.text=element_text(size=8), axis.text.x = element_text(vjust=0.65, hjust=0.5, size=8), panel.border = element_rect(colour = "black",size=1.25)) + theme(axis.ticks.length=unit(0.3,"cm")) + xlab("Salinity") + ylab("Carbon Mineralization (ng CO2/mL/day)") 
 ggsave("../figures/carbon_mineralization.pdf", plot=last_plot(), device=NULL, path=NULL, scale=1, width=NA, height=NA, dpi=300, limitsize=TRUE)
-```
 
-REPEAT C_MINERALIZATION RATES WITHOUT SOURCE TANKS
-
-```{r (4 w/o source tanks}
-#import C-mineralization CSV -- note that this file has NO source tanks
-carbon2_min <- read.csv("../data/Cmin-data-NO-SOURCE.csv")
-
-carbon2.lm <- lm(ngCO2C_mL_day ~ Dispersal + Salinity + Dispersal*Salinity, data = carbon_min)
-anova(carbon2.lm)
-
-# run linear regression (must use 'factor' salinity -- don't have real salinity for these tanks/samples)
-carbon2.reg <- lm(ngCO2C_mL_day~Salinity, data = carbon_min)
-summary(carbon2.reg)
-
-p <- ggplot(carbon2_min, aes(x=Salinity, y=ngCO2C_mL_day, color=Dispersal))+geom_point()
+p <- ggplot(carbon_min, aes(x=Sal_Real, y=ngCO2C_mL_day, color=Dispersal))+geom_point()
 p1=p+geom_smooth(method="lm",aes(fill=Dispersal))
 p1 + theme_bw() 
-p1 + theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.line = element_line(colour = "black")) +theme(axis.title=element_text(vjust=1,size=10,face="bold"), axis.text=element_text(size=8), axis.text.x = element_text(vjust=0.65, hjust=0.5, size=8), panel.border = element_rect(colour = "black",size=1.25)) + theme(axis.ticks.length=unit(0.3,"cm")) + xlab("Salinity") + ylab("Carbon Mineralization (ng CO2/mL/day)") 
-ggsave("../figures/carbon_mineralization_nosource.pdf", plot=last_plot(), device=NULL, path=NULL, scale=1, width=NA, height=NA, dpi=300, limitsize=TRUE)
+p1 + theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.line = element_line(colour = "black")) +theme(axis.title=element_text(vjust=1,size=10,face="bold"), axis.text=element_text(size=8), axis.text.x = element_text(vjust=0.65, hjust=0.5, size=8), panel.border = element_rect(colour = "black",size=1.25)) + theme(axis.ticks.length=unit(0.3,"cm")) + xlab("Measured Salinity") + ylab("Carbon Mineralization (ng CO2/mL/day)") 
+ggsave("../figures/real.sal.carbonmin.pdf", plot=last_plot(), device=NULL, path=NULL, scale=1, width=NA, height=NA, dpi=300, limitsize=TRUE)
 ```
 
 
@@ -296,30 +291,109 @@ Create Table for Supplemental (includes all taxa and associated taxon contributi
 Create subset in table format to highlight top 5-10 OTUs (with names) for each salinity tank type (or by whatever groupings seem interesting) - See AP's IL Wetlands paper
 
 ```{r (5)}
-install.packages("labdsv")
+require("stats")
 require("labdsv")
+require("mgcv")
+require("cluster")
+require("vegan")
+require("reshape2")
+require("reshape")
 
-#create distance matrix
-csi.ns.relabun <- vegdist(csi_relabun, method="bray")
+#braycurtis
+braycurtis.csi <- vegdist(csi_relabun, method="bray")
+#pcoa
+csi.pcoa <- cmdscale(braycurtis.csi, k=3, eig=TRUE, add=FALSE)
 
-#PCoA
-csi.pcoa <- cmdscale(csi.ns.relabun, k=3, eig=TRUE, add=FALSE)
-explainvar1 <- round(csi.pcoa$eig[1] / sum(csi.pcoa$eig), 3) * 100
-explainvar2 <- round(csi.pcoa$eig[2] / sum(csi.pcoa$eig), 3) * 100
+#remove odd sites
+odd <- row.names(csi_relabun[c(abs(csi.pcoa$points[, 1]) > 0.3), ])
+odd.odd <- csi_relabun[c(abs(csi.pcoa$points[, 1]) > 0.3), ]
+mean(rowSums((csi_relabun > 0) * 1))
+ #992.8889
+rowSums((odd.odd > 0) * 1)
+
+csi_relabun.2 <- csi_relabun[c(abs(csi.pcoa$points[, 1]) < 0.3), ]
+design.2 <- design.ns[c(abs(csi.pcoa$points[, 1]) < 0.3), ]
+treatment.salreal <- design.2$Salinity_real
+
+#create dist matrix
+csi.rel2 <- vegdist(csi_relabun.2, method="bray")
+
+#principle coordinate analysis
+csi_pcoa <- cmdscale(csi.rel2, k=2, eig=TRUE, add=FALSE)
+
+explainvar1 <- round(csi_pcoa$eig[1] / sum(csi_pcoa$eig), 3) * 100
+explainvar2 <- round(csi_pcoa$eig[2] / sum(csi_pcoa$eig), 3) * 100
 sum.eig <- sum(explainvar1, explainvar2)
 
-#NOTHING BELOW THIS POINT WORKS AS OF 9/28
-treatment <- design_relabun$treatments1
-
-points <- cbind(as.data.frame(csi.pcoa$points), treatment)
-L.centroids <- melt(points, id="treatments1", measure.vars = c("0", "5","9","13"))
-centroids <- cast(L.centroids, variable ~ treatments1, mean)
-centroids.se <- cast(L.centroids, variable ~ treatments11, se)
-centroids.sd <- cast(L.centroids, variable ~ treatments, sd)
+#plot
+points <- cbind(as.data.frame(csi_pcoa$points), treatment.salreal)
+L.centroids <- melt(points, id="treatment.salreal", measure.vars = c("V1", "V2"))
+centroids <- cast(L.centroids, variable ~ treatment.salreal, mean)
+centroids.se <- cast(L.centroids, variable ~ treatment.salreal, se)
+centroids.sd <- cast(L.centroids, variable ~ treatment.salreal, sd)
 cent.dataframe <- t(data.frame(rbind(centroids[1,-1], centroids[2,-1],
 centroids.sd[1,-1],centroids.sd[2,-1])))
-colnames(cent.dataframe) <- c("0", "5", "9", "13")
+colnames(cent.dataframe) <- c("V1", "V2", "V1e", "V2e")
 cent.treats <- rownames(cent.dataframe)
+
+myColors <- c("#448844", "#33CC33", "#CCFF00", "#FFF000", "#FF9933", "#A9A9A9")
+names(myColors) <- c("BalledBurlapped", "Bareroot", "Seedling",
+"Acorn", "Seedbank", "Reference")
+
+#define plot parameters
+par(mar=c(5, 5.5, 1,1) + 0.1)
+layout(matrix(1:2, 1, 1), widths=c(4,2))
+
+plot(cent.dataframe[,1], cent.dataframe[,2], type = 'n', las = 1,
+     xlim = c(-0.1, 0.1), ylim = c(-0.1,0.1),
+     xaxt = "n", xlab = "", yaxt = "n", ylab="")
+abline(h = 0, lty = 3, col = "gray")
+abline(v = 0, lty = 3, col = "gray")
+
+arrows(x0 = cent.dataframe[,1],
+      y1 = cent.dataframe[,2] - cent.dataframe[,4],
+      y0 = cent.dataframe[,2] + cent.dataframe[,4],
+      angle = 90,
+      length=0.1, lwd = 2, code = 3)
+arrows(y0 = cent.dataframe[,2],
+       x1 = cent.dataframe[,1] - cent.dataframe[,3],
+       x0 = cent.dataframe[,1] + cent.dataframe[,3],
+       angle = 90,
+       length=0.1, lwd = 2, code = 3)
+points(cent.dataframe[,1], cent.dataframe[,2],
+       cex = 2.5, bg = myColors, col = "black", pch = 22, lwd = 2)
+
+axis(side = 1, labels = T, las = 1, lwd.ticks = 2)
+axis(side = 2, labels = T, las = 1, lwd.ticks = 2)
+axis(side=1, lwd.ticks = 2, tck = -0.02, labels=F, cex.axis=1)
+axis(side=3, lwd.ticks = 2, tck = -0.02, labels=F, cex.axis=1)
+axis(side=1, lwd.ticks = 2, tck = 0.01, labels=F, cex.axis=1)
+axis(side=3, lwd.ticks = 2, tck = 0.01, labels=F, cex.axis=1)
+axis(side = 2, lwd.ticks = 2, tck = -0.02, labels=F, cex.axis=1)
+axis(side = 4, lwd.ticks = 2, tck = -0.02, labels=F, cex.axis=1)
+axis(side = 2, lwd.ticks = 2, tck = 0.01, labels=F, cex.axis=1)
+axis(side = 4, lwd.ticks = 2, tck = 0.01, labels=F, cex.axis=1)
+
+mtext(paste("PCoA 1 (", explainvar1, "%)", sep = ""), side = 1, line = 3, cex = 1.5)
+mtext(paste("PCoA 2 (", explainvar2, "%)", sep = ""), side = 2, line = 3.5, cex = 1.5)
+box(lwd = 2)
+
+par(mar = c(5, 0, 1, 1) + 0.1)
+plot.new()
+
+legend(0, 1, c(treatment.salreal), pt.bg = myColors, col = "black", pch = 22, cex = 0.9, bty = 'n', inset = c(0.1, 0.05), y.intersp = 1.25, adj = 2)
+
+dev.off()
+
+graphics.off()
+#NOTE the PCOA plot looks horrible -- lines overlap a lot -- how to fix??
+
+
+#SPECIES INDICATOR ANALYSIS
+csi.ns.indval <- read.csv("../data/csi.ns.indval.csv")
+#ERROR REC'D : NOT MEANINGFUL FOR FACTORS : this won't work
+csi.ind <- indval(csi.ns.indval,treatments1)
+
 
 ```
 
