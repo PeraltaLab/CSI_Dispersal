@@ -95,7 +95,7 @@ csi_relabun[i, ] <- otu_final[i, ]/sum(otu_final[i,
 }
 
 # import taxonomy file for later
-csi_tax <- read.tax(taxonomy = "../data/CSI.0.03.cons.taxonomy", format = "rdp", tax.levels = 6, col.tax = 3)
+csi.tax <- read.tax(taxonomy = "../data/CSI.0.03.cons.taxonomy", format = "rdp", tax.levels = 6, col.tax = 3)
 
 # bind design and bact files
 csi.full <- cbind(design_final,csi_relabun)
@@ -116,6 +116,16 @@ dim(design.ns2)
 design.ns.final <- droplevels(design.ns2)
 
 all.equal(rownames(design.ns2), rownames(otu_final.ns))
+
+# create presence/absence and relative abundance matrices
+csi_pres_abs.ns <- (otu_final.ns > 0) * 1
+csi_relabun.ns <- otu_final.ns
+for (i in 1:dim(otu_final.ns)[1]) {
+csi_relabun.ns[i, ] <- otu_final.ns[i, ]/sum(otu_final.ns[i,
+])
+}
+# bind design and bact files
+csi.full.ns <- cbind(design.ns.final,csi_relabun.ns)
 
 csi.ns <- cbind(design.ns.final,otu_final.ns)
 
@@ -290,7 +300,7 @@ Run Species Indicator Analysis - see IL_Wetlands.Rmd file
 Create Table for Supplemental (includes all taxa and associated taxon contribution to bacterial response)
 Create subset in table format to highlight top 5-10 OTUs (with names) for each salinity tank type (or by whatever groupings seem interesting) - See AP's IL Wetlands paper
 
-```{r (5)}
+```{r (5 with NO SOURCE tanks)}
 require("stats")
 require("labdsv")
 require("mgcv")
@@ -299,102 +309,123 @@ require("vegan")
 require("reshape2")
 require("reshape")
 
-#braycurtis
-braycurtis.csi <- vegdist(csi_relabun, method="bray")
-#pcoa
-csi.pcoa <- cmdscale(braycurtis.csi, k=3, eig=TRUE, add=FALSE)
+#csi.full <- cbind(design_final,csi_relabun) - ready for stats
+#csi.full.ns <- cbind(design.ns.final,csi_relabun.ns) - ready for stats NO SOURCE TANKS
 
-#remove odd sites
-odd <- row.names(csi_relabun[c(abs(csi.pcoa$points[, 1]) > 0.3), ])
-odd.odd <- csi_relabun[c(abs(csi.pcoa$points[, 1]) > 0.3), ]
-mean(rowSums((csi_relabun > 0) * 1))
- #992.8889
-rowSums((odd.odd > 0) * 1)
+sampleREL.dist1 <- vegdist(csi_relabun.ns, method="bray")
 
-csi_relabun.2 <- csi_relabun[c(abs(csi.pcoa$points[, 1]) < 0.3), ]
-design.2 <- design.ns[c(abs(csi.pcoa$points[, 1]) < 0.3), ]
-treatment.salreal <- design.2$Salinity_real
+# PERMANOVA
+adonis = adonis(csi.full.ns[,-c(1:15)] ~ Date2*Dispersal*Salinity, method = "bray", data = csi.full.ns, perm=1000)
+adonis
 
-#create dist matrix
-csi.rel2 <- vegdist(csi_relabun.2, method="bray")
+# Principal Coordinates Analysis - NO SOURCE
+CSI_pcoa1 <- cmdscale(sampleREL.dist1, k=3, eig=TRUE, add=FALSE)
+  # Classical (Metric) Multidimensional Scaling; returns PCoA coordinates
+  # eig=TRUE returns eigenvalues; k = # of dimensions to calculate
 
-#principle coordinate analysis
-csi_pcoa <- cmdscale(csi.rel2, k=2, eig=TRUE, add=FALSE)
+explainvar1a <- round(CSI_pcoa1$eig[1] / sum(CSI_pcoa1$eig), 3) * 100
+explainvar2a <- round(CSI_pcoa1$eig[2] / sum(CSI_pcoa1$eig), 3) * 100
+sum.eiga <- sum(explainvar1a, explainvar2a)
 
-explainvar1 <- round(csi_pcoa$eig[1] / sum(csi_pcoa$eig), 3) * 100
-explainvar2 <- round(csi_pcoa$eig[2] / sum(csi_pcoa$eig), 3) * 100
-sum.eig <- sum(explainvar1, explainvar2)
+explainvar1a #17.2
+explainvar2a #7.4
+```
 
-#plot
-points <- cbind(as.data.frame(csi_pcoa$points), treatment.salreal)
-L.centroids <- melt(points, id="treatment.salreal", measure.vars = c("V1", "V2"))
-centroids <- cast(L.centroids, variable ~ treatment.salreal, mean)
-centroids.se <- cast(L.centroids, variable ~ treatment.salreal, se)
-centroids.sd <- cast(L.centroids, variable ~ treatment.salreal, sd)
-cent.dataframe <- t(data.frame(rbind(centroids[1,-1], centroids[2,-1],
-centroids.sd[1,-1],centroids.sd[2,-1])))
-colnames(cent.dataframe) <- c("V1", "V2", "V1e", "V2e")
-cent.treats <- rownames(cent.dataframe)
+# PCoA Plot Design
+```{r}
+all.equal(rownames(design.ns.final), rownames(csi_relabun.ns))
 
-myColors <- c("#448844", "#33CC33", "#CCFF00", "#FFF000", "#FF9933", "#A9A9A9")
-names(myColors) <- c("BalledBurlapped", "Bareroot", "Seedling",
-"Acorn", "Seedbank", "Reference")
+pcoa.groups <- paste(design.ns.final$Date, design.ns.final$Salinity, sep = "_")
 
-#define plot parameters
-par(mar=c(5, 5.5, 1,1) + 0.1)
-layout(matrix(1:2, 1, 1), widths=c(4,2))
+pcoa.points <- data.frame(CSI_pcoa1$points, group = pcoa.groups)
 
-plot(cent.dataframe[,1], cent.dataframe[,2], type = 'n', las = 1,
-     xlim = c(-0.1, 0.1), ylim = c(-0.1,0.1),
-     xaxt = "n", xlab = "", yaxt = "n", ylab="")
-abline(h = 0, lty = 3, col = "gray")
-abline(v = 0, lty = 3, col = "gray")
+# Calculate Centroids (mean and SE)
+pcoa.L.centroids <- melt(pcoa.points, id="group", measure.vars = c("X1", "X2"))
+pcoa.centroids <- acast(pcoa.L.centroids, variable ~ group, mean)
+pcoa.centroids.se <- acast(pcoa.L.centroids, variable ~ group, se)
+pcoa.centroids.sd <- acast(pcoa.L.centroids, variable ~ group, sd)
 
-arrows(x0 = cent.dataframe[,1],
-      y1 = cent.dataframe[,2] - cent.dataframe[,4],
-      y0 = cent.dataframe[,2] + cent.dataframe[,4],
-      angle = 90,
-      length=0.1, lwd = 2, code = 3)
-arrows(y0 = cent.dataframe[,2],
-       x1 = cent.dataframe[,1] - cent.dataframe[,3],
-       x0 = cent.dataframe[,1] + cent.dataframe[,3],
-       angle = 90,
-       length=0.1, lwd = 2, code = 3)
-points(cent.dataframe[,1], cent.dataframe[,2],
-       cex = 2.5, bg = myColors, col = "black", pch = 22, lwd = 2)
+# Combine
+pcoa.cent.dataframe <- cbind(t(pcoa.centroids), t(pcoa.centroids.se))
+colnames(pcoa.cent.dataframe) <- c("V1", "V2", "V1e", "V2e")
+pcoa.cent.treats <- rownames(pcoa.cent.dataframe)
 
-axis(side = 1, labels = T, las = 1, lwd.ticks = 2)
-axis(side = 2, labels = T, las = 1, lwd.ticks = 2)
-axis(side=1, lwd.ticks = 2, tck = -0.02, labels=F, cex.axis=1)
-axis(side=3, lwd.ticks = 2, tck = -0.02, labels=F, cex.axis=1)
-axis(side=1, lwd.ticks = 2, tck = 0.01, labels=F, cex.axis=1)
-axis(side=3, lwd.ticks = 2, tck = 0.01, labels=F, cex.axis=1)
-axis(side = 2, lwd.ticks = 2, tck = -0.02, labels=F, cex.axis=1)
-axis(side = 4, lwd.ticks = 2, tck = -0.02, labels=F, cex.axis=1)
-axis(side = 2, lwd.ticks = 2, tck = 0.01, labels=F, cex.axis=1)
-axis(side = 4, lwd.ticks = 2, tck = 0.01, labels=F, cex.axis=1)
+pcoa.col <- as.factor(sapply(strsplit(pcoa.cent.treats, "_"), `[`, 2)) # Salinity
+pcoa.shape <- as.factor(sapply(strsplit(pcoa.cent.treats, "_"), `[`, 1))  # Date
+```
 
-mtext(paste("PCoA 1 (", explainvar1, "%)", sep = ""), side = 1, line = 3, cex = 1.5)
-mtext(paste("PCoA 2 (", explainvar2, "%)", sep = ""), side = 2, line = 3.5, cex = 1.5)
-box(lwd = 2)
+# Plot (ggplot)
+```{r}
+df1a <- as.data.frame(pcoa.cent.dataframe)
+plot1a <- ggplot(df1a, aes(x=V1, y=V2, colour=pcoa.col, shape = pcoa.shape,
+                 group = interaction(pcoa.col, pcoa.shape))) + theme_bw() 
+plot1a + theme(panel.grid.major = element_blank(), 
+               panel.grid.minor = element_blank(), 
+               axis.line = element_line(colour = "black")) + 
+theme(panel.background = element_blank()) + 
+  geom_point(aes(fill=pcoa.col), colour = "black", size=6, stroke = 0.75) + 
+  geom_errorbarh(aes(xmax=V1+V1e, xmin=V1-V1e, height=0.01), colour="black") +    
+  geom_errorbar(aes(ymax=V2+V2e, ymin=V2-V2e, width=0.01), colour="black") + 
+  scale_colour_manual(labels = c("0","5","9","13"), 
+                      values = c("#FFFFFF", "#00FFFF", "#33CCCC", "#0066CC")) + 
+  scale_fill_manual(labels = c("0","5","9","13"), 
+                    values = c("#FFFFFF", "#00FFFF", "#33CCCC", "#0066CC")) + 
+  scale_shape_manual(labels = c("0","18","45"),
+                     values = c(22, 21, 24)) +
+  coord_cartesian(xlim = c(-0.25, 0.5), ylim = c(-0.35, 0.3)) + 
+  theme(axis.title = element_text(size=18), axis.text=element_text(size=14), 
+          axis.text.x = element_text(size=14), 
+          panel.border = element_rect(colour = "black", size=1.25)) + 
+  theme(axis.ticks.length=unit(0.3,"cm")) + 
+  xlab("PCoA 1 (17.2%)") + ylab("PCoA 2 (7.4%)") + 
+  labs(fill = "Salinity", shape = "Date") +
+  guides(fill = guide_legend(override.aes = list(pch=21, size = 4, colour="black")),
+         shape = guide_legend(override.aes = list(size = 4, fill="black")))
 
-par(mar = c(5, 0, 1, 1) + 0.1)
-plot.new()
+ggsave("../figures/16SrRNA_CSI_Rplot_SalinityDispersal_NoSource.pdf", plot=last_plot(), device=NULL, path=NULL, scale=1, width=NA, height=NA, dpi=900, limitsize=TRUE)
+```
 
-legend(0, 1, c(treatment.salreal), pt.bg = myColors, col = "black", pch = 22, cex = 0.9, bty = 'n', inset = c(0.1, 0.05), y.intersp = 1.25, adj = 2)
+# Indicator Species Analysis
+```{r}
+library("labdsv")
+#bac.ind
 
-dev.off()
+csi_relabun.ns.2 <- csi_relabun.ns[, colSums(csi_relabun.ns) > 0.05]
+bac.ind <- indval(csi_relabun.ns.2, treatments1)
+levels(treatments1)
+summary(bac.ind)
 
-graphics.off()
-#NOTE the PCOA plot looks horrible -- lines overlap a lot -- how to fix??
+inds <- which(bac.ind$pval <= 0.05)
+bac.indicators <- as.data.frame(matrix(NA, nrow = length(inds), ncol = 4))
+colnames(bac.indicators) <- c("OTU", "Cluster", "IndVal", "Prob")
 
+bac.indicators$OTU <- names(inds)
+bac.indicators$Cluster <- bac.ind$maxcls[inds]
+bac.indicators$IndVal <- bac.ind$indcls[inds]
+bac.indicators$Prob <- bac.ind$pval[inds]
 
-#SPECIES INDICATOR ANALYSIS
-csi.ns.indval <- read.csv("../data/csi.ns.indval.csv")
-#ERROR REC'D : NOT MEANINGFUL FOR FACTORS : this won't work
-csi.ind <- indval(csi.ns.indval,treatments1)
+ind.tax <- csi.tax[which(as.character(csi.tax$OTU) %in% bac.indicators$OTU), ]
+ind.tax <- ind.tax[match(ind.tax$OTU, bac.indicators$OTU), ]
 
+indicator.bac <- cbind(bac.indicators, ind.tax[, -c(1)])
 
+indicator.bac <- indicator.bac[order(as.numeric(indicator.bac$Cluster)), ]
+
+table(indicator.bac$Cluster)
+table(indicator.bac$Phylum)
+table(indicator.bac$Cluster)
+levels(treatments1)
+
+# Export Bacteria Indicator Table
+write.table(indicator.bac, "../data/BacterialIndicators.txt",
+            sep="\t", row.names = F, quote = F)
+
+split(indicator.bac$Phylum, indicator.bac$Cluster)
+split(indicator.bac$Class, indicator.bac$Cluster)
+
+plot(as.factor(indicator.bac$Cluster), as.factor(indicator.bac$Phylum))
+
+```
 ```
 
 
