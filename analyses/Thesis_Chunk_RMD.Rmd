@@ -293,14 +293,12 @@ ggsave("../figures/real.sal.carbonmin.pdf", plot=last_plot(), device=NULL, path=
 ```
 
 
-(5) Which bacterial taxa are driving bacterial community patterns in response to salinity only?
-Subset data (run without source tanks)
-Bray-Curtis dissimilarity matrix for bacterial community
-Run Species Indicator Analysis - see IL_Wetlands.Rmd file
-Create Table for Supplemental (includes all taxa and associated taxon contribution to bacterial response)
-Create subset in table format to highlight top 5-10 OTUs (with names) for each salinity tank type (or by whatever groupings seem interesting) - See AP's IL Wetlands paper
+(6) How does salinity and dispersal influence bacterial community composition? (this should be done - just combine with your Rmd file and double check)
+Revisit original data set and include source tanks to Rmd file
+Graph PCoA ordination (include source tanks) - salinity=colors, date=shapes, label source tanks
+Run PERMANOVA to test bacterial community ~ salinity + dispersal + salinity*dispersal
 
-```{r (5 with NO SOURCE tanks)}
+```{r (6 with NO SOURCE tanks)}
 require("stats")
 require("labdsv")
 require("mgcv")
@@ -331,6 +329,28 @@ explainvar1a #17.2
 explainvar2a #7.4
 ```
 
+#PCoA set up WITH source tanks
+```{r}
+sampleREL.dist2 <- vegdist(csi_relabun, method="bray")
+
+# PERMANOVA
+adonis2 <- adonis(csi.full[,-c(1:15)] ~ Date*Dispersal*Salinity, method = "bray", data = csi.full, perm=1000)
+adonis2
+
+# Principal Coordinates Analysis - NO SOURCE
+CSI_pcoa2 <- cmdscale(sampleREL.dist2, k=3, eig=TRUE, add=FALSE)
+  # Classical (Metric) Multidimensional Scaling; returns PCoA coordinates
+  # eig=TRUE returns eigenvalues; k = # of dimensions to calculate
+
+explainvar1b <- round(CSI_pcoa2$eig[1] / sum(CSI_pcoa2$eig), 3) * 100
+explainvar2b <- round(CSI_pcoa2$eig[2] / sum(CSI_pcoa2$eig), 3) * 100
+sum.eigb <- sum(explainvar1b, explainvar2b)
+
+explainvar1b #20.8
+explainvar2b #6.4
+```
+
+
 # PCoA Plot Design
 ```{r}
 all.equal(rownames(design.ns.final), rownames(csi_relabun.ns))
@@ -353,6 +373,61 @@ pcoa.cent.treats <- rownames(pcoa.cent.dataframe)
 pcoa.col <- as.factor(sapply(strsplit(pcoa.cent.treats, "_"), `[`, 2)) # Salinity
 pcoa.shape <- as.factor(sapply(strsplit(pcoa.cent.treats, "_"), `[`, 1))  # Date
 ```
+#PCoA plot design WITH SOURCE TANKS
+
+```{r}
+all.equal(rownames(design_final), rownames(csi_relabun))
+
+pcoa.groups2 <- paste(design_final$Date, design_final$Salinity, sep = "_")
+
+pcoa.points2 <- data.frame(CSI_pcoa2$points, group = pcoa.groups2)
+
+# Calculate Centroids (mean and SE)
+pcoa.L.centroids2 <- melt(pcoa.points2, id="group", measure.vars = c("X1", "X2"))
+pcoa.centroids2 <- acast(pcoa.L.centroids2, variable ~ group, mean)
+pcoa.centroids.se2 <- acast(pcoa.L.centroids2, variable ~ group, se)
+pcoa.centroids.sd2 <- acast(pcoa.L.centroids2, variable ~ group, sd)
+
+# Combine
+pcoa.cent.dataframe2 <- cbind(t(pcoa.centroids2), t(pcoa.centroids.se2))
+colnames(pcoa.cent.dataframe2) <- c("V1", "V2", "V1e", "V2e")
+pcoa.cent.treats2 <- rownames(pcoa.cent.dataframe2)
+
+pcoa.col2 <- as.factor(sapply(strsplit(pcoa.cent.treats2, "_"), `[`, 2)) # Salinity
+pcoa.shape2 <- as.factor(sapply(strsplit(pcoa.cent.treats2, "_"), `[`, 1))  # Date
+```
+
+# PLOT GGPLOT WITH SOURCE TANKS (where is salinity 0???)
+```{r}
+df1a2 <- as.data.frame(pcoa.cent.dataframe2)
+plot1a2 <- ggplot(df1a2, aes(x=V1, y=V2, colour=pcoa.col2, shape = pcoa.shape2,
+                 group = interaction(pcoa.col2, pcoa.shape2))) + theme_bw() 
+plot1a2 + theme(panel.grid.major = element_blank(), 
+               panel.grid.minor = element_blank(), 
+               axis.line = element_line(colour = "black")) + 
+theme(panel.background = element_blank()) + 
+  geom_point(aes(fill=pcoa.col2), colour = "black", size=6, stroke = 0.75) + 
+  geom_errorbarh(aes(xmax=V1+V1e, xmin=V1-V1e, height=0.01), colour="black") +    
+  geom_errorbar(aes(ymax=V2+V2e, ymin=V2-V2e, width=0.01), colour="black") + 
+  scale_colour_manual(labels = c("0","5","9","13"), 
+                      values = c("#FFFFFF", "#00FFFF", "#33CCCC", "#0066CC")) + 
+  scale_fill_manual(labels = c("0","5","9","13"), 
+                    values = c("#FFFFFF", "#00FFFF", "#33CCCC", "#0066CC")) + 
+  scale_shape_manual(labels = c("0","18","45"),
+                     values = c(22, 21, 24)) +
+  coord_cartesian(xlim = c(-0.25, 0.5), ylim = c(-0.35, 0.3)) + 
+  theme(axis.title = element_text(size=18), axis.text=element_text(size=14), 
+          axis.text.x = element_text(size=14), 
+          panel.border = element_rect(colour = "black", size=1.25)) + 
+  theme(axis.ticks.length=unit(0.3,"cm")) + 
+  xlab("PCoA 1 (20.8%)") + ylab("PCoA 2 (6.4%)") + 
+  labs(fill = "Salinity", shape = "Date") +
+  guides(fill = guide_legend(override.aes = list(pch=21, size = 4, colour="black")),
+         shape = guide_legend(override.aes = list(size = 4, fill="black")))
+
+ggsave("../figures/16SrRNA_CSI_Rplot_SalinityDispersal_Source.pdf", plot=last_plot(), device=NULL, path=NULL, scale=1, width=NA, height=NA, dpi=900, limitsize=TRUE)
+```
+
 
 # Plot (ggplot)
 ```{r}
@@ -384,8 +459,22 @@ theme(panel.background = element_blank()) +
 
 ggsave("../figures/16SrRNA_CSI_Rplot_SalinityDispersal_NoSource.pdf", plot=last_plot(), device=NULL, path=NULL, scale=1, width=NA, height=NA, dpi=900, limitsize=TRUE)
 ```
+# PCoA permanova
+```{r}
+adonis2.pcoa <- adonis(csi.full.ns[,-c(1:15)] ~ Salinity + Dispersal + Salinity*Dispersal, method = "bray", data = csi.full.ns, perm=1000)
+adonis2.pcoa
+```
+
 
 # Indicator Species Analysis
+
+(5) Which bacterial taxa are driving bacterial community patterns in response to salinity only?
+Subset data (run without source tanks)
+Bray-Curtis dissimilarity matrix for bacterial community
+Run Species Indicator Analysis - see IL_Wetlands.Rmd file
+Create Table for Supplemental (includes all taxa and associated taxon contribution to bacterial response)
+Create subset in table format to highlight top 5-10 OTUs (with names) for each salinity tank type (or by whatever groupings seem interesting) - See AP's IL Wetlands paper
+
 ```{r}
 library("labdsv")
 #bac.ind
@@ -426,7 +515,52 @@ split(indicator.bac$Class, indicator.bac$Cluster)
 plot(as.factor(indicator.bac$Cluster), as.factor(indicator.bac$Phylum))
 
 ```
+
+(7)  Is there a relationship between community composition and litter decomposition rates?
+Subset data - source tanks only
+Euclidean distance for leaf litter decomposition
+Bray-Curtis dissimilarity matrix for bacterial community
+ Run matrix comparison using Mantel test
+
+Subset data -  experimental (all data but source) tanks
+Euclidean distance for leaf litter decomposition
+Bray-Curtis dissimilarity matrix for bacterial community
+Run matrix comparison using Mantel test
+Run Redundancy Analysis to include litter decomp AND C min
+Model:  bacterial community~litter decomp1+decomp2+decomp3+Cmin
+
+```{r (7)}
+#uploading leaf litter decomp data
+decomp <- read.csv("../data/CSI_meso_Decomp.csv")
+
+#NOT SURE IF THIS IS THE RIGHT FILE FOR DECOMP
+#HOW DO I CREATE A REL ABUN MATRIX FROM THIS TO USE IN EUCLIDEAN DISTANCE?
+
 ```
 
+NOTHING BELOW THIS POINT WORKS OR IS CORRECT.
+
+```{r (7 only source tanks)}
+#csi.full <- cbind(design_final,csi_relabun) - ready for stats
+#csi.full.ns <- cbind(design.ns.final,csi_relabun.ns) - ready for stats NO SOURCE TANKS
+
+write.csv(csi.full, file="CSI_Full.csv")
+
+#remove all but source tanks (manually removed and uploaded file to git server and r) -- named CSI_SourceOnly.csv
+csi.source <- read.csv("CSI_SourceOnly.csv")
+
+#don't know how to get a rel abun matrix to do bray curtis on this file with nothing but source tanks
+```
+
+```{r (7 without source tanks)}
+#bray curtis for bact comm
+sampleREL.dist3 <- vegdist(csi_relabun.ns, method="bray")
+
+#euclidean distance for leaf litter decomp
+euc.decomp <- vegdist(decomp, method = "euclidean")
+
+#matrix comparison
+mantel.ns <- mantel(sampleREL.dist3, euc.decomp)
+```
 
 
