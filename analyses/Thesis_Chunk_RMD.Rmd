@@ -397,7 +397,7 @@ pcoa.col2 <- as.factor(sapply(strsplit(pcoa.cent.treats2, "_"), `[`, 2)) # Salin
 pcoa.shape2 <- as.factor(sapply(strsplit(pcoa.cent.treats2, "_"), `[`, 1))  # Date
 ```
 
-# PLOT GGPLOT WITH SOURCE TANKS (where is salinity 0???)
+# PLOT GGPLOT WITH SOURCE TANKS (where is salinity 0???) - need to fix figure to show salinity 0 and SOURCES
 ```{r}
 df1a2 <- as.data.frame(pcoa.cent.dataframe2)
 plot1a2 <- ggplot(df1a2, aes(x=V1, y=V2, colour=pcoa.col2, shape = pcoa.shape2,
@@ -534,14 +534,11 @@ Model:  bacterial community~litter decomp1+decomp2+decomp3+Cmin
 decomp <- read.csv("../data/CSI_meso_Decomp.csv")
 
 #NOT SURE IF THIS IS THE RIGHT FILE FOR DECOMP
-#HOW DO I CREATE A REL ABUN MATRIX FROM THIS TO USE IN EUCLIDEAN DISTANCE?
-
+#HOW DO I CREATE A REL ABUN MATRIX FROM THIS TO USE IN EUCLIDEAN DISTANCE? - you don't need to standardize or normalize decomp data
 ```
 
-NOTHING BELOW THIS POINT WORKS OR IS CORRECT.
-
 ```{r (7 only source tanks)}
-#csi.full <- cbind(design_final,csi_relabun) - ready for stats
+#csi.full <- cbind(design_final,csi_relabun) - ready for stats - the desgin files have decomp and env data in them
 #csi.full.ns <- cbind(design.ns.final,csi_relabun.ns) - ready for stats NO SOURCE TANKS
 
 write.csv(csi.full, file="CSI_Full.csv")
@@ -550,17 +547,22 @@ write.csv(csi.full, file="CSI_Full.csv")
 csi.source <- read.csv("CSI_SourceOnly.csv")
 
 #don't know how to get a rel abun matrix to do bray curtis on this file with nothing but source tanks
+#AP answer: relative abundance is only needed for community composition data - so you get the proportion of each OTU in the total community. This doesn't apply for decomposition numbers. Does this make sense?
 ```
 
 ```{r (7 without source tanks)}
+#Is there a relationship betwen bacterial community composition and decomposition rate? used matrix comparison Mantel test
+str(csi.full.ns)
+df.bcc <- csi.full.ns[,-c(1:15)] #bacteria
+df.env.bcc <- csi.full.ns[,c(1:15)] #env
+df.decomp <- csi.full.ns[,c(12:14)] #decomp
+
 #bray curtis for bact comm
-sampleREL.dist3 <- vegdist(csi_relabun.ns, method="bray")
-
+dist.bcc <- vegdist(df.bcc, method = "bray")
 #euclidean distance for leaf litter decomp
-euc.decomp <- vegdist(decomp, method = "euclidean")
-
+dist.decomp <- vegdist(df.decomp, method = "euclidean")
 #matrix comparison
-mantel.ns <- mantel(sampleREL.dist3, euc.decomp)
+mantel.rtest(dist.bcc, dist.decomp, nrepet = 999)
 ```
 
 
