@@ -8,7 +8,6 @@ output:
 ---
 Project Description: Analysis of salinity and dispersal of saline aquatic communities on bacterial community structure and function.
 
-
 Setting up working directory, packages
 ```{r (1)}
 #PC - set WD manually by Session -> Set Working Directory -> Choose Directory...
