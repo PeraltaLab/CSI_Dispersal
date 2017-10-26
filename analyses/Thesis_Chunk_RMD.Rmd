@@ -534,6 +534,8 @@ decomp <- read.csv("../data/CSI_meso_Decomp.csv")
 
 #NOT SURE IF THIS IS THE RIGHT FILE FOR DECOMP
 #HOW DO I CREATE A REL ABUN MATRIX FROM THIS TO USE IN EUCLIDEAN DISTANCE? - you don't need to standardize or normalize decomp data
+
+#
 ```
 
 ```{r (7 only source tanks)}
@@ -562,6 +564,24 @@ dist.bcc <- vegdist(df.bcc, method = "bray")
 dist.decomp <- vegdist(df.decomp, method = "euclidean")
 #matrix comparison
 mantel.rtest(dist.bcc, dist.decomp, nrepet = 999)
+
+#note in timeline says to combine c-min and decomp data for RDA? trying to do this below
+#export 2 datasets
+write.csv(csi.full.ns, file="csi.full.ns.csv")
+write.csv(carbon_min, file="carbonmin.csv")
+#combined to include ONLY the barcodes in C-Min file (uploaded below)
+csi.cmin.full <- read.csv("csi.full.ns.cmin.csv")
+rownames(csi.cmin.full) <- csi.cmin.full$X
+cmin.full <- subset(csi.cmin.full, select = -X)
+
+
+#need these for this file?
+df.bcc2 <- cmin.full[,-c(1:15)] #bacteria
+df.env.bcc2 <- cmin.full[,c(1:17)] #env
+df.decomp2 <- cmin.full[,c(14:16)] #decomp
+df.cmin <- cmin.full[,c(1,17)]
+
+
 ```
 
 
