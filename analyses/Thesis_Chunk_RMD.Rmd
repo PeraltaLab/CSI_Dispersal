@@ -259,32 +259,32 @@ Graph C mineralization
 Run stat model Cmin~dispersal + salinity + dispersal*salinity
 
 ```{r (4 w source tanks)}
+#Cmin data inculded in full data set - no longer need to import separate file. Note: only use Date2=45 since Cmin only completed Day 45 of experiment
+
+#subset according to Date2=45 only b/c Cmin only measured for Date2=45
+csi.full.ns.Cmin  <- csi.full.ns[which(csi.full.ns$Date2=="45"),]
+dim(csi.full.ns)
+dim(csi.full.ns.Cmin)
+
+# run full parametric statistical model
+Cmin.lm <- lm(Cmin ~ Dispersal*Salinity + Dispersal + Salinity, data = csi.full.ns.Cmin)
+Cmin.lm
+anova(Cmin.lm)
+
+# run linear regression measured salinity used instead of 'factor' salinity
+Cmin.reg <- lm(Cmin~Salinity_real, data = csi.full.ns.Cmin)
+summary(Cmin.reg)
+
 #import C-mineralization CSV -- no source tanks
 carbon_min <- read.csv("../data/Cmin-data-NO-SOURCE.csv")
 
-#experimental salinity
-carbon.lm <- lm(ngCO2C_mL_day ~ Dispersal + Salinity + Dispersal*Salinity, data = carbon_min)
-anova(carbon.lm)
-
-#real salinity
-real.carbon.lm <- lm(ngCO2C_mL_day ~ Dispersal + Sal_Real + Dispersal*Sal_Real, data = carbon_min)
-anova(real.carbon.lm)
-
-# run linear regression ('factor' salinity)
-carbon.reg <- lm(ngCO2C_mL_day~Salinity, data = carbon_min)
-summary(carbon.reg)
-
-#linear regression (real salinity)
-real.carbon.reg <- lm(ngCO2C_mL_day~Sal_Real, data = carbon_min)
-summary(real.carbon.reg)
-
-p <- ggplot(carbon_min, aes(x=Salinity, y=ngCO2C_mL_day, color=Dispersal))+geom_point()
+p <- ggplot(csi.full.ns.Cmin, aes(x=Salinity, y=Cmin, color=Dispersal))+geom_point()
 p1=p+geom_smooth(method="lm",aes(fill=Dispersal))
 p1 + theme_bw() 
 p1 + theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.line = element_line(colour = "black")) +theme(axis.title=element_text(vjust=1,size=10,face="bold"), axis.text=element_text(size=8), axis.text.x = element_text(vjust=0.65, hjust=0.5, size=8), panel.border = element_rect(colour = "black",size=1.25)) + theme(axis.ticks.length=unit(0.3,"cm")) + xlab("Salinity") + ylab("Carbon Mineralization (ng CO2/mL/day)") 
 ggsave("../figures/carbon_mineralization.pdf", plot=last_plot(), device=NULL, path=NULL, scale=1, width=NA, height=NA, dpi=300, limitsize=TRUE)
 
-p <- ggplot(carbon_min, aes(x=Sal_Real, y=ngCO2C_mL_day, color=Dispersal))+geom_point()
+p <- ggplot(csi.full.ns.Cmin, aes(x=Salinity_real, y=Cmin, color=Dispersal))+geom_point()
 p1=p+geom_smooth(method="lm",aes(fill=Dispersal))
 p1 + theme_bw() 
 p1 + theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.line = element_line(colour = "black")) +theme(axis.title=element_text(vjust=1,size=10,face="bold"), axis.text=element_text(size=8), axis.text.x = element_text(vjust=0.65, hjust=0.5, size=8), panel.border = element_rect(colour = "black",size=1.25)) + theme(axis.ticks.length=unit(0.3,"cm")) + xlab("Measured Salinity") + ylab("Carbon Mineralization (ng CO2/mL/day)") 
@@ -293,7 +293,9 @@ ggsave("../figures/real.sal.carbonmin.pdf", plot=last_plot(), device=NULL, path=
 
 
 (6) How does salinity and dispersal influence bacterial community composition? (this should be done - just combine with your Rmd file and double check)
-Revisit original data set and include source tanks to Rmd file
+--Complete with source tanks
+--Complete without source tanks (SFS poster code)
+Revisit original data set and include source tanks to Rmd file - still waiting on full env data from Jo Werba
 Graph PCoA ordination (include source tanks) - salinity=colors, date=shapes, label source tanks
 Run PERMANOVA to test bacterial community ~ salinity + dispersal + salinity*dispersal
 
@@ -312,7 +314,7 @@ require("reshape")
 sampleREL.dist1 <- vegdist(csi_relabun.ns, method="bray")
 
 # PERMANOVA
-adonis = adonis(csi.full.ns[,-c(1:15)] ~ Date2*Dispersal*Salinity, method = "bray", data = csi.full.ns, perm=1000)
+adonis = adonis(csi.full.ns[,-c(1:16)] ~ Date2*Dispersal*Salinity, method = "bray", data = csi.full.ns, perm=1000)
 adonis
 
 # Principal Coordinates Analysis - NO SOURCE
@@ -333,7 +335,7 @@ explainvar2a #7.4
 sampleREL.dist2 <- vegdist(csi_relabun, method="bray")
 
 # PERMANOVA
-adonis2 <- adonis(csi.full[,-c(1:15)] ~ Date*Dispersal*Salinity, method = "bray", data = csi.full, perm=1000)
+adonis2 <- adonis(csi.full[,-c(1:16)] ~ Date*Dispersal*Salinity, method = "bray", data = csi.full, perm=1000)
 adonis2
 
 # Principal Coordinates Analysis - NO SOURCE
@@ -350,7 +352,7 @@ explainvar2b #6.4
 ```
 
 
-# PCoA Plot Design
+# PCoA Plot Design without Source
 ```{r}
 all.equal(rownames(design.ns.final), rownames(csi_relabun.ns))
 
@@ -372,7 +374,39 @@ pcoa.cent.treats <- rownames(pcoa.cent.dataframe)
 pcoa.col <- as.factor(sapply(strsplit(pcoa.cent.treats, "_"), `[`, 2)) # Salinity
 pcoa.shape <- as.factor(sapply(strsplit(pcoa.cent.treats, "_"), `[`, 1))  # Date
 ```
-#PCoA plot design WITH SOURCE TANKS
+
+# Plot (ggplot)
+```{r}
+df1a <- as.data.frame(pcoa.cent.dataframe)
+plot1a <- ggplot(df1a, aes(x=V1, y=V2, colour=pcoa.col, shape = pcoa.shape,
+                 group = interaction(pcoa.col, pcoa.shape))) + theme_bw() 
+plot1a + theme(panel.grid.major = element_blank(), 
+               panel.grid.minor = element_blank(), 
+               axis.line = element_line(colour = "black")) + 
+theme(panel.background = element_blank()) + 
+  geom_point(aes(fill=pcoa.col), colour = "black", size=6, stroke = 0.75) + 
+  geom_errorbarh(aes(xmax=V1+V1e, xmin=V1-V1e, height=0.01), colour="black") +    
+  geom_errorbar(aes(ymax=V2+V2e, ymin=V2-V2e, width=0.01), colour="black") + 
+  scale_colour_manual(labels = c("0","5","9","13"), 
+                      values = c("#FFFFFF", "#00FFFF", "#33CCCC", "#0066CC")) + 
+  scale_fill_manual(labels = c("0","5","9","13"), 
+                    values = c("#FFFFFF", "#00FFFF", "#33CCCC", "#0066CC")) + 
+  scale_shape_manual(labels = c("0","18","45"),
+                     values = c(22, 21, 24)) +
+  coord_cartesian(xlim = c(-0.25, 0.5), ylim = c(-0.35, 0.3)) + 
+  theme(axis.title = element_text(size=18), axis.text=element_text(size=14), 
+          axis.text.x = element_text(size=14), 
+          panel.border = element_rect(colour = "black", size=1.25)) + 
+  theme(axis.ticks.length=unit(0.3,"cm")) + 
+  xlab("PCoA 1 (17.2%)") + ylab("PCoA 2 (7.4%)") + 
+  labs(fill = "Salinity", shape = "Date") +
+  guides(fill = guide_legend(override.aes = list(pch=21, size = 4, colour="black")),
+         shape = guide_legend(override.aes = list(size = 4, fill="black")))
+
+ggsave("../figures/16SrRNA_CSI_Rplot_SalinityDispersal_NoSource.pdf", plot=last_plot(), device=NULL, path=NULL, scale=1, width=NA, height=NA, dpi=900, limitsize=TRUE)
+```
+
+#PCoA plot design WITH SOURCE TANKS - need to update and figure out symbol for SOURCE - McCoy
 
 ```{r}
 all.equal(rownames(design_final), rownames(csi_relabun))
@@ -427,44 +461,6 @@ theme(panel.background = element_blank()) +
 ggsave("../figures/16SrRNA_CSI_Rplot_SalinityDispersal_Source.pdf", plot=last_plot(), device=NULL, path=NULL, scale=1, width=NA, height=NA, dpi=900, limitsize=TRUE)
 ```
 
-
-# Plot (ggplot)
-```{r}
-df1a <- as.data.frame(pcoa.cent.dataframe)
-plot1a <- ggplot(df1a, aes(x=V1, y=V2, colour=pcoa.col, shape = pcoa.shape,
-                 group = interaction(pcoa.col, pcoa.shape))) + theme_bw() 
-plot1a + theme(panel.grid.major = element_blank(), 
-               panel.grid.minor = element_blank(), 
-               axis.line = element_line(colour = "black")) + 
-theme(panel.background = element_blank()) + 
-  geom_point(aes(fill=pcoa.col), colour = "black", size=6, stroke = 0.75) + 
-  geom_errorbarh(aes(xmax=V1+V1e, xmin=V1-V1e, height=0.01), colour="black") +    
-  geom_errorbar(aes(ymax=V2+V2e, ymin=V2-V2e, width=0.01), colour="black") + 
-  scale_colour_manual(labels = c("0","5","9","13"), 
-                      values = c("#FFFFFF", "#00FFFF", "#33CCCC", "#0066CC")) + 
-  scale_fill_manual(labels = c("0","5","9","13"), 
-                    values = c("#FFFFFF", "#00FFFF", "#33CCCC", "#0066CC")) + 
-  scale_shape_manual(labels = c("0","18","45"),
-                     values = c(22, 21, 24)) +
-  coord_cartesian(xlim = c(-0.25, 0.5), ylim = c(-0.35, 0.3)) + 
-  theme(axis.title = element_text(size=18), axis.text=element_text(size=14), 
-          axis.text.x = element_text(size=14), 
-          panel.border = element_rect(colour = "black", size=1.25)) + 
-  theme(axis.ticks.length=unit(0.3,"cm")) + 
-  xlab("PCoA 1 (17.2%)") + ylab("PCoA 2 (7.4%)") + 
-  labs(fill = "Salinity", shape = "Date") +
-  guides(fill = guide_legend(override.aes = list(pch=21, size = 4, colour="black")),
-         shape = guide_legend(override.aes = list(size = 4, fill="black")))
-
-ggsave("../figures/16SrRNA_CSI_Rplot_SalinityDispersal_NoSource.pdf", plot=last_plot(), device=NULL, path=NULL, scale=1, width=NA, height=NA, dpi=900, limitsize=TRUE)
-```
-# PCoA permanova
-```{r}
-adonis2.pcoa <- adonis(csi.full.ns[,-c(1:15)] ~ Salinity + Dispersal + Salinity*Dispersal, method = "bray", data = csi.full.ns, perm=1000)
-adonis2.pcoa
-```
-
-
 # Indicator Species Analysis
 
 (5) Which bacterial taxa are driving bacterial community patterns in response to salinity only?
@@ -515,7 +511,7 @@ plot(as.factor(indicator.bac$Cluster), as.factor(indicator.bac$Phylum))
 
 ```
 
-(7)  Is there a relationship between community composition and litter decomposition rates?
+(7)  Is there a relationship between community composition and litter decomposition rates? (Date2=45 only)
 Subset data - source tanks only
 Euclidean distance for leaf litter decomposition
 Bray-Curtis dissimilarity matrix for bacterial community
@@ -528,60 +524,34 @@ Run matrix comparison using Mantel test
 Run Redundancy Analysis to include litter decomp AND C min
 Model:  bacterial community~litter decomp1+decomp2+decomp3+Cmin
 
-```{r (7)}
-#uploading leaf litter decomp data
-decomp <- read.csv("../data/CSI_meso_Decomp.csv")
-
-#NOT SURE IF THIS IS THE RIGHT FILE FOR DECOMP
-#HOW DO I CREATE A REL ABUN MATRIX FROM THIS TO USE IN EUCLIDEAN DISTANCE? - you don't need to standardize or normalize decomp data
-
-#
-```
-
-```{r (7 only source tanks)}
-#csi.full <- cbind(design_final,csi_relabun) - ready for stats - the desgin files have decomp and env data in them
-#csi.full.ns <- cbind(design.ns.final,csi_relabun.ns) - ready for stats NO SOURCE TANKS
-
-write.csv(csi.full, file="CSI_Full.csv")
-
-#remove all but source tanks (manually removed and uploaded file to git server and r) -- named CSI_SourceOnly.csv
-csi.source <- read.csv("CSI_SourceOnly.csv")
-
-#don't know how to get a rel abun matrix to do bray curtis on this file with nothing but source tanks
-#AP answer: relative abundance is only needed for community composition data - so you get the proportion of each OTU in the total community. This doesn't apply for decomposition numbers. Does this make sense?
-```
-
 ```{r (7 without source tanks)}
 #Is there a relationship betwen bacterial community composition and decomposition rate? used matrix comparison Mantel test
-str(csi.full.ns)
-df.bcc <- csi.full.ns[,-c(1:15)] #bacteria
-df.env.bcc <- csi.full.ns[,c(1:15)] #env
-df.decomp <- csi.full.ns[,c(12:14)] #decomp
+str(csi.full.ns.Cmin)
+df.bcc <- csi.full.ns.Cmin[,-c(1:16)] #bacteria
+df.env.bcc <- csi.full.ns.Cmin[,c(1:16)] #env
+df.decomp <- csi.full.ns.Cmin[,c(12:14)] #decomp
+df.decompCmin <- csi.full.ns.Cmin[,c(12:15)] #decompCmin
 
 #bray curtis for bact comm
 dist.bcc <- vegdist(df.bcc, method = "bray")
 #euclidean distance for leaf litter decomp
 dist.decomp <- vegdist(df.decomp, method = "euclidean")
+#euclidean distance for leaf litter decomp and Cmin
+dist.decompCmin <- vegdist(df.decompCmin, method = "euclidean")
+
 #matrix comparison
-mantel.rtest(dist.bcc, dist.decomp, nrepet = 999)
+mantel.rtest(dist.bcc, dist.decomp, nrepet = 999) #bacteria compared to decomp correlation r = 0.231, P=0.006
 
-#note in timeline says to combine c-min and decomp data for RDA? trying to do this below
-#export 2 datasets
-write.csv(csi.full.ns, file="csi.full.ns.csv")
-write.csv(carbon_min, file="carbonmin.csv")
-#combined to include ONLY the barcodes in C-Min file (uploaded below)
-csi.cmin.full <- read.csv("csi.full.ns.cmin.csv")
-rownames(csi.cmin.full) <- csi.cmin.full$X
-cmin.full <- subset(csi.cmin.full, select = -X)
+mantel.rtest(dist.bcc, dist.decompCmin, nrepet = 999) #bacteria compared to decompCmin correlation r = 0.212, P=0.007
 
-
-#need these for this file?
-df.bcc2 <- cmin.full[,-c(1:15)] #bacteria
-df.env.bcc2 <- cmin.full[,c(1:17)] #env
-df.decomp2 <- cmin.full[,c(14:16)] #decomp
-df.cmin <- cmin.full[,c(1,17)]
+#Redundancy Analysis
+f <- df.bcc ~ Maple_dmass + Spartina_dmass + Phrag_dmass + Cmin
+df.rda <- rda(f, data=df.env.bcc)
+anova(df.rda)
 
 
 ```
 
+```{r (7 only source tanks)}
 
+```
