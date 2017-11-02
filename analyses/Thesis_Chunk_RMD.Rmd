@@ -532,6 +532,48 @@ anova(df.rda)
 
 ```
 
-```{r (7 only source tanks)}
+``````{r (8 only source tanks)}
+# Phylogenetic Diversity
+# Reorder Tree
+which(tree$edge.length < 0.0000001)
+#tree.2 <- reorder(tree, order = "cladewise")
+#tree.r <- midpoint.root(tree.2)
+phylo.d <- pd(otus.r, tree, include.root = F)
 
+design.r <- design.otu[which(rownames(design.otu) %in% rownames(otus.r)), ]
+
+
+design.sed <- design.r[design.r$Sample_Type != "W", ]
+
+sed.bac <- as.data.frame(matrix(NA, dim(design.sed)[1], 10))
+colnames(sed.bac) <- c("Sample", "Location", "Time", "Type", "Replicate", 
+                       "S", "F_alpha", "S_even", "Shannon", "Phylo")
+sed.bac$Sample <- rownames(design.sed)
+sed.bac$Location <- design.sed$Location
+sed.bac$Time <- design.sed$Storm
+sed.bac$Type <- design.sed$Sample_Type
+sed.bac$Replicate <- design.sed$Field_replicate
+for(i in 1:length(rownames(design.sed))){
+  temp <- rownames(design.sed)[i]
+  sed.bac$S[i] <- richness[which(names(richness) == temp)]
+  sed.bac$F_alpha[i] <- fisher[which(names(fisher) == temp)]
+  sed.bac$S_even[i] <- simp.even[which(names(simp.even) == temp)]
+  sed.bac$Shannon[i] <- shannon[which(names(shannon) == temp)]
+  sed.bac$Phylo[i] <- phylo.d[which(rownames(phylo.d) == temp), 1]
+}
+
+# Reorganize
+sed.bac.m <- melt(sed.bac, id = c("Sample", "Location", "Time", "Type"))
+sed.bac.c <- cast(data = sed.bac.m, Location + Type ~ variable, c(mean, se), na.rm=T)
+
+sed.bac.c <- as.data.frame(sed.bac.c)
+sed.bac.m <- as.data.frame(sed.bac.m)
+
+# # ANOVA - update
+aov.sed=aov(value~Location*Type,data=sed.bac.m[which(sed.bac.m$variable == "S"), ])
+summary(aov.sed)
+posthocD <-TukeyHSD(aov.sed,"Location:Type",conf.level=0.95)
+posthocD
+
+```
 ```
