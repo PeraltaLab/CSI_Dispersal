@@ -8,4 +8,8 @@ system(cp ./CSI.15.trim.contigs.good.unique.good.filter.unique.precluster.pick.p
 # Fast Tree
 python name_change.py CSI.final.0.03.rep.fasta CSI.final.0.03.rep.rename.fasta
 
-FastTree -gtr -nt -gamma CSI.final.0.03.rep.rename.fasta > WL.bac.tree
+FastTree -gtr -nt -gamma CSI.final.0.03.rep.rename.fasta > CSI.bac.rename.tree
+FastTree -gtr -nt -gamma CSI.final.0.03.rep.fasta > CSI.bac.tree
+
+# Make PhyloDist in mothur
+unifrac.weighted(tree=CSI.bac.tree, count=CSI.15.trim.contigs.good.unique.good.filter.unique.precluster.pick.pick.pick.opti_mcc.unique_list.0.03.rep.count_table, distance=square)

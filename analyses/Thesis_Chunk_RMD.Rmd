@@ -532,10 +532,40 @@ anova(df.rda)
 
 ```
 
-``````{r (8 only source tanks)}
+```{r}
 # Phylogenetic Diversity
-# Reorder Tree
-which(tree$edge.length < 0.0000001)
+# Load Tree
+tree <- read.tree("../data/CSI.bac.rename.tree")
+tree$tip.label <- gsub("\\|", "", tree$tip.label)
+
+sum(tree$tip.label %in% colnames(csi_otu) == FALSE)
+
+# Small Branches
+sum(tree$edge.length < 0.0000001)
+
+# Import Unifrac Matrix
+unifrac.raw <- read.delim("../data/CSI.bac.tree1.weighted.phylip.dist",
+                             header = F, skip = 1, row.names = 1)
+
+row.names(unifrac.raw) <- gsub("    ", "", row.names(unifrac.raw))
+
+unifrac <- unifrac.raw[which(row.names(unifrac.raw) %in%
+                                   row.names(otu_final)),
+                             which(row.names(unifrac.raw) %in%
+                                   row.names(otu_final))]
+
+rownames(unifrac) <- gsub("     ", "", row.names(unifrac))
+colnames(unifrac) <- rownames(unifrac)
+dim(unifrac)
+
+# Make into Distance Matrix
+unifrac.dist <- as.dist(unifrac, upper = T, diag = T)
+
+# Calculate Phylo Diversity
+phylo.d <- pd(otu_final, tree, include.root = F)
+```
+
+```{r}
 #tree.2 <- reorder(tree, order = "cladewise")
 #tree.r <- midpoint.root(tree.2)
 phylo.d <- pd(otus.r, tree, include.root = F)
