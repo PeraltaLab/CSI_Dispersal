@@ -526,8 +526,11 @@ mantel.rtest(dist.bcc, dist.decompCmin, nrepet = 999) #bacteria compared to deco
 
 #Redundancy Analysis
 f <- df.bcc ~ Maple_dmass + Spartina_dmass + Phrag_dmass + Cmin
-df.rda <- rda(f, data=df.env.bcc)
-anova(df.rda)
+df.rda <- dbrda(f, data=df.env.bcc, distance="bray")
+anova(df.rda, by="terms", model="direct")
+RsquareAdj(df.rda)
+
+plot(df.rda)
 
 
 ```
