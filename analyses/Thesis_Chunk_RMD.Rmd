@@ -530,6 +530,8 @@ df.rda <- dbrda(f, data=df.env.bcc, distance="bray")
 anova(df.rda, by="terms", model="direct")
 RsquareAdj(df.rda)
 
+plot(df.rda)
+
 
 ```
 
