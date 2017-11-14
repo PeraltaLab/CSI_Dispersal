@@ -600,3 +600,18 @@ p1 + theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor = e
 
 ggsave("../figures/phylogenetic_div.pdf", plot=last_plot(), device=NULL, path=NULL, scale=1, width=NA, height=NA, dpi=300, limitsize=TRUE)
 ```
+
+Venn Diagram figures
+```{r}
+#transpose the presence absence matrix
+transposed.pres.abs <- t(csi_pres_abs.ns)
+csi.full.ns
+
+#venn diagrams
+install.packages("gplots")
+require(gplots)
+venn(transposed.pres.abs[,7:8]) #need to figure out how to compare ALL of each salinity -- above code is salinity 13 (CSI010) compared to salinity 0 (CSI010) as an example 
+venn(transposed.pres.abs[,1:2]) #this is comparing salinity 0 (CSI004) and salinity 5 (CSI005) just to see the difference in this and above venn
+
+```
+
