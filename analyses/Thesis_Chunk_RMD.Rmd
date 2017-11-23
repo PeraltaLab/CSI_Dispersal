@@ -96,8 +96,34 @@ csi_relabun[i, ] <- otu_final[i, ]/sum(otu_final[i,
 # import taxonomy file for later
 csi.tax <- read.tax(taxonomy = "../data/CSI.0.03.cons.taxonomy", format = "rdp", tax.levels = 6, col.tax = 3)
 
-# bind design and bact files
-csi.full <- cbind(design_final,csi_relabun)
+# bind design and bact files WITH SOURCE
+csi.relabun.full <- cbind(design_final,csi_relabun)
+dim(csi.relabun.full)
+
+csi.PA.full <- cbind(design_final,csi_pres_abs)
+dim(csi.PA.full)
+
+# not yet finished - data manipulation in prep for Venn
+library(dplyr)
+library(reshape2)
+
+test <- csi.PA.full[c(1:15)]
+head(test)
+str(test)
+new.data <- melt(test, id.vars = c("Replicate", "Salinity"))
+
+
+dcast(test, Replicate ~ variable, fun.aggregate = mean, measure.var = c("Otu00001"))                 
+                                 ,
+  variable.name = "OTU", 
+  value.name = "OTU_PA")
+head(new.data)
+
+dcast(csi.PA.full, Replicate ~ variable, fun.aggregate = mean, 
+  na.rm = TRUE)
+
+head(csi.PA.full)
+str(csi.PA.full)
 
 # REMOVE source tanks from otu file
 # REMOVE source tanks Number 1,2,3 from otu_final and use design.ns (manually removed source tanks)
@@ -135,6 +161,12 @@ treatments2 <- as.factor(design.ns.final$Dispersal)
 levels(treatments2) <- c("2","3")
 
 date_1 <- as.factor(design.ns.final$Date2)
+```
+
+Venn Diagram
+```{r (Venn)}
+
+
 ```
 
 Calculating Diversity Metrics
