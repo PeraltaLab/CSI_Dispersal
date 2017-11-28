@@ -32,6 +32,7 @@ require("ape")
 require("png")
 require("picante")
 require("venneuler")
+require("Hmisc")
 
 # set std err
 se <- function(x, ...) {
@@ -44,6 +45,8 @@ ci <- function(x, ...) {
 
 #Loading data file
 ```{r (2)}
+#NOTE: Tank 3 only had fresh water added. Tank 1 was the source for the salt and tank 2 was the source for the fresh water.
+
 # load design file - no source tanks
 design.ns <- read.csv("../data/CSI_Design_ENV_NoSourceTanks.csv", row.names=1)
 head(design.ns)
@@ -58,6 +61,9 @@ dim(design.full)
 # load OTU file
 csi_otu <- read.otu("../data/CSI.shared")
 dim(csi_otu)
+
+# load environ/function file - includes expt design, decomp data, Cmin, nutrients day 45 only
+design.env.full <- read.csv("../data/design_CSI.csv", row.names=1)
 
 # import taxonomy file for later
 csi.tax <- read.tax(taxonomy = "../data/CSI.0.03.cons.taxonomy", 
@@ -101,41 +107,6 @@ for (i in 1:dim(otu_final)[1]) {
   csi_relabun[i, ] <- otu_final[i, ]/sum(otu_final[i,])
 }
 
-
-# bind design and bact files WITH SOURCE
-csi.relabun.full <- cbind(design_final,csi_relabun)
-dim(csi.relabun.full)
-
-csi.PA.full <- cbind(design_final,csi_pres_abs)
-dim(csi.PA.full)
-
-
-
-############# Remove Now> ###################
-# not yet finished - data manipulation in prep for Venn
-test <- csi.PA.full[c(1:25)]
-test$Salinity <- as.factor(test$Salinity)
-head(test)
-str(test)
-new.data <- reshape2::melt(test)
-
-
-dcast(new.data, Replicate ~ variable, fun.aggregate = mean, measure.var = c("Otu00001"))                 
-                                 ,
-  variable.name = "OTU", 
-  value.name = "OTU_PA")
-head(new.data)
-
-dcast(csi.PA.full, Replicate ~ variable, fun.aggregate = mean, 
-  na.rm = TRUE)
-
-head(csi.PA.full)
-str(csi.PA.full)
-
-############# 
-
-
-
 # REMOVE source tanks from otu file
 # REMOVE source tanks Number 1,2,3 from otu_final and use design.ns (manually removed source tanks)
 temp <- rownames(design_final[which(design_final$Number %in% c(1,2,3)), ])
@@ -160,11 +131,17 @@ for (i in 1:dim(otu_final.ns)[1]) {
 csi_relabun.ns[i, ] <- otu_final.ns[i, ]/sum(otu_final.ns[i,
 ])
 }
-# bind design and bact files
+# bind design and bact files NO Source
 csi.full.ns <- cbind(design.ns.final,csi_relabun.ns)
 
 csi.ns <- cbind(design.ns.final,otu_final.ns)
 
+# bind design and bact files WITH SOURCE
+csi.relabun.full <- cbind(design_final,csi_relabun)
+dim(csi.relabun.full)
+
+csi.PA.full <- cbind(design_final,csi_pres_abs)
+dim(csi.PA.full)
 # Set treatments
 treatments1 <- as.factor(design.ns.final$Salinity)
 levels(treatments1) <- c("0","5","9","13")
@@ -194,11 +171,11 @@ l.overlap <- function(x){
   return(rev(lengths(temp2)))
   }
 
-fns <- occupants(csi_pres_abs[which(design_final$Number == 2), ])
-f_only <-  occupants(csi_pres_abs[which(design_final$Number == 3), ])
+salt <- occupants(csi_pres_abs[which(design_final$Number == 1), ])
+fresh <-  occupants(csi_pres_abs[which(design_final$Number == 3), ])
 
-draw.pairwise.venn(area1 = length(fns), area2 = length(f_only),
-                    cross.area = length(intersect(fns, f_only)),
+draw.pairwise.venn(area1 = length(salt), area2 = length(fresh),
+                    cross.area = length(intersect(salt, fresh)),
                    category = c("Fresh and Salt", "Salt"), 
                    col = c("green", "blue"), fill = c("green", "blue"),
                    scaled = T, cat.pos = c(210, 140))
@@ -211,39 +188,39 @@ sal9  <- occupants(csi_pres_abs[which(design_final$Salinity == 9),])
 sal13  <- occupants(csi_pres_abs[which(design_final$Salinity == 13),])
 
 
-overlap <- calculate.overlap(list(fns, sal0, sal5, sal9, sal13))
+overlap <- calculate.overlap(list(salt, sal0, sal5, sal9, sal13))
 
 draw.quintuple.venn(c(rev(lengths(overlap))), direct.area = T, scaled = T)
 
 
-draw.quintuple.venn(area1 = length(fns), area2 = length(sal0),
+draw.quintuple.venn(area1 = length(salt), area2 = length(sal0),
      area3 = length(sal5), area4 = length(sal9), area5 = length(sal13), 
-     n12 = length(Reduce(intersect, list(fns, sal0))),
-     n13 = length(Reduce(intersect, list(fns, sal5))), 
-     n14 = length(Reduce(intersect, list(fns, sal9))),
-     n15 = length(Reduce(intersect, list(fns, sal13))),
+     n12 = length(Reduce(intersect, list(salt, sal0))),
+     n13 = length(Reduce(intersect, list(salt, sal5))), 
+     n14 = length(Reduce(intersect, list(salt, sal9))),
+     n15 = length(Reduce(intersect, list(salt, sal13))),
      n23 = length(Reduce(intersect, list(sal0, sal5))),
      n24 = length(Reduce(intersect, list(sal0, sal9))),
      n25 = length(Reduce(intersect, list(sal0, sal13))),
      n34 = length(Reduce(intersect, list(sal5, sal9))),
      n35 = length(Reduce(intersect, list(sal5, sal13))),
      n45 = length(Reduce(intersect, list(sal9, sal13))),
-     n123 = length(Reduce(intersect, list(fns, sal0, sal5))),
-     n124 = length(Reduce(intersect, list(fns, sal0, sal9))),
-     n125 = length(Reduce(intersect, list(fns, sal0, sal13))), 
-     n134 = length(Reduce(intersect, list(fns, sal5, sal9))),
-     n135 = length(Reduce(intersect, list(fns, sal5, sal13))),
-     n145 = length(Reduce(intersect, list(fns, sal9, sal13))),
+     n123 = length(Reduce(intersect, list(salt, sal0, sal5))),
+     n124 = length(Reduce(intersect, list(salt, sal0, sal9))),
+     n125 = length(Reduce(intersect, list(salt, sal0, sal13))), 
+     n134 = length(Reduce(intersect, list(salt, sal5, sal9))),
+     n135 = length(Reduce(intersect, list(salt, sal5, sal13))),
+     n145 = length(Reduce(intersect, list(salt, sal9, sal13))),
      n234 = length(Reduce(intersect, list(sal0, sal5, sal9))),
      n235 = length(Reduce(intersect, list(sal0, sal5, sal13))),
      n245 = length(Reduce(intersect, list(sal0, sal9, sal13))),
      n345 = length(Reduce(intersect, list(sal5, sal9, sal13))),
-     n1234 = length(Reduce(intersect, list(fns, sal0, sal5, sal9))),
-     n1235 = length(Reduce(intersect, list(fns, sal0, sal5, sal13))),
-     n1245 = length(Reduce(intersect, list(fns, sal0, sal9, sal13))),
-     n1345 = length(Reduce(intersect, list(fns, sal5, sal9, sal13))),
+     n1234 = length(Reduce(intersect, list(salt, sal0, sal5, sal9))),
+     n1235 = length(Reduce(intersect, list(salt, sal0, sal5, sal13))),
+     n1245 = length(Reduce(intersect, list(salt, sal0, sal9, sal13))),
+     n1345 = length(Reduce(intersect, list(salt, sal5, sal9, sal13))),
      n2345 = length(Reduce(intersect, list(sal0, sal5, sal9, sal13))),
-     n12345 = length(Reduce(intersect, list(fns, sal0, sal5, sal9, sal13))), 
+     n12345 = length(Reduce(intersect, list(salt, sal0, sal5, sal9, sal13))), 
      scaled = T)
      
  
@@ -262,11 +239,11 @@ draw.quad.venn(area1 = length(sal0), area2 = length(sal5),
      n1234 = length(Reduce(intersect, list(sal0, sal5, sal9, sal13))),
      scaled = T, category = c("sal0", "sal5", "sal9", "sal13"))
      
-     n1235 = length(Reduce(intersect, list(fns, sal0, sal5, sal13))),
-     n1245 = length(Reduce(intersect, list(fns, sal0, sal9, sal13))),
-     n1345 = length(Reduce(intersect, list(fns, sal5, sal9, sal13))),
+     n1235 = length(Reduce(intersect, list(salt, sal0, sal5, sal13))),
+     n1245 = length(Reduce(intersect, list(salt, sal0, sal9, sal13))),
+     n1345 = length(Reduce(intersect, list(salt, sal5, sal9, sal13))),
      n2345 = length(Reduce(intersect, list(sal0, sal5, sal9, sal13))),
-     n12345 = length(Reduce(intersect, list(fns, sal0, sal5, sal9, sal13))), 
+     n12345 = length(Reduce(intersect, list(salt, sal0, sal5, sal9, sal13))), 
      scaled = T)
 
 
