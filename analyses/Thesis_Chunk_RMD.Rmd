@@ -8,7 +8,7 @@ output:
 ---
 Project Description: Analysis of salinity and dispersal of saline aquatic communities on bacterial community structure and function.
 
-Setting up working directory, packages
+# Setting up working directory, packages
 ```{r (1)}
 #PC - set WD manually by Session -> Set Working Directory -> Choose Directory...
 rm(list = ls())
@@ -31,6 +31,7 @@ require("grid")
 require("ape")
 require("png")
 require("picante")
+require("venneuler")
 
 # set std err
 se <- function(x, ...) {
@@ -41,7 +42,7 @@ ci <- function(x, ...) {
 }
 ```
 
-Loading data files and manipulate data files for statistical analyses and graphing
+#Loading data file
 ```{r (2)}
 # load design file - no source tanks
 design.ns <- read.csv("../data/CSI_Design_ENV_NoSourceTanks.csv", row.names=1)
@@ -58,6 +59,13 @@ dim(design.full)
 csi_otu <- read.otu("../data/CSI.shared")
 dim(csi_otu)
 
+# import taxonomy file for later
+csi.tax <- read.tax(taxonomy = "../data/CSI.0.03.cons.taxonomy", 
+                    format = "rdp", tax.levels = 6, col.tax = 3)
+```
+
+# manipulate data files for statistical analyses and graphing
+```{r}
 # remove extra site (no mock community)
 
 # design with source tanks
@@ -87,14 +95,12 @@ all.equal(rownames(design_final), rownames(otu_final))
 
 # create presence/absence and relative abundance matrices
 csi_pres_abs <- (otu_final > 0) * 1
+
 csi_relabun <- otu_final
 for (i in 1:dim(otu_final)[1]) {
-csi_relabun[i, ] <- otu_final[i, ]/sum(otu_final[i,
-])
+  csi_relabun[i, ] <- otu_final[i, ]/sum(otu_final[i,])
 }
 
-# import taxonomy file for later
-csi.tax <- read.tax(taxonomy = "../data/CSI.0.03.cons.taxonomy", format = "rdp", tax.levels = 6, col.tax = 3)
 
 # bind design and bact files WITH SOURCE
 csi.relabun.full <- cbind(design_final,csi_relabun)
@@ -103,17 +109,18 @@ dim(csi.relabun.full)
 csi.PA.full <- cbind(design_final,csi_pres_abs)
 dim(csi.PA.full)
 
-# not yet finished - data manipulation in prep for Venn
-library(dplyr)
-library(reshape2)
 
-test <- csi.PA.full[c(1:15)]
+
+############# Remove Now> ###################
+# not yet finished - data manipulation in prep for Venn
+test <- csi.PA.full[c(1:25)]
+test$Salinity <- as.factor(test$Salinity)
 head(test)
 str(test)
-new.data <- melt(test, id.vars = c("Replicate", "Salinity"))
+new.data <- reshape2::melt(test)
 
 
-dcast(test, Replicate ~ variable, fun.aggregate = mean, measure.var = c("Otu00001"))                 
+dcast(new.data, Replicate ~ variable, fun.aggregate = mean, measure.var = c("Otu00001"))                 
                                  ,
   variable.name = "OTU", 
   value.name = "OTU_PA")
@@ -124,6 +131,10 @@ dcast(csi.PA.full, Replicate ~ variable, fun.aggregate = mean,
 
 head(csi.PA.full)
 str(csi.PA.full)
+
+############# 
+
+
 
 # REMOVE source tanks from otu file
 # REMOVE source tanks Number 1,2,3 from otu_final and use design.ns (manually removed source tanks)
@@ -163,13 +174,105 @@ levels(treatments2) <- c("2","3")
 date_1 <- as.factor(design.ns.final$Date2)
 ```
 
-Venn Diagram
+# Venn Diagram
 ```{r (Venn)}
+
+library("VennDiagram")
+dim(design_final)
+dim(csi_pres_abs)
+
+head(design_final)
+head(csi_pres_abs)
+
+all.equal(rownames(design_final), rownames(csi_pres_abs))
+
+occupants <- function(x){names(which(colSums(x) > 1))}
+l.overlap <- function(x){
+  temp <- calculate.overlap(x)
+  l.temp <- length(temp)
+  temp2 <- temp[1: (l.temp - length(x) )]
+  return(rev(lengths(temp2)))
+  }
+
+fns <- occupants(csi_pres_abs[which(design_final$Number == 2), ])
+f_only <-  occupants(csi_pres_abs[which(design_final$Number == 3), ])
+
+draw.pairwise.venn(area1 = length(fns), area2 = length(f_only),
+                    cross.area = length(intersect(fns, f_only)),
+                   category = c("Fresh and Salt", "Salt"), 
+                   col = c("green", "blue"), fill = c("green", "blue"),
+                   scaled = T, cat.pos = c(210, 140))
+
+
+sal0 <- occupants(csi_pres_abs[which(design_final$Salinity == 0 &
+                                     design_final$Number > 3), ])
+sal5  <- occupants(csi_pres_abs[which(design_final$Salinity == 5),])
+sal9  <- occupants(csi_pres_abs[which(design_final$Salinity == 9),])
+sal13  <- occupants(csi_pres_abs[which(design_final$Salinity == 13),])
+
+
+overlap <- calculate.overlap(list(fns, sal0, sal5, sal9, sal13))
+
+draw.quintuple.venn(c(rev(lengths(overlap))), direct.area = T, scaled = T)
+
+
+draw.quintuple.venn(area1 = length(fns), area2 = length(sal0),
+     area3 = length(sal5), area4 = length(sal9), area5 = length(sal13), 
+     n12 = length(Reduce(intersect, list(fns, sal0))),
+     n13 = length(Reduce(intersect, list(fns, sal5))), 
+     n14 = length(Reduce(intersect, list(fns, sal9))),
+     n15 = length(Reduce(intersect, list(fns, sal13))),
+     n23 = length(Reduce(intersect, list(sal0, sal5))),
+     n24 = length(Reduce(intersect, list(sal0, sal9))),
+     n25 = length(Reduce(intersect, list(sal0, sal13))),
+     n34 = length(Reduce(intersect, list(sal5, sal9))),
+     n35 = length(Reduce(intersect, list(sal5, sal13))),
+     n45 = length(Reduce(intersect, list(sal9, sal13))),
+     n123 = length(Reduce(intersect, list(fns, sal0, sal5))),
+     n124 = length(Reduce(intersect, list(fns, sal0, sal9))),
+     n125 = length(Reduce(intersect, list(fns, sal0, sal13))), 
+     n134 = length(Reduce(intersect, list(fns, sal5, sal9))),
+     n135 = length(Reduce(intersect, list(fns, sal5, sal13))),
+     n145 = length(Reduce(intersect, list(fns, sal9, sal13))),
+     n234 = length(Reduce(intersect, list(sal0, sal5, sal9))),
+     n235 = length(Reduce(intersect, list(sal0, sal5, sal13))),
+     n245 = length(Reduce(intersect, list(sal0, sal9, sal13))),
+     n345 = length(Reduce(intersect, list(sal5, sal9, sal13))),
+     n1234 = length(Reduce(intersect, list(fns, sal0, sal5, sal9))),
+     n1235 = length(Reduce(intersect, list(fns, sal0, sal5, sal13))),
+     n1245 = length(Reduce(intersect, list(fns, sal0, sal9, sal13))),
+     n1345 = length(Reduce(intersect, list(fns, sal5, sal9, sal13))),
+     n2345 = length(Reduce(intersect, list(sal0, sal5, sal9, sal13))),
+     n12345 = length(Reduce(intersect, list(fns, sal0, sal5, sal9, sal13))), 
+     scaled = T)
+     
+ 
+draw.quad.venn(area1 = length(sal0), area2 = length(sal5), 
+                    area3 = length(sal9), area4 = length(sal13), 
+     n12 = length(Reduce(intersect, list(sal0, sal5))),
+     n13 = length(Reduce(intersect, list(sal0, sal9))),
+     n14 = length(Reduce(intersect, list(sal0, sal13))),
+     n23 = length(Reduce(intersect, list(sal5, sal9))),
+     n24 = length(Reduce(intersect, list(sal5, sal13))),
+     n34 = length(Reduce(intersect, list(sal9, sal13))),
+     n123 = length(Reduce(intersect, list(sal0, sal5, sal9))),
+     n124 = length(Reduce(intersect, list(sal0, sal5, sal13))),
+     n134 = length(Reduce(intersect, list(sal0, sal9, sal13))),
+     n234 = length(Reduce(intersect, list(sal5, sal9, sal13))),
+     n1234 = length(Reduce(intersect, list(sal0, sal5, sal9, sal13))),
+     scaled = T, category = c("sal0", "sal5", "sal9", "sal13"))
+     
+     n1235 = length(Reduce(intersect, list(fns, sal0, sal5, sal13))),
+     n1245 = length(Reduce(intersect, list(fns, sal0, sal9, sal13))),
+     n1345 = length(Reduce(intersect, list(fns, sal5, sal9, sal13))),
+     n2345 = length(Reduce(intersect, list(sal0, sal5, sal9, sal13))),
+     n12345 = length(Reduce(intersect, list(fns, sal0, sal5, sal9, sal13))), 
+     scaled = T)
 
 
 ```
 
-Calculating Diversity Metrics
+# Calculating Diversity Metrics
 ```{r (3)}
 # Rarefy Abundances (min abundance is 13,240. We are sampling to 13,000)
 min(rowSums(otu_final.ns))
@@ -195,7 +298,7 @@ csi_otu.div <- cbind(design.ns.final,shannon,richness,J)
 Supplemental Results:
 Use full data set (with source tanks) #Maybe just subset source tanks into a separate figure with no stats (just use as supplemental)
 
-Testing salinity x dispersal influence on DIVERSITY (no source tanks)
+# Testing salinity x dispersal influence on DIVERSITY (no source tanks)
 ```{r (4)}
 # run full parametric statistical model
 shannon.lm <- lm(shannon ~ Dispersal*Salinity*Date, data = csi_otu.div)
