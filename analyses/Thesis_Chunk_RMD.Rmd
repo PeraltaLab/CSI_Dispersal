@@ -213,9 +213,12 @@ sal13  <- occupants(csi_pres_abs[which(design_final$Salinity == 13),])
 
 overlap <- calculate.overlap(list(fns, sal0, sal5, sal9, sal13))
 
+dev.off()
+plot.new()
 draw.quintuple.venn(c(rev(lengths(overlap))), direct.area = T, scaled = T)
 
-
+dev.off()
+plot.new()
 draw.quintuple.venn(area1 = length(fns), area2 = length(sal0),
      area3 = length(sal5), area4 = length(sal9), area5 = length(sal13), 
      n12 = length(Reduce(intersect, list(fns, sal0))),
@@ -245,8 +248,9 @@ draw.quintuple.venn(area1 = length(fns), area2 = length(sal0),
      n2345 = length(Reduce(intersect, list(sal0, sal5, sal9, sal13))),
      n12345 = length(Reduce(intersect, list(fns, sal0, sal5, sal9, sal13))), 
      scaled = T)
-     
- 
+  
+dev.off()   
+plot.new()
 draw.quad.venn(area1 = length(sal0), area2 = length(sal5), 
                     area3 = length(sal9), area4 = length(sal13), 
      n12 = length(Reduce(intersect, list(sal0, sal5))),
@@ -261,15 +265,10 @@ draw.quad.venn(area1 = length(sal0), area2 = length(sal5),
      n234 = length(Reduce(intersect, list(sal5, sal9, sal13))),
      n1234 = length(Reduce(intersect, list(sal0, sal5, sal9, sal13))),
      scaled = T, category = c("sal0", "sal5", "sal9", "sal13"))
-     
-     n1235 = length(Reduce(intersect, list(fns, sal0, sal5, sal13))),
-     n1245 = length(Reduce(intersect, list(fns, sal0, sal9, sal13))),
-     n1345 = length(Reduce(intersect, list(fns, sal5, sal9, sal13))),
-     n2345 = length(Reduce(intersect, list(sal0, sal5, sal9, sal13))),
-     n12345 = length(Reduce(intersect, list(fns, sal0, sal5, sal9, sal13))), 
-     scaled = T)
 
 
+dev.off()
+plot.new()
 ```
 
 # Calculating Diversity Metrics
