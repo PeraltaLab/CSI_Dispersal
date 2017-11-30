@@ -179,11 +179,11 @@ fresh <-  occupants(csi_pres_abs[which(design_final$Number == 2), ])
 
 venn.plot <- draw.pairwise.venn(area1 = length(salt), area2 = length(fresh),
                     cross.area = length(intersect(salt, fresh)),
-                   category = c("Fresh and Salt", "Salt"), 
+                   category = c("Salt", "Fresh"), 
                    col = c("green", "blue"), fill = c("green", "blue"),
                    scaled = T, cat.pos = c(210, 140))
-grid.draw(venn.plot, recording=TRUE) #grid.draw of venn isn't displaying
 grid.newpage()
+grid.draw(venn.plot, recording=TRUE) #grid.draw of venn isn't displaying
 
 sal0 <- occupants(csi_pres_abs[which(design_final$Salinity == 0 &
                                      design_final$Number > 3), ])
@@ -196,16 +196,8 @@ overlap <- calculate.overlap(list(salt, sal0, sal5, sal9, sal13))
 
 dev.off()
 plot.new()
-draw.quintuple.venn(c(rev(lengths(overlap))), direct.area = T, scaled = T)
-
-<<<<<<< HEAD
-dev.off()
-plot.new()
-draw.quintuple.venn(area1 = length(fns), area2 = length(sal0),
-=======
 
 draw.quintuple.venn(area1 = length(salt), area2 = length(sal0),
->>>>>>> upstream/master
      area3 = length(sal5), area4 = length(sal9), area5 = length(sal13), 
      n12 = length(Reduce(intersect, list(salt, sal0))),
      n13 = length(Reduce(intersect, list(salt, sal5))), 
@@ -251,8 +243,7 @@ draw.quad.venn(area1 = length(sal0), area2 = length(sal5),
      n234 = length(Reduce(intersect, list(sal5, sal9, sal13))),
      n1234 = length(Reduce(intersect, list(sal0, sal5, sal9, sal13))),
      scaled = T, category = c("sal0", "sal5", "sal9", "sal13"))
-<<<<<<< HEAD
-=======
+
      
      n1235 = length(Reduce(intersect, list(salt, sal0, sal5, sal13))),
      n1245 = length(Reduce(intersect, list(salt, sal0, sal9, sal13))),
@@ -260,7 +251,7 @@ draw.quad.venn(area1 = length(sal0), area2 = length(sal5),
      n2345 = length(Reduce(intersect, list(sal0, sal5, sal9, sal13))),
      n12345 = length(Reduce(intersect, list(salt, sal0, sal5, sal9, sal13))), 
      scaled = T)
->>>>>>> upstream/master
+
 
 
 dev.off()
@@ -730,6 +721,7 @@ ggsave("../figures/16SrRNA_CSI_Rplot_SourceAndTrt.pdf", plot=last_plot(), device
 #use csi.relabun.full dataframe
 
 sampleREL.dist4 <- vegdist(csi.relabun.full[,-c(1:8)], method="bray")
+Date <- csi.relabun.full$Date2
 
 # PERMANOVA
 adonis4 <- adonis(csi.relabun.full[,-c(1:8)] ~ Date*Dispersal*Salinity, method = "bray", data = csi.relabun.full, perm=1000)
@@ -752,13 +744,15 @@ explainvar2b #6.4
 ```{r}
 pcoa.groups4 <- paste(csi.relabun.full$Dispersal, csi.relabun.full$Salinity, sep = "_")
 
-pcoa.points4 <- data.frame(CSI_pcoa$points, group = pcoa.groups4)
+Date <- csi.relabun.full$Date2
+
+pcoa.points4 <- data.frame(CSI_pcoa4$points, group = pcoa.groups4, date = Date)
 
 # Calculate Centroids (mean and SE)
-pcoa.L.centroids4 <- melt(pcoa.points4, id="group", measure.vars = c("X1", "X2"))
-pcoa.centroids4 <- acast(pcoa.L.centroids4, variable ~ group, mean)
-pcoa.centroids.se4 <- acast(pcoa.L.centroids4, variable ~ group, se)
-pcoa.centroids.sd4 <- acast(pcoa.L.centroids4, variable ~ group, sd)
+pcoa.L.centroids4 <- melt(pcoa.points4, id=c("group", "date"), measure.vars = c("X1", "X2"))
+pcoa.centroids4 <- acast(pcoa.L.centroids4, variable ~ group + date, mean)
+pcoa.centroids.se4 <- acast(pcoa.L.centroids4, variable ~ group + date, se)
+pcoa.centroids.sd4 <- acast(pcoa.L.centroids4, variable ~ group + date, sd)
 
 # Combine
 pcoa.cent.dataframe4 <- cbind(t(pcoa.centroids4), t(pcoa.centroids.se4))
@@ -767,13 +761,18 @@ pcoa.cent.treats4 <- rownames(pcoa.cent.dataframe4)
 
 pcoa.col4 <- as.factor(sapply(strsplit(pcoa.cent.treats4, "_"), `[`, 2)) # Salinity
 pcoa.shape4 <- as.factor(sapply(strsplit(pcoa.cent.treats4, "_"), `[`, 1))  # Dispersal
+
+pcoa.date <- as.factor(sapply(strsplit(pcoa.cent.treats4, "_"), `[`, 3))
+
 ```
 
 # PLOT GGPLOT WITH SOURCE TANKS All data - need to get Day to be labeled on symbol #unsure how to overlay DATE on points
 ```{r}
 df4a <- as.data.frame(pcoa.cent.dataframe4)
-plot4a <- ggplot(df4a, aes(x=V1, y=V2, colour=pcoa.col4, shape = pcoa.shape4, label=Date,
-                 group = interaction(pcoa.col4, pcoa.shape4))) + theme_bw() 
+plot4a <- ggplot(df4a, aes(x=V1, y=V2, colour=pcoa.col4, 
+                           shape = pcoa.shape4, label=pcoa.date,
+                           group = interaction(pcoa.col4, pcoa.shape4))) +
+  theme_bw() 
 plot4a + theme(panel.grid.major = element_blank(), 
                panel.grid.minor = element_blank(), 
                axis.line = element_line(colour = "black")) + 
@@ -787,7 +786,7 @@ theme(panel.background = element_blank()) +
                     values = c("#FFFFFF", "#00FFFF", "#33CCCC", "#0066CC")) + 
   scale_shape_manual(labels = c("TRT fresh","TRT fresh+salt","Control (no dispersal)","Source fresh","Source salt"),
                     values = c(22, 21, 8, 23, 24)) +
-  geom_text(aes(label=Date),hjust=0, vjust=0) +
+  geom_text(aes(label=pcoa.date),hjust=0, vjust=0) +
   theme(axis.title = element_text(size=18), axis.text=element_text(size=14), 
           axis.text.x = element_text(size=14), 
           panel.border = element_rect(colour = "black", size=1.25)) + 
