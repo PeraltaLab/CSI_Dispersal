@@ -2,9 +2,10 @@
 title: "Bacterioplankton response to salinity (aka 2015 CSI Dispersal Experiment)"
 author: "Alex Stucy, Jo Werba, Mike McCoy, Ariane Peralta"
 date: "Last updated on `r format(Sys.time(), '%d %B, %Y')`"
-output: 
-  pdf_document:
-  fig_caption: true
+output:
+  html_document: default
+  fig_caption: yes
+  pdf_document: null
 ---
 Project Description: Analysis of salinity and dispersal of saline aquatic communities on bacterial community structure and function.
 
@@ -152,11 +153,12 @@ date_1 <- as.factor(design.ns.final$Date2)
 ```
 
 # Venn Diagram
-```{r (Venn)}
+```{r (Venn), eval=FALSE, include=FALSE}
 require("VennDiagram")
 library("VennDiagram")
 require("Hmisc")
 library("Hmisc")
+library("gridExtra")
 
 dim(design_final)
 dim(csi_pres_abs)
@@ -182,8 +184,11 @@ venn.plot <- draw.pairwise.venn(area1 = length(salt), area2 = length(fresh),
                    category = c("Salt", "Fresh"), 
                    col = c("green", "blue"), fill = c("green", "blue"),
                    scaled = T, cat.pos = c(210, 140))
+
 grid.newpage()
-grid.draw(venn.plot, recording=TRUE) #grid.draw of venn isn't displaying
+grid.draw(venn.plot, recording=TRUE)
+
+ggsave("../figures/vennSource.pdf", plot=last_plot(), device=NULL, path=NULL, scale=1, width=NA, height=NA, dpi=300, limitsize=TRUE)
 
 sal0 <- occupants(csi_pres_abs[which(design_final$Salinity == 0 &
                                      design_final$Number > 3), ])
@@ -732,8 +737,8 @@ CSI_pcoa4 <- cmdscale(sampleREL.dist4, k=3, eig=TRUE, add=FALSE)
   # Classical (Metric) Multidimensional Scaling; returns PCoA coordinates
   # eig=TRUE returns eigenvalues; k = # of dimensions to calculate
 
-explainvar1b <- round(CSI_pcoa3$eig[1] / sum(CSI_pcoa3$eig), 3) * 100
-explainvar2b <- round(CSI_pcoa3$eig[2] / sum(CSI_pcoa3$eig), 3) * 100
+explainvar1b <- round(CSI_pcoa4$eig[1] / sum(CSI_pcoa4$eig), 3) * 100
+explainvar2b <- round(CSI_pcoa4$eig[2] / sum(CSI_pcoa4$eig), 3) * 100
 sum.eigb <- sum(explainvar1b, explainvar2b)
 
 explainvar1b #20.8
@@ -786,7 +791,7 @@ theme(panel.background = element_blank()) +
                     values = c("#FFFFFF", "#00FFFF", "#33CCCC", "#0066CC")) + 
   scale_shape_manual(labels = c("TRT fresh","TRT fresh+salt","Control (no dispersal)","Source fresh","Source salt"),
                     values = c(22, 21, 8, 23, 24)) +
-  geom_text(aes(label=pcoa.date),hjust=0, vjust=0) +
+  geom_text(aes(label=pcoa.date), colour = "black",hjust=0, vjust=0, nudge_x = 0.04) +
   theme(axis.title = element_text(size=18), axis.text=element_text(size=14), 
           axis.text.x = element_text(size=14), 
           panel.border = element_rect(colour = "black", size=1.25)) + 
