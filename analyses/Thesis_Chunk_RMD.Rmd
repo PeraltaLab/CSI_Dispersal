@@ -68,9 +68,71 @@ dim(csi_otu)
 # load environ/function file - includes expt design, decomp data, Cmin, nutrients day 45 only - need sreal
 design.env.full <- read.csv("../data/CSI_Design_ENV_Source.csv", row.names=1)
 
-# import taxonomy file for later
+hea# import taxonomy file for later
 csi.tax <- read.tax(taxonomy = "../data/CSI.0.03.cons.taxonomy", 
                     format = "rdp", tax.levels = 6, col.tax = 3)
+```
+# nutrient plots - all data - supplemental
+```{r (Summary - ENV day 45 only), echo=TRUE}
+#design.env.full
+str(design.env.full)
+
+#ammonium
+ammonium <- ggplot(design.env.full, aes(x=Salinity, y=NH4uM, color=as.factor(Dispersal))) + theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor =element_blank(), axis.line = element_line(colour = "black"), panel.border = element_rect(colour = "black",size=1)) + stat_summary(fun.data=mean_cl_boot,size=1.25, position=position_dodge(width=0.75)) +
+scale_color_manual(name="Dispersal", values=c("skyblue","gray","black", "purple"), labels = c("source only", "no dispersal", "fresh (2)", "fresh+salt (3)")) + labs(x = "Salinity", y = "Ammonium-N (µM)") +theme(axis.title=element_text(vjust=1,size=16,face="bold"), axis.text=element_text(size=14))
+
+ggsave("../figures/ammonium.pdf", plot=last_plot(), device=NULL, path=NULL, scale=1, width=NA, height=NA, dpi=300, limitsize=TRUE)
+
+#nitrate+nitrite
+nitrate <- ggplot(design.env.full, aes(x=Salinity, y=NO3NO2uM, color=as.factor(Dispersal))) + theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor =element_blank(), axis.line = element_line(colour = "black"), panel.border = element_rect(colour = "black",size=1)) + stat_summary(fun.data=mean_cl_boot,size=1.25, position=position_dodge(width=0.75)) +
+scale_color_manual(name="Dispersal", values=c("skyblue","gray","black", "purple"), labels = c("source only", "no dispersal", "fresh (2)", "fresh+salt (3)")) + labs(x = "Salinity", y = "Nitrate+Nitrite-N (µM)") +theme(axis.title=element_text(vjust=1,size=16,face="bold"), axis.text=element_text(size=14))
+
+ggsave("../figures/nitrate.pdf", plot=last_plot(), device=NULL, path=NULL, scale=1, width=NA, height=NA, dpi=300, limitsize=TRUE)
+
+#phosphate
+phosphate <- ggplot(design.env.full, aes(x=Salinity, y=PO4uM, color=as.factor(Dispersal))) + theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor =element_blank(), axis.line = element_line(colour = "black"), panel.border = element_rect(colour = "black",size=1)) + stat_summary(fun.data=mean_cl_boot,size=1.25, position=position_dodge(width=0.75)) +
+scale_color_manual(name="Dispersal", values=c("skyblue","gray","black", "purple"), labels = c("source only", "no dispersal", "fresh (2)", "fresh+salt (3)")) + labs(x = "Salinity", y = "Phosphate-P (µM)") +theme(axis.title=element_text(vjust=1,size=16,face="bold"), axis.text=element_text(size=14))
+
+ggsave("../figures/phosphate.pdf", plot=last_plot(), device=NULL, path=NULL, scale=1, width=NA, height=NA, dpi=300, limitsize=TRUE)
+
+source("../bin/multiplot.R")
+jpeg("../figures/NutrientsAll.jpeg", width = 480, height = 480 * 1.75)
+multiplot(ammonium, nitrate, phosphate, cols=1) 
+dev.off()
+```
+#function plots - all data - supplemental
+```{r (Summary - ENV day 45 only), echo=TRUE}
+#design.env.full
+str(design.env.full)
+
+#Cmin
+Cmin<- ggplot(design.env.full, aes(x=Salinity, y=Cmin, color=as.factor(Dispersal))) + theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor =element_blank(), axis.line = element_line(colour = "black"), panel.border = element_rect(colour = "black",size=1)) + stat_summary(fun.data=mean_cl_boot,size=1.25, position=position_dodge(width=0.75)) +
+scale_color_manual(name="Dispersal", values=c("skyblue","gray","black", "purple"), labels = c("source only", "no dispersal", "fresh (2)", "fresh+salt (3)")) + labs(x = "Salinity", y = (expression(paste("C min. (ng CO"[2]," mL"^-{1}," d"^-{1},")")))) +theme(axis.title=element_text(vjust=1,size=16,face="bold"), axis.text=element_text(size=14))
+
+ggsave("../figures/CminSourceAll.pdf", plot=last_plot(), device=NULL, path=NULL, scale=1, width=NA, height=NA, dpi=300, limitsize=TRUE)
+
+#maple
+maple <- ggplot(design.env.full, aes(x=Salinity, y=Maple_dmass, color=as.factor(Dispersal))) + theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor =element_blank(), axis.line = element_line(colour = "black"), panel.border = element_rect(colour = "black",size=1)) + stat_summary(fun.data=mean_cl_boot,size=1.25, position=position_dodge(width=0.75)) + ylim(0, 8)+
+scale_color_manual(name="Dispersal", values=c("skyblue","gray","black", "purple"), labels = c("source only", "no dispersal", "fresh (2)", "fresh+salt (3)")) + labs(x = "Salinity", y = "Maple mass loss (g)") +theme(axis.title=element_text(vjust=1,size=16,face="bold"), axis.text=element_text(size=14))
+
+ggsave("../figures/mapleSourceAll.pdf", plot=last_plot(), device=NULL, path=NULL, scale=1, width=NA, height=NA, dpi=300, limitsize=TRUE)
+
+#spartina
+spartina <- ggplot(design.env.full, aes(x=Salinity, y=Spartina_dmass, color=as.factor(Dispersal))) + theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor =element_blank(), axis.line = element_line(colour = "black"), panel.border = element_rect(colour = "black",size=1)) + stat_summary(fun.data=mean_cl_boot,size=1.25, position=position_dodge(width=0.75)) + ylim(0, 8)+
+scale_color_manual(name="Dispersal", values=c("skyblue","gray","black", "purple"), labels = c("source only", "no dispersal", "fresh (2)", "fresh+salt (3)")) + labs(x = "Salinity", y = "Spartina mass loss (g)") +theme(axis.title=element_text(vjust=1,size=16,face="bold"), axis.text=element_text(size=14))
+
+ggsave("../figures/spartinaSourceAll.pdf", plot=last_plot(), device=NULL, path=NULL, scale=1, width=NA, height=NA, dpi=300, limitsize=TRUE)
+
+#phragmites
+phrag <- ggplot(design.env.full, aes(x=Salinity, y=Phrag_dmass, color=as.factor(Dispersal))) + theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor =element_blank(), axis.line = element_line(colour = "black"), panel.border = element_rect(colour = "black",size=1)) + stat_summary(fun.data=mean_cl_boot,size=1.25, position=position_dodge(width=0.75)) + ylim(0, 8)+
+scale_color_manual(name="Dispersal", values=c("skyblue","gray","black", "purple"), labels = c("source only", "no dispersal", "fresh (2)", "fresh+salt (3)")) + labs(x = "Salinity", y = "Phragmites mass loss (g)") +theme(axis.title=element_text(vjust=1,size=16,face="bold"), axis.text=element_text(size=14))
+
+ggsave("../figures/phragSourceAll.pdf", plot=last_plot(), device=NULL, path=NULL, scale=1, width=NA, height=NA, dpi=300, limitsize=TRUE)
+
+source("../bin/multiplot.R")
+jpeg("../figures/CarbonFxnAll.jpeg", width = 480, height = 480 * 1.75)
+multiplot(Cmin,maple,spartina,phrag, cols=1)
+dev.off()
 ```
 
 # manipulate data files for statistical analyses and graphing
