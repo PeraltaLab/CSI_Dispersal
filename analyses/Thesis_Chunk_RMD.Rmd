@@ -3,10 +3,10 @@ title: "Bacterioplankton response to salinity (aka 2015 CSI Dispersal Experiment
 author: "Alex Stucy, Jo Werba, Mike McCoy, Ariane Peralta"
 date: "Last updated on `r format(Sys.time(), '%d %B, %Y')`"
 output:
-  pdf_document: null
-  fig_caption: yes
   html_document: default
-editor_options: 
+  fig_caption: yes
+  pdf_document: null
+editor_options:
   chunk_output_type: console
 ---
 Project Description: Analysis of salinity and dispersal of saline aquatic communities on bacterial community structure and function.
@@ -14,6 +14,11 @@ Project Description: Analysis of salinity and dispersal of saline aquatic commun
 # Setting up working directory, packages
 ```{r (1), include=FALSE}
 #PC - set WD manually by Session -> Set Working Directory -> Choose Directory...
+if(Sys.info()[1] == "Darwin"){
+  setwd("~/GitHub/CSI_Dispersal/analyses/")
+} else {
+  # setwd(choose.dir())
+}
 rm(list = ls())
 
 #Set source R tools
@@ -34,7 +39,7 @@ require("grid")
 require("ape")
 require("png")
 require("picante")
-require("venneuler")
+# require("venneuler")
 require("Hmisc")
 
 # set std err
@@ -68,12 +73,12 @@ dim(csi_otu)
 # load environ/function file - includes expt design, decomp data, Cmin, nutrients day 45 only - need sreal
 design.env.full <- read.csv("../data/CSI_Design_ENV_Source.csv", row.names=1)
 
-hea# import taxonomy file for later
+# import taxonomy file for later
 csi.tax <- read.tax(taxonomy = "../data/CSI.0.03.cons.taxonomy", 
                     format = "rdp", tax.levels = 6, col.tax = 3)
 ```
 # nutrient plots - all data - supplemental
-```{r (Summary - ENV day 45 only), echo=TRUE}
+```{r (Supp Summary - ENV day 45 only), echo=TRUE}
 #design.env.full
 str(design.env.full)
 
@@ -264,9 +269,10 @@ venn.plot2 <- draw.triple.venn(area1 = length(salt), area2 = length(sal0),
      n23 = length(Reduce(intersect, list(sal0, sal5))),
      n13 = length(Reduce(intersect, list(salt, sal5))), 
      n123 = length(Reduce(intersect, list(salt, sal0, sal5))),  
-      category = c("Source Salt", "Salinity 0", "Salinity 5"), 
-                   col = c("green", "darkblue", "orange"), fill = c("green", "darkblue","orange"),
-                   scaled = T, cex=2, cat.cex=2, cat.pos = c(-40, 40, 180))
+     category = c("Source Salt", "Salinity 0", "Salinity 5"), 
+                   col = c("green", "darkblue", "orange"), 
+     fill = c("green", "darkblue","orange"),
+     scaled = T, cex=2, cat.cex=2, cat.pos = c(-40, 40, 180))
 #manuallly export PDF to figures folder
 dev.off()
 
@@ -361,10 +367,11 @@ shannon.source <- diversity(otu.rarefy, "shannon")
 richness.source <- rowSums((otu.rarefy >= 1))
 
 # Pielou’s evenness
-J.source <- shannon/log(specnumber(otu.rarefy[,-c(1:1)]))
+J.source <- shannon.source/log(specnumber(otu.rarefy[,-c(1:1)]))
 
 # Dombined design,shannon,richness,evenness - no source tanks
-csi_otu.div.source <- cbind(design_final,shannon.source,richness.source,J.source)
+csi_otu.div.source <- cbind(design_final, shannon.source, 
+                            richness.source,J.source)
 ```
 
 (1) How does salinity/dispersal/date influence bacterial diversity?
