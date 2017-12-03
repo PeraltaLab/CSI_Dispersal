@@ -3,14 +3,16 @@ title: "Bacterioplankton response to salinity (aka 2015 CSI Dispersal Experiment
 author: "Alex Stucy, Jo Werba, Mike McCoy, Ariane Peralta"
 date: "Last updated on `r format(Sys.time(), '%d %B, %Y')`"
 output:
-  html_document: default
-  fig_caption: yes
   pdf_document: null
+  fig_caption: yes
+  html_document: default
+editor_options: 
+  chunk_output_type: console
 ---
 Project Description: Analysis of salinity and dispersal of saline aquatic communities on bacterial community structure and function.
 
 # Setting up working directory, packages
-```{r (1)}
+```{r (1), include=FALSE}
 #PC - set WD manually by Session -> Set Working Directory -> Choose Directory...
 rm(list = ls())
 
@@ -45,7 +47,7 @@ ci <- function(x, ...) {
 ```
 
 #Loading data file
-```{r (2)}
+```{r (2), include=FALSE}
 #NOTE: Tank 3 only had fresh water added. Tank 1 was the source for the salt and tank 2 was the source for the fresh water.
 
 # load design file - no source tanks
@@ -66,13 +68,75 @@ dim(csi_otu)
 # load environ/function file - includes expt design, decomp data, Cmin, nutrients day 45 only - need sreal
 design.env.full <- read.csv("../data/CSI_Design_ENV_Source.csv", row.names=1)
 
-# import taxonomy file for later
+hea# import taxonomy file for later
 csi.tax <- read.tax(taxonomy = "../data/CSI.0.03.cons.taxonomy", 
                     format = "rdp", tax.levels = 6, col.tax = 3)
 ```
+# nutrient plots - all data - supplemental
+```{r (Summary - ENV day 45 only), echo=TRUE}
+#design.env.full
+str(design.env.full)
+
+#ammonium
+ammonium <- ggplot(design.env.full, aes(x=Salinity, y=NH4uM, color=as.factor(Dispersal))) + theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor =element_blank(), axis.line = element_line(colour = "black"), panel.border = element_rect(colour = "black",size=1)) + stat_summary(fun.data=mean_cl_boot,size=1.25, position=position_dodge(width=0.75)) +
+scale_color_manual(name="Dispersal", values=c("skyblue","gray","black", "purple"), labels = c("source only", "no dispersal", "fresh (2)", "fresh+salt (3)")) + labs(x = "Salinity", y = "Ammonium-N (µM)") +theme(axis.title=element_text(vjust=1,size=16,face="bold"), axis.text=element_text(size=14))
+
+ggsave("../figures/ammonium.pdf", plot=last_plot(), device=NULL, path=NULL, scale=1, width=NA, height=NA, dpi=300, limitsize=TRUE)
+
+#nitrate+nitrite
+nitrate <- ggplot(design.env.full, aes(x=Salinity, y=NO3NO2uM, color=as.factor(Dispersal))) + theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor =element_blank(), axis.line = element_line(colour = "black"), panel.border = element_rect(colour = "black",size=1)) + stat_summary(fun.data=mean_cl_boot,size=1.25, position=position_dodge(width=0.75)) +
+scale_color_manual(name="Dispersal", values=c("skyblue","gray","black", "purple"), labels = c("source only", "no dispersal", "fresh (2)", "fresh+salt (3)")) + labs(x = "Salinity", y = "Nitrate+Nitrite-N (µM)") +theme(axis.title=element_text(vjust=1,size=16,face="bold"), axis.text=element_text(size=14))
+
+ggsave("../figures/nitrate.pdf", plot=last_plot(), device=NULL, path=NULL, scale=1, width=NA, height=NA, dpi=300, limitsize=TRUE)
+
+#phosphate
+phosphate <- ggplot(design.env.full, aes(x=Salinity, y=PO4uM, color=as.factor(Dispersal))) + theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor =element_blank(), axis.line = element_line(colour = "black"), panel.border = element_rect(colour = "black",size=1)) + stat_summary(fun.data=mean_cl_boot,size=1.25, position=position_dodge(width=0.75)) +
+scale_color_manual(name="Dispersal", values=c("skyblue","gray","black", "purple"), labels = c("source only", "no dispersal", "fresh (2)", "fresh+salt (3)")) + labs(x = "Salinity", y = "Phosphate-P (µM)") +theme(axis.title=element_text(vjust=1,size=16,face="bold"), axis.text=element_text(size=14))
+
+ggsave("../figures/phosphate.pdf", plot=last_plot(), device=NULL, path=NULL, scale=1, width=NA, height=NA, dpi=300, limitsize=TRUE)
+
+source("../bin/multiplot.R")
+jpeg("../figures/NutrientsAll.jpeg", width = 480, height = 480 * 1.75)
+multiplot(ammonium, nitrate, phosphate, cols=1) 
+dev.off()
+```
+#function plots - all data - supplemental
+```{r (Summary - ENV day 45 only), echo=TRUE}
+#design.env.full
+str(design.env.full)
+
+#Cmin
+Cmin<- ggplot(design.env.full, aes(x=Salinity, y=Cmin, color=as.factor(Dispersal))) + theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor =element_blank(), axis.line = element_line(colour = "black"), panel.border = element_rect(colour = "black",size=1)) + stat_summary(fun.data=mean_cl_boot,size=1.25, position=position_dodge(width=0.75)) +
+scale_color_manual(name="Dispersal", values=c("skyblue","gray","black", "purple"), labels = c("source only", "no dispersal", "fresh (2)", "fresh+salt (3)")) + labs(x = "Salinity", y = (expression(paste("C min. (ng CO"[2]," mL"^-{1}," d"^-{1},")")))) +theme(axis.title=element_text(vjust=1,size=16,face="bold"), axis.text=element_text(size=14))
+
+ggsave("../figures/CminSourceAll.pdf", plot=last_plot(), device=NULL, path=NULL, scale=1, width=NA, height=NA, dpi=300, limitsize=TRUE)
+
+#maple
+maple <- ggplot(design.env.full, aes(x=Salinity, y=Maple_dmass, color=as.factor(Dispersal))) + theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor =element_blank(), axis.line = element_line(colour = "black"), panel.border = element_rect(colour = "black",size=1)) + stat_summary(fun.data=mean_cl_boot,size=1.25, position=position_dodge(width=0.75)) + ylim(0, 8)+
+scale_color_manual(name="Dispersal", values=c("skyblue","gray","black", "purple"), labels = c("source only", "no dispersal", "fresh (2)", "fresh+salt (3)")) + labs(x = "Salinity", y = "Maple mass loss (g)") +theme(axis.title=element_text(vjust=1,size=16,face="bold"), axis.text=element_text(size=14))
+
+ggsave("../figures/mapleSourceAll.pdf", plot=last_plot(), device=NULL, path=NULL, scale=1, width=NA, height=NA, dpi=300, limitsize=TRUE)
+
+#spartina
+spartina <- ggplot(design.env.full, aes(x=Salinity, y=Spartina_dmass, color=as.factor(Dispersal))) + theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor =element_blank(), axis.line = element_line(colour = "black"), panel.border = element_rect(colour = "black",size=1)) + stat_summary(fun.data=mean_cl_boot,size=1.25, position=position_dodge(width=0.75)) + ylim(0, 8)+
+scale_color_manual(name="Dispersal", values=c("skyblue","gray","black", "purple"), labels = c("source only", "no dispersal", "fresh (2)", "fresh+salt (3)")) + labs(x = "Salinity", y = "Spartina mass loss (g)") +theme(axis.title=element_text(vjust=1,size=16,face="bold"), axis.text=element_text(size=14))
+
+ggsave("../figures/spartinaSourceAll.pdf", plot=last_plot(), device=NULL, path=NULL, scale=1, width=NA, height=NA, dpi=300, limitsize=TRUE)
+
+#phragmites
+phrag <- ggplot(design.env.full, aes(x=Salinity, y=Phrag_dmass, color=as.factor(Dispersal))) + theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor =element_blank(), axis.line = element_line(colour = "black"), panel.border = element_rect(colour = "black",size=1)) + stat_summary(fun.data=mean_cl_boot,size=1.25, position=position_dodge(width=0.75)) + ylim(0, 8)+
+scale_color_manual(name="Dispersal", values=c("skyblue","gray","black", "purple"), labels = c("source only", "no dispersal", "fresh (2)", "fresh+salt (3)")) + labs(x = "Salinity", y = "Phragmites mass loss (g)") +theme(axis.title=element_text(vjust=1,size=16,face="bold"), axis.text=element_text(size=14))
+
+ggsave("../figures/phragSourceAll.pdf", plot=last_plot(), device=NULL, path=NULL, scale=1, width=NA, height=NA, dpi=300, limitsize=TRUE)
+
+source("../bin/multiplot.R")
+jpeg("../figures/CarbonFxnAll.jpeg", width = 480, height = 480 * 1.75)
+multiplot(Cmin,maple,spartina,phrag, cols=1)
+dev.off()
+```
 
 # manipulate data files for statistical analyses and graphing
-```{r}
+```{r (3), include=FALSE}
 # remove extra site (no mock community)
 
 # design only with source tanks
@@ -153,18 +217,16 @@ date_1 <- as.factor(design.ns.final$Date2)
 ```
 
 # Venn Diagram
-```{r (Venn), eval=FALSE, include=FALSE}
+```{r (Venn), echo=TRUE}
 require("VennDiagram")
-library("VennDiagram")
 require("Hmisc")
-library("Hmisc")
 library("gridExtra")
 
 dim(design_final)
 dim(csi_pres_abs)
 
-head(design_final)
-head(csi_pres_abs)
+#head(design_final)
+#head(csi_pres_abs)
 
 all.equal(rownames(design_final), rownames(csi_pres_abs))
 
@@ -179,16 +241,15 @@ l.overlap <- function(x){
 salt <- occupants(csi_pres_abs[which(design_final$Number == 1), ])
 fresh <-  occupants(csi_pres_abs[which(design_final$Number == 2), ])
 
+
 venn.plot <- draw.pairwise.venn(area1 = length(salt), area2 = length(fresh),
                     cross.area = length(intersect(salt, fresh)),
-                   category = c("Salt", "Fresh"), 
+                   category = c("Source Salt", "Source Fresh"), 
                    col = c("green", "blue"), fill = c("green", "blue"),
-                   scaled = T, cat.pos = c(210, 140))
+                   scaled = T, cex=2, cat.cex=2, cat.pos = c(200, 160))
+#manuallly export PDF to figures folder
+dev.off()
 
-grid.newpage()
-grid.draw(venn.plot, recording=TRUE)
-
-ggsave("../figures/vennSource.pdf", plot=last_plot(), device=NULL, path=NULL, scale=1, width=NA, height=NA, dpi=300, limitsize=TRUE)
 
 sal0 <- occupants(csi_pres_abs[which(design_final$Salinity == 0 &
                                      design_final$Number > 3), ])
@@ -197,74 +258,82 @@ sal9  <- occupants(csi_pres_abs[which(design_final$Salinity == 9),])
 sal13  <- occupants(csi_pres_abs[which(design_final$Salinity == 13),])
 
 
-overlap <- calculate.overlap(list(salt, sal0, sal5, sal9, sal13))
-
-dev.off()
-plot.new()
-
-draw.quintuple.venn(area1 = length(salt), area2 = length(sal0),
-     area3 = length(sal5), area4 = length(sal9), area5 = length(sal13), 
+venn.plot2 <- draw.triple.venn(area1 = length(salt), area2 = length(sal0),
+     area3 = length(sal5), euler.d = TRUE,  
      n12 = length(Reduce(intersect, list(salt, sal0))),
-     n13 = length(Reduce(intersect, list(salt, sal5))), 
-     n14 = length(Reduce(intersect, list(salt, sal9))),
-     n15 = length(Reduce(intersect, list(salt, sal13))),
      n23 = length(Reduce(intersect, list(sal0, sal5))),
-     n24 = length(Reduce(intersect, list(sal0, sal9))),
-     n25 = length(Reduce(intersect, list(sal0, sal13))),
-     n34 = length(Reduce(intersect, list(sal5, sal9))),
-     n35 = length(Reduce(intersect, list(sal5, sal13))),
-     n45 = length(Reduce(intersect, list(sal9, sal13))),
-     n123 = length(Reduce(intersect, list(salt, sal0, sal5))),
-     n124 = length(Reduce(intersect, list(salt, sal0, sal9))),
-     n125 = length(Reduce(intersect, list(salt, sal0, sal13))), 
-     n134 = length(Reduce(intersect, list(salt, sal5, sal9))),
-     n135 = length(Reduce(intersect, list(salt, sal5, sal13))),
-     n145 = length(Reduce(intersect, list(salt, sal9, sal13))),
-     n234 = length(Reduce(intersect, list(sal0, sal5, sal9))),
-     n235 = length(Reduce(intersect, list(sal0, sal5, sal13))),
-     n245 = length(Reduce(intersect, list(sal0, sal9, sal13))),
-     n345 = length(Reduce(intersect, list(sal5, sal9, sal13))),
-     n1234 = length(Reduce(intersect, list(salt, sal0, sal5, sal9))),
-     n1235 = length(Reduce(intersect, list(salt, sal0, sal5, sal13))),
-     n1245 = length(Reduce(intersect, list(salt, sal0, sal9, sal13))),
-     n1345 = length(Reduce(intersect, list(salt, sal5, sal9, sal13))),
-     n2345 = length(Reduce(intersect, list(sal0, sal5, sal9, sal13))),
-     n12345 = length(Reduce(intersect, list(salt, sal0, sal5, sal9, sal13))), 
-     scaled = T)
-  
-dev.off()   
-plot.new()
-draw.quad.venn(area1 = length(sal0), area2 = length(sal5), 
-                    area3 = length(sal9), area4 = length(sal13), 
-     n12 = length(Reduce(intersect, list(sal0, sal5))),
-     n13 = length(Reduce(intersect, list(sal0, sal9))),
-     n14 = length(Reduce(intersect, list(sal0, sal13))),
-     n23 = length(Reduce(intersect, list(sal5, sal9))),
-     n24 = length(Reduce(intersect, list(sal5, sal13))),
-     n34 = length(Reduce(intersect, list(sal9, sal13))),
-     n123 = length(Reduce(intersect, list(sal0, sal5, sal9))),
-     n124 = length(Reduce(intersect, list(sal0, sal5, sal13))),
-     n134 = length(Reduce(intersect, list(sal0, sal9, sal13))),
-     n234 = length(Reduce(intersect, list(sal5, sal9, sal13))),
-     n1234 = length(Reduce(intersect, list(sal0, sal5, sal9, sal13))),
-     scaled = T, category = c("sal0", "sal5", "sal9", "sal13"))
-
-     
-     n1235 = length(Reduce(intersect, list(salt, sal0, sal5, sal13))),
-     n1245 = length(Reduce(intersect, list(salt, sal0, sal9, sal13))),
-     n1345 = length(Reduce(intersect, list(salt, sal5, sal9, sal13))),
-     n2345 = length(Reduce(intersect, list(sal0, sal5, sal9, sal13))),
-     n12345 = length(Reduce(intersect, list(salt, sal0, sal5, sal9, sal13))), 
-     scaled = T)
-
-
-
+     n13 = length(Reduce(intersect, list(salt, sal5))), 
+     n123 = length(Reduce(intersect, list(salt, sal0, sal5))),  
+      category = c("Source Salt", "Salinity 0", "Salinity 5"), 
+                   col = c("green", "darkblue", "orange"), fill = c("green", "darkblue","orange"),
+                   scaled = T, cex=2, cat.cex=2, cat.pos = c(-40, 40, 180))
+#manuallly export PDF to figures folder
 dev.off()
-plot.new()
+
+venn.plot3 <- draw.triple.venn(area1 = length(salt), area2 = length(sal5),
+     area3 = length(sal9), euler.d = TRUE,  
+     n12 = length(Reduce(intersect, list(salt, sal5))),
+     n23 = length(Reduce(intersect, list(sal5, sal9))),
+     n13 = length(Reduce(intersect, list(salt, sal9))), 
+     n123 = length(Reduce(intersect, list(salt, sal5, sal9))),  
+      category = c("Source Salt", "Salinity 5", "Salinity 9"), 
+                   col = c("green", "orange", "purple"), fill = c("green", "orange", "purple"),
+                   scaled = T, cex=2, cat.cex=2, cat.pos = c(-40, 40, 180))
+#manuallly export PDF to figures folder
+dev.off()
+
+venn.plot4 <- draw.triple.venn(area1 = length(salt), area2 = length(sal9),
+     area3 = length(sal13), euler.d = TRUE,  
+     n12 = length(Reduce(intersect, list(salt, sal9))),
+     n23 = length(Reduce(intersect, list(sal9, sal13))),
+     n13 = length(Reduce(intersect, list(salt, sal13))), 
+     n123 = length(Reduce(intersect, list(salt, sal9, sal13))),  
+      category = c("Source Salt", "Salinity 9", "Salinity 13"), 
+                   col = c("green", "purple", "darkgreen"), fill = c("green", "purple", "darkgreen"),
+                   scaled = T, cex=2, cat.cex=2, cat.pos = c(-30, 30, 50))
+#manuallly export PDF to figures folder
+dev.off()
+
+venn.plot5 <- draw.triple.venn(area1 = length(fresh), area2 = length(sal0),
+     area3 = length(sal5), euler.d = TRUE,  
+     n12 = length(Reduce(intersect, list(fresh, sal0))),
+     n23 = length(Reduce(intersect, list(sal0, sal5))),
+     n13 = length(Reduce(intersect, list(fresh, sal5))), 
+     n123 = length(Reduce(intersect, list(fresh, sal0, sal5))),  
+      category = c("Source Fresh", "Salinity 0", "Salinity 5"), 
+                   col = c("blue", "darkblue", "orange"), fill = c("blue", "darkblue","orange"),
+                   scaled = T, cex=2, cat.cex=2, cat.pos = c(-40, 40, 180))
+#manuallly export PDF to figures folder
+dev.off()
+
+venn.plot5 <- draw.triple.venn(area1 = length(fresh), area2 = length(sal5),
+     area3 = length(sal9), euler.d = TRUE,  
+     n12 = length(Reduce(intersect, list(fresh, sal5))),
+     n23 = length(Reduce(intersect, list(sal5, sal9))),
+     n13 = length(Reduce(intersect, list(fresh, sal9))), 
+     n123 = length(Reduce(intersect, list(fresh, sal5, sal9))),  
+      category = c("Source Fresh", "Salinity 5", "Salinity 9"), 
+                   col = c("blue", "orange", "purple"), fill = c("blue", "orange", "purple"),
+                   scaled = T, cex=2, cat.cex=2, cat.pos = c(-40, 40, 180))
+#manuallly export PDF to figures folder
+dev.off()
+
+venn.plot6 <- draw.triple.venn(area1 = length(fresh), area2 = length(sal9),
+     area3 = length(sal13), euler.d = TRUE,  
+     n12 = length(Reduce(intersect, list(fresh, sal9))),
+     n23 = length(Reduce(intersect, list(sal9, sal13))),
+     n13 = length(Reduce(intersect, list(fresh, sal13))), 
+     n123 = length(Reduce(intersect, list(fresh, sal9, sal13))),  
+      category = c("Source Fresh", "Salinity 9", "Salinity 13"), 
+                   col = c("blue", "purple", "darkgreen"), fill = c("blue", "purple", "darkgreen"),
+                   scaled = T, cex=2, cat.cex=2, cat.pos = c(-30, 30, 180))
+#manuallly export PDF to figures folder
+dev.off()
+
 ```
 
 # Calculating Diversity Metrics
-```{r (3)}
+```{r (Diversity Metrics), echo=TRUE}
 # Rarefy Abundances (min abundance is 13,240. We are sampling to 13,000)
 min(rowSums(otu_final.ns))
 otu.rarefy <- rrarefy(otu_final.ns, 13000)
@@ -305,8 +374,8 @@ csi_otu.div.source <- cbind(design_final,shannon.source,richness.source,J.source
 Supplemental Results:
 Use full data set (with source tanks) #Maybe just subset source tanks into a separate figure with no stats (just use as supplemental)
 
-# Testing salinity x dispersal influence on DIVERSITY (no source tanks)
-```{r (4)}
+# Testing salinity x dispersal influence on DIVERSITY
+```{r (Shannon), echo=TRUE}
 # run full parametric statistical model
 shannon.lm <- lm(shannon ~ Dispersal*Salinity*Date, data = csi_otu.div)
 plot(shannon.lm)
@@ -331,10 +400,7 @@ plot(shannon.lm.source)
 summary(shannon.lm.source)
 shannon.lm.source
 anova(shannon.lm.source)
-```
 
-Plotting diversity metrics
-```{r (5)}
 date_1 <- as.factor(design.ns.final$Date2)
 labels <- c("0"="Day 0","18"="Day 18", "45"="Day 45")
 
@@ -355,12 +421,11 @@ ggsave("../figures/shannon.source.pdf", plot=last_plot(), device=NULL, path=NULL
 ```
 (2) How does salinity/dispersal/date influence bacterial evenness?
 
-```{r}
+```{r (Evenness Metric), echo=TRUE}
 # run full parametric statistical model
 J.lm <- lm(J ~ Dispersal*Salinity*Date, data = csi_otu.div)
 plot(J.lm)
 anova(J.lm)
-
 
 # run linear regression measured salinity used instead of 'factor' salinity
 J.reg <- lm(J~Salinity_real, data = csi_otu.div)
@@ -391,7 +456,7 @@ ggsave("../figures/pielousj.source.pdf", plot=last_plot(), device=NULL, path=NUL
 
 (3) How does salinity/dispersal/date influence bacterial richness?
 
-```{r}
+```{r (Richness Metric), echo=TRUE}
 # run full parametric statistical model
 richness.lm <- lm(log(richness) ~ Dispersal*Salinity*Date, data = csi_otu.div)
 plot(richness.lm)
@@ -431,7 +496,7 @@ Calculate C mineralization rate (should be completed already in CSI shared folde
 Graph C mineralization
 Run stat model Cmin~dispersal + salinity + dispersal*salinity
 
-```{r (4 w source tanks)}
+```{r (Carbon Min), echo=FALSE}
 #Cmin data inculded in full data set - no longer need to import separate file. Note: only use Date2=45 since Cmin only completed Day 45 of experiment
 
 # run full parametric statistical model SOURCE
@@ -482,7 +547,7 @@ Revisit original data set and include source tanks to Rmd file - still waiting o
 Graph PCoA ordination (include source tanks) - salinity=colors, date=shapes, label source tanks
 Run PERMANOVA to test bacterial community ~ salinity + dispersal + salinity*dispersal
 
-```{r (6 with NO SOURCE tanks)}
+```{r (Community Composition), echo=FALSE}
 require("stats")
 require("labdsv")
 require("mgcv")
@@ -513,7 +578,7 @@ explainvar1a #17.2
 explainvar2a #7.4
 ```
 # PCoA Plot Design without Source
-```{r}
+```{r (PCoA), echo=FALSE}
 all.equal(rownames(design.ns.final), rownames(csi_relabun.ns))
 
 pcoa.groups <- paste(design.ns.final$Date, design.ns.final$Salinity, sep = "_")
@@ -536,7 +601,7 @@ pcoa.shape <- as.factor(sapply(strsplit(pcoa.cent.treats, "_"), `[`, 1))  # Date
 ```
 
 # Plot (ggplot)
-```{r}
+```{r (Plot PCoA no source), echo=FALSE}
 df1a <- as.data.frame(pcoa.cent.dataframe)
 plot1a <- ggplot(df1a, aes(x=V1, y=V2, colour=pcoa.col, shape = pcoa.shape,
                  group = interaction(pcoa.col, pcoa.shape))) + theme_bw() 
@@ -547,10 +612,9 @@ theme(panel.background = element_blank()) +
   geom_point(aes(fill=pcoa.col), colour = "black", size=6, stroke = 0.75) + 
   geom_errorbarh(aes(xmax=V1+V1e, xmin=V1-V1e, height=0.01), colour="black") +    
   geom_errorbar(aes(ymax=V2+V2e, ymin=V2-V2e, width=0.01), colour="black") + 
-  scale_colour_manual(labels = c("0","5","9","13"), 
-                      values = c("#FFFFFF", "#00FFFF", "#33CCCC", "#0066CC")) + 
-  scale_fill_manual(labels = c("0","5","9","13"), 
-                    values = c("#FFFFFF", "#00FFFF", "#33CCCC", "#0066CC")) + 
+  scale_colour_manual(values = c("#FFFFFF", "#00FFFF", "#33CCCC", "#0066CC")) + 
+  #scale_fill_manual(labels = c("0","5","9","13"), 
+                    #values = c("#FFFFFF", "#00FFFF", "#33CCCC", "#0066CC")) + 
   scale_shape_manual(labels = c("0","18","45"),
                      values = c(22, 21, 24)) +
   coord_cartesian(xlim = c(-0.25, 0.5), ylim = c(-0.35, 0.3)) + 
@@ -565,8 +629,8 @@ theme(panel.background = element_blank()) +
 
 ggsave("../figures/16SrRNA_CSI_Rplot_SalinityDispersal_NoSource.pdf", plot=last_plot(), device=NULL, path=NULL, scale=1, width=NA, height=NA, dpi=900, limitsize=TRUE)
 ```
-#PCoA set up WITH source tanks
-```{r}
+#PCoA sources only
+```{r (Community Composition - source only), echo=FALSE}
 # run for source tanks only
 csi.div.source1 <- subset(csi.relabun.full, Number == "1")
 csi.div.source2 <- subset(csi.relabun.full, Number == "2")
@@ -593,8 +657,8 @@ explainvar1b #29.1
 explainvar2b #9.8
 ```
 
-#PCoA plot design WITH SOURCE TANKS 
-```{r}
+#PCoA plot sources only
+```{r (PCoA sources only), echo=FALSE}
 #all.equal(rownames(csi.relabun.full2), rownames(csi_relabun))
 
 pcoa.groups2 <- paste(csi.relabun.full2$Date, csi.relabun.full2$Number, sep = "_")
@@ -616,8 +680,8 @@ pcoa.col2 <- as.factor(sapply(strsplit(pcoa.cent.treats2, "_"), `[`, 2)) # Tank 
 pcoa.shape2 <- as.factor(sapply(strsplit(pcoa.cent.treats2, "_"), `[`, 1))  # Date
 ```
 
-# PLOT GGPLOT WITH SOURCE TANKS 
-```{r}
+# PLOT GGPLOT sources only
+```{r (PCoA plot sources only), echo=FALSE}
 df1a2 <- as.data.frame(pcoa.cent.dataframe2)
 plot1a2 <- ggplot(df1a2, aes(x=V1, y=V2, colour=pcoa.col2, shape = pcoa.shape2,
                  group = interaction(pcoa.col2, pcoa.shape2))) + theme_bw() 
@@ -630,8 +694,8 @@ theme(panel.background = element_blank()) +
   geom_errorbar(aes(ymax=V2+V2e, ymin=V2-V2e, width=0.01), colour="black") + 
   scale_colour_manual(labels = c("saltwater","freshwater"), 
                       values = c("#FFFFFF", "#0066CC")) + 
-  scale_fill_manual(labels = c("saltwater","freshwater"), 
-                    values = c("#FFFFFF", "#0066CC")) + 
+ scale_fill_manual(labels = c("saltwater","freshwater"), 
+                     values = c("#FFFFFF", "#0066CC")) + 
   scale_shape_manual(labels = c("0","18","45"),
                      values = c(22, 21, 24)) +
   theme(axis.title = element_text(size=18), axis.text=element_text(size=14), 
@@ -646,7 +710,7 @@ theme(panel.background = element_blank()) +
 ggsave("../figures/16SrRNA_CSI_Rplot_Source.pdf", plot=last_plot(), device=NULL, path=NULL, scale=1, width=NA, height=NA, dpi=900, limitsize=TRUE)
 ```
 #PCoA set up WITH source tanks
-```{r}
+```{r eval=FALSE, include=FALSE}
 # run for source tanks only
 #use csi.relabun.full dataframe
 
@@ -670,7 +734,7 @@ explainvar2b #6.4
 ```
 
 #PCoA plot design WITH SOURCE TANKS - by date x dispersal type
-```{r}
+```{r eval=FALSE, include=FALSE}
 pcoa.groups3 <- paste(csi.relabun.full$Date, csi.relabun.full$Dispersal, sep = "_")
 
 pcoa.points3 <- data.frame(CSI_pcoa3$points, group = pcoa.groups3)
@@ -691,7 +755,7 @@ pcoa.shape3 <- as.factor(sapply(strsplit(pcoa.cent.treats3, "_"), `[`, 1))  # Da
 ```
 
 # PLOT GGPLOT WITH SOURCE TANKS + treatment tanks date x dispersal type
-```{r}
+```{r eval=FALSE, include=FALSE}
 df3a <- as.data.frame(pcoa.cent.dataframe3)
 plot1a <- ggplot(df3a, aes(x=V1, y=V2, colour=pcoa.col3, shape = pcoa.shape3,
                  group = interaction(pcoa.col3, pcoa.shape3))) + theme_bw() 
@@ -721,7 +785,7 @@ ggsave("../figures/16SrRNA_CSI_Rplot_SourceAndTrt.pdf", plot=last_plot(), device
 ```
 
 #PCoA set up WITH source tanks All data - need to get Day to be labeled on symbol
-```{r}
+```{r (Community Comp w/ SOURCE), echo=FALSE}
 # run for source tanks only
 #use csi.relabun.full dataframe
 
@@ -746,7 +810,7 @@ explainvar2b #6.4
 ```
 
 #PCoA plot design WITH SOURCE TANKS All data - need to get Day to be labeled on symbol
-```{r}
+```{r (PCoA w/ SOURCE), echo=FALSE}
 pcoa.groups4 <- paste(csi.relabun.full$Dispersal, csi.relabun.full$Salinity, sep = "_")
 
 Date <- csi.relabun.full$Date2
@@ -772,7 +836,7 @@ pcoa.date <- as.factor(sapply(strsplit(pcoa.cent.treats4, "_"), `[`, 3))
 ```
 
 # PLOT GGPLOT WITH SOURCE TANKS All data - need to get Day to be labeled on symbol #unsure how to overlay DATE on points
-```{r}
+```{r (PCoA plot w/ SOURCE), echo=FALSE}
 df4a <- as.data.frame(pcoa.cent.dataframe4)
 plot4a <- ggplot(df4a, aes(x=V1, y=V2, colour=pcoa.col4, 
                            shape = pcoa.shape4, label=pcoa.date,
@@ -787,8 +851,8 @@ theme(panel.background = element_blank()) +
   geom_errorbar(aes(ymax=V2+V2e, ymin=V2-V2e, width=0.01), colour="black") + 
   scale_colour_manual(labels = c("0","5","9","13"), 
                     values = c("#FFFFFF", "#00FFFF", "#33CCCC", "#0066CC")) + 
-  scale_fill_manual(labels = c("0","5","9","13"), 
-                    values = c("#FFFFFF", "#00FFFF", "#33CCCC", "#0066CC")) + 
+  #scale_fill_manual(labels = c("0","5","9","13"), 
+                    #values = c("#FFFFFF", "#00FFFF", "#33CCCC", "#0066CC")) + 
   scale_shape_manual(labels = c("TRT fresh","TRT fresh+salt","Control (no dispersal)","Source fresh","Source salt"),
                     values = c(22, 21, 8, 23, 24)) +
   geom_text(aes(label=pcoa.date), colour = "black",hjust=0, vjust=0, nudge_x = 0.04) +
@@ -813,7 +877,7 @@ Run Species Indicator Analysis - see IL_Wetlands.Rmd file
 Create Table for Supplemental (includes all taxa and associated taxon contribution to bacterial response)
 Create subset in table format to highlight top 5-10 OTUs (with names) for each salinity tank type (or by whatever groupings seem interesting) - See AP's IL Wetlands paper
 
-```{r}
+```{r (Spp Indicator), include=FALSE}
 library("labdsv")
 #bac.ind
 
@@ -867,7 +931,7 @@ Run matrix comparison using Mantel test
 Run Redundancy Analysis to include litter decomp AND C min
 Model:  bacterial community~litter decomp1+decomp2+decomp3+Cmin
 
-```{r (7 without source tanks)}
+```{r (structure-function without source), echo=TRUE}
 #Is there a relationship betwen bacterial community composition and decomposition rate? used matrix comparison Mantel test
 str(csi.full.ns.Cmin)
 df.bcc <- csi.full.ns.Cmin[,-c(1:16)] #bacteria
@@ -898,7 +962,7 @@ plot(df.rda)
 
 ```
 
-```{r}
+```{r (Phylogenetic Diversity), include=FALSE}
 # Phylogenetic Diversity
 # Load Tree
 tree <- read.tree("../data/CSI.bac.rename.tree")
@@ -946,7 +1010,7 @@ dim(design.ns.final)
 csi.phylo.ns <- cbind(design.ns.final,phylo_final.ns)
 ```
 
-```{r}
+```{r (Phylogenetic Diversity - plot), echo=TRUE}
 # run full parametric statistical model
 PD.lm <- lm(PD ~ Dispersal*Salinity*Date, data = csi.phylo.ns)
 plot(PD.lm)
