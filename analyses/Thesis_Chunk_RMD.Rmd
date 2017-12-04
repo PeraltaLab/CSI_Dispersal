@@ -1,11 +1,11 @@
 ---
 title: "Bacterioplankton response to salinity (aka 2015 CSI Dispersal Experiment)"
-author: "Alex Stucy, Jo Werba, Mike McCoy, Ariane Peralta"
+author: "Alex Stucy, Jo Werba, Mike McCoy, Ariane Peralta with contributions from Mario Muscarella (phylogenetic analyses, data manipulation, mothur tools)"
 date: "Last updated on `r format(Sys.time(), '%d %B, %Y')`"
 output:
-  html_document: default
-  fig_caption: yes
   pdf_document: null
+  fig_caption: yes
+  html_document: default
 editor_options:
   chunk_output_type: console
 ---
@@ -416,7 +416,7 @@ p <- ggplot(csi_otu.div, aes(x=Salinity, y=shannon, color=as.factor(Dispersal)))
 p1=p+geom_smooth(method="lm")+facet_wrap(~Date2)+facet_grid(. ~ Date2, labeller=labeller(Date2 = labels))
 p1 + theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.line = element_line(colour = "black")) +theme(axis.title=element_text(vjust=1,size=16,face="bold"), axis.text=element_text(size=14), axis.text.x = element_text(vjust=0.65, hjust=0.5, size=14), panel.border = element_rect(colour = "black",size=1)) + theme(axis.ticks.length=unit(0.3,"cm")) + labs(x = "Salinity", y = "Shannon Diversity Index (H')") + theme(strip.text.x = element_text(size=16, face="bold"), strip.text.y = element_text(size=16, face="bold"), strip.background = element_rect(colour="black", fill="white", size=1))
   
-ggsave("../figures/shannon.source.pdf", plot=last_plot(), device=NULL, path=NULL, scale=1, width=NA, height=NA, dpi=300, limitsize=TRUE)
+ggsave("../figures/shannon.pdf", plot=last_plot(), device=NULL, path=NULL, scale=1, width=NA, height=NA, dpi=300, limitsize=TRUE)
 
 # Graphing Shannon Diversity - Treatment Salinity SOURCE ONLY
 p <- ggplot(csi.div.source, aes(x=Date2, y=shannon.source, color=as.factor(Number1)))+ scale_color_manual(name="Dispersal Source", values=c("darkgray","blue"), labels = c("saltwater", "freshwater")) + stat_summary(fun.data=mean_cl_boot,size=0.75) 
@@ -970,7 +970,7 @@ plot(df.rda)
 ```
 
 ```{r (Phylogenetic Diversity), include=FALSE}
-# Phylogenetic Diversity
+# Phylogenetic Diversity - analysis by Mario Muscarella
 # Load Tree
 tree <- read.tree("../data/CSI.bac.rename.tree")
 tree$tip.label <- gsub("\\|", "", tree$tip.label)
