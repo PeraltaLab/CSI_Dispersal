@@ -41,7 +41,7 @@ require("png")
 require("picante")
 # require("venneuler")
 require("Hmisc")
-
+require("knitr")
 # set std err
 se <- function(x, ...) {
 sd(x, na.rm = TRUE)/sqrt(length(na.omit(x)))
@@ -54,6 +54,7 @@ ci <- function(x, ...) {
 #Loading data file
 ```{r (2), include=FALSE}
 #NOTE: Tank 3 only had fresh water added. Tank 1 was the source for the salt and tank 2 was the source for the fresh water.
+#NOTE: Dispersal 0 (treatments 1 and 2) were source tanks-- no dispersal. Dispersal 1 (treatment 3) only received fresh water. Dispersal 3 (treatments 4,6,8,10) only got salt water. And dispersal 2 (treatments 5,7,9,11) received both fresh and salt.
 
 # load design file - no source tanks
 design.ns <- read.csv("../data/CSI_Design_ENV_NoSourceTanks.csv", row.names=1)
@@ -84,19 +85,19 @@ str(design.env.full)
 
 #ammonium
 ammonium <- ggplot(design.env.full, aes(x=Salinity, y=NH4uM, color=as.factor(Dispersal))) + theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor =element_blank(), axis.line = element_line(colour = "black"), panel.border = element_rect(colour = "black",size=1)) + stat_summary(fun.data=mean_cl_boot,size=1.25, position=position_dodge(width=0.75)) +
-scale_color_manual(name="Dispersal", values=c("skyblue","gray","black", "purple"), labels = c("source only", "no dispersal", "fresh (2)", "fresh+salt (3)")) + labs(x = "Salinity", y = "Ammonium-N (µM)") +theme(axis.title=element_text(vjust=1,size=16,face="bold"), axis.text=element_text(size=14))
+scale_color_manual(name="Dispersal", values=c("skyblue","gray","black", "purple"), labels = c("source only", "no dispersal", "fresh+salt (2)", "salt only (3)")) + labs(x = "Salinity", y = "Ammonium-N (µM)") +theme(axis.title=element_text(vjust=1,size=16,face="bold"), axis.text=element_text(size=14))
 
 ggsave("../figures/ammonium.pdf", plot=last_plot(), device=NULL, path=NULL, scale=1, width=NA, height=NA, dpi=300, limitsize=TRUE)
 
 #nitrate+nitrite
 nitrate <- ggplot(design.env.full, aes(x=Salinity, y=NO3NO2uM, color=as.factor(Dispersal))) + theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor =element_blank(), axis.line = element_line(colour = "black"), panel.border = element_rect(colour = "black",size=1)) + stat_summary(fun.data=mean_cl_boot,size=1.25, position=position_dodge(width=0.75)) +
-scale_color_manual(name="Dispersal", values=c("skyblue","gray","black", "purple"), labels = c("source only", "no dispersal", "fresh (2)", "fresh+salt (3)")) + labs(x = "Salinity", y = "Nitrate+Nitrite-N (µM)") +theme(axis.title=element_text(vjust=1,size=16,face="bold"), axis.text=element_text(size=14))
+scale_color_manual(name="Dispersal", values=c("skyblue","gray","black", "purple"), labels = c("source only", "no dispersal", "fresh+salt (2)", "salt only (3)")) + labs(x = "Salinity", y = "Nitrate+Nitrite-N (µM)") +theme(axis.title=element_text(vjust=1,size=16,face="bold"), axis.text=element_text(size=14))
 
 ggsave("../figures/nitrate.pdf", plot=last_plot(), device=NULL, path=NULL, scale=1, width=NA, height=NA, dpi=300, limitsize=TRUE)
 
 #phosphate
 phosphate <- ggplot(design.env.full, aes(x=Salinity, y=PO4uM, color=as.factor(Dispersal))) + theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor =element_blank(), axis.line = element_line(colour = "black"), panel.border = element_rect(colour = "black",size=1)) + stat_summary(fun.data=mean_cl_boot,size=1.25, position=position_dodge(width=0.75)) +
-scale_color_manual(name="Dispersal", values=c("skyblue","gray","black", "purple"), labels = c("source only", "no dispersal", "fresh (2)", "fresh+salt (3)")) + labs(x = "Salinity", y = "Phosphate-P (µM)") +theme(axis.title=element_text(vjust=1,size=16,face="bold"), axis.text=element_text(size=14))
+scale_color_manual(name="Dispersal", values=c("skyblue","gray","black", "purple"), labels = c("source only", "no dispersal", "fresh+salt (2)", "salt only (3)")) + labs(x = "Salinity", y = "Phosphate-P (µM)") +theme(axis.title=element_text(vjust=1,size=16,face="bold"), axis.text=element_text(size=14))
 
 ggsave("../figures/phosphate.pdf", plot=last_plot(), device=NULL, path=NULL, scale=1, width=NA, height=NA, dpi=300, limitsize=TRUE)
 
@@ -112,25 +113,25 @@ str(design.env.full)
 
 #Cmin
 Cmin<- ggplot(design.env.full, aes(x=Salinity, y=Cmin, color=as.factor(Dispersal))) + theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor =element_blank(), axis.line = element_line(colour = "black"), panel.border = element_rect(colour = "black",size=1)) + stat_summary(fun.data=mean_cl_boot,size=1.25, position=position_dodge(width=0.75)) +
-scale_color_manual(name="Dispersal", values=c("skyblue","gray","black", "purple"), labels = c("source only", "no dispersal", "fresh (2)", "fresh+salt (3)")) + labs(x = "Salinity", y = (expression(paste("C min. (ng CO"[2]," mL"^-{1}," d"^-{1},")")))) +theme(axis.title=element_text(vjust=1,size=16,face="bold"), axis.text=element_text(size=14))
+scale_color_manual(name="Dispersal", values=c("skyblue","gray","black", "purple"), labels = c("source only", "no dispersal", "fresh+salt (2)", "salt only (3)")) + labs(x = "Salinity", y = (expression(paste("C min. (ng CO"[2]," mL"^-{1}," d"^-{1},")")))) +theme(axis.title=element_text(vjust=1,size=16,face="bold"), axis.text=element_text(size=14))
 
 ggsave("../figures/CminSourceAll.pdf", plot=last_plot(), device=NULL, path=NULL, scale=1, width=NA, height=NA, dpi=300, limitsize=TRUE)
 
 #maple
 maple <- ggplot(design.env.full, aes(x=Salinity, y=Maple_dmass, color=as.factor(Dispersal))) + theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor =element_blank(), axis.line = element_line(colour = "black"), panel.border = element_rect(colour = "black",size=1)) + stat_summary(fun.data=mean_cl_boot,size=1.25, position=position_dodge(width=0.75)) + ylim(0, 8)+
-scale_color_manual(name="Dispersal", values=c("skyblue","gray","black", "purple"), labels = c("source only", "no dispersal", "fresh (2)", "fresh+salt (3)")) + labs(x = "Salinity", y = "Maple mass loss (g)") +theme(axis.title=element_text(vjust=1,size=16,face="bold"), axis.text=element_text(size=14))
+scale_color_manual(name="Dispersal", values=c("skyblue","gray","black", "purple"), labels = c("source only", "no dispersal", "fresh+salt (2)", "salt only (3)")) + labs(x = "Salinity", y = "Maple mass loss (g)") +theme(axis.title=element_text(vjust=1,size=16,face="bold"), axis.text=element_text(size=14))
 
 ggsave("../figures/mapleSourceAll.pdf", plot=last_plot(), device=NULL, path=NULL, scale=1, width=NA, height=NA, dpi=300, limitsize=TRUE)
 
 #spartina
 spartina <- ggplot(design.env.full, aes(x=Salinity, y=Spartina_dmass, color=as.factor(Dispersal))) + theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor =element_blank(), axis.line = element_line(colour = "black"), panel.border = element_rect(colour = "black",size=1)) + stat_summary(fun.data=mean_cl_boot,size=1.25, position=position_dodge(width=0.75)) + ylim(0, 8)+
-scale_color_manual(name="Dispersal", values=c("skyblue","gray","black", "purple"), labels = c("source only", "no dispersal", "fresh (2)", "fresh+salt (3)")) + labs(x = "Salinity", y = "Spartina mass loss (g)") +theme(axis.title=element_text(vjust=1,size=16,face="bold"), axis.text=element_text(size=14))
+scale_color_manual(name="Dispersal", values=c("skyblue","gray","black", "purple"), labels = c("source only", "no dispersal", "fresh+salt (2)", "salt only (3)")) + labs(x = "Salinity", y = "Spartina mass loss (g)") +theme(axis.title=element_text(vjust=1,size=16,face="bold"), axis.text=element_text(size=14))
 
 ggsave("../figures/spartinaSourceAll.pdf", plot=last_plot(), device=NULL, path=NULL, scale=1, width=NA, height=NA, dpi=300, limitsize=TRUE)
 
 #phragmites
 phrag <- ggplot(design.env.full, aes(x=Salinity, y=Phrag_dmass, color=as.factor(Dispersal))) + theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor =element_blank(), axis.line = element_line(colour = "black"), panel.border = element_rect(colour = "black",size=1)) + stat_summary(fun.data=mean_cl_boot,size=1.25, position=position_dodge(width=0.75)) + ylim(0, 8)+
-scale_color_manual(name="Dispersal", values=c("skyblue","gray","black", "purple"), labels = c("source only", "no dispersal", "fresh (2)", "fresh+salt (3)")) + labs(x = "Salinity", y = "Phragmites mass loss (g)") +theme(axis.title=element_text(vjust=1,size=16,face="bold"), axis.text=element_text(size=14))
+scale_color_manual(name="Dispersal", values=c("skyblue","gray","black", "purple"), labels = c("source only", "no dispersal", "fresh+salt (2)", "salt only (3)")) + labs(x = "Salinity", y = "Phragmites mass loss (g)") +theme(axis.title=element_text(vjust=1,size=16,face="bold"), axis.text=element_text(size=14))
 
 ggsave("../figures/phragSourceAll.pdf", plot=last_plot(), device=NULL, path=NULL, scale=1, width=NA, height=NA, dpi=300, limitsize=TRUE)
 
@@ -412,7 +413,7 @@ date_1 <- as.factor(design.ns.final$Date2)
 labels <- c("0"="Day 0","18"="Day 18", "45"="Day 45")
 
 # Graphing Shannon Diversity - Treatment Salinity NO SOURCE
-p <- ggplot(csi_otu.div, aes(x=Salinity, y=shannon, color=as.factor(Dispersal)))+ scale_color_manual(name="Dispersal Treatment", values=c("black","purple"), labels = c("fresh (2)", "fresh+salt (3)")) + stat_summary(fun.data=mean_cl_boot,size=0.75) 
+p <- ggplot(csi_otu.div, aes(x=Salinity, y=shannon, color=as.factor(Dispersal)))+ scale_color_manual(name="Dispersal Treatment", values=c("black","purple"), labels = c("fresh+salt (2)", "salt only (3)")) + stat_summary(fun.data=mean_cl_boot,size=0.75) 
 p1=p+geom_smooth(method="lm")+facet_wrap(~Date2)+facet_grid(. ~ Date2, labeller=labeller(Date2 = labels))
 p1 + theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.line = element_line(colour = "black")) +theme(axis.title=element_text(vjust=1,size=16,face="bold"), axis.text=element_text(size=14), axis.text.x = element_text(vjust=0.65, hjust=0.5, size=14), panel.border = element_rect(colour = "black",size=1)) + theme(axis.ticks.length=unit(0.3,"cm")) + labs(x = "Salinity", y = "Shannon Diversity Index (H')") + theme(strip.text.x = element_text(size=16, face="bold"), strip.text.y = element_text(size=16, face="bold"), strip.background = element_rect(colour="black", fill="white", size=1))
   
@@ -445,7 +446,7 @@ summary(J.lm.source)
 anova(J.lm.source)
 
 # Graphing Pielous J - Treatment Salinity
-p <- ggplot(csi_otu.div, aes(x=Salinity, y=J, color=as.factor(Dispersal)))+ scale_color_manual(name="Dispersal Treatment", values=c("black","purple"), labels = c("fresh (2)", "fresh+salt (3)")) + stat_summary(fun.data=mean_cl_boot,size=0.75) 
+p <- ggplot(csi_otu.div, aes(x=Salinity, y=J, color=as.factor(Dispersal)))+ scale_color_manual(name="Dispersal Treatment", values=c("black","purple"), labels = c("fresh+salt (2)", "salt only (3)")) + stat_summary(fun.data=mean_cl_boot,size=0.75) 
 p1=p+geom_smooth(method="lm")+facet_wrap(~Date2)+facet_grid(. ~ Date2, labeller=labeller(Date2 = labels))
 p1 + theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.line = element_line(colour = "black")) +theme(axis.title=element_text(vjust=1,size=16,face="bold"), axis.text=element_text(size=14), axis.text.x = element_text(vjust=0.65, hjust=0.5, size=14), panel.border = element_rect(colour = "black",size=1)) + theme(axis.ticks.length=unit(0.3,"cm")) + labs(x = "Salinity", y = "Pielou's Evenness (J')") + theme(strip.text.x = element_text(size=16, face="bold"), strip.text.y = element_text(size=16, face="bold"), strip.background = element_rect(colour="black", fill="white", size=1))
 
@@ -482,7 +483,7 @@ richness.lm.source
 anova(richness.lm.source)
 
 # Graphing richness - Treatment Salinity
-p <- ggplot(csi_otu.div, aes(x=Salinity, y=richness, color=as.factor(Dispersal)))+ scale_color_manual(name="Dispersal Treatment", values=c("black","purple"), labels = c("fresh (2)", "fresh+salt (3)")) + stat_summary(fun.data=mean_cl_boot,size=0.75) 
+p <- ggplot(csi_otu.div, aes(x=Salinity, y=richness, color=as.factor(Dispersal)))+ scale_color_manual(name="Dispersal Treatment", values=c("black","purple"), labels = c("fresh+salt (2)", "salt only (3)")) + stat_summary(fun.data=mean_cl_boot,size=0.75) 
 p1=p+geom_smooth(method="lm")+facet_wrap(~Date2)+facet_grid(. ~ Date2, labeller=labeller(Date2 = labels))
 p1 + theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.line = element_line(colour = "black")) +theme(axis.title=element_text(vjust=1,size=16,face="bold"), axis.text=element_text(size=14), axis.text.x = element_text(vjust=0.65, hjust=0.5, size=14), panel.border = element_rect(colour = "black",size=1)) + theme(axis.ticks.length=unit(0.3,"cm")) + labs(x = "Salinity", y = "Species Richness") + theme(strip.text.x = element_text(size=16, face="bold"), strip.text.y = element_text(size=16, face="bold"), strip.background = element_rect(colour="black", fill="white", size=1))
   
@@ -533,13 +534,13 @@ summary(Cmin.reg)
 #import C-mineralization CSV -- no source tanks
 carbon_min <- read.csv("../data/Cmin-data-NO-SOURCE.csv")
 
-p <- ggplot(csi.full.ns.Cmin, aes(x=Salinity, y=Cmin, color=as.factor(Dispersal)))+ scale_color_manual(name="Dispersal Treatment", values=c("black","purple"), labels = c("fresh (2)", "fresh+salt (3)")) + stat_summary(fun.data=mean_cl_boot,size=0.75) 
+p <- ggplot(csi.full.ns.Cmin, aes(x=Salinity, y=Cmin, color=as.factor(Dispersal)))+ scale_color_manual(name="Dispersal Treatment", values=c("black","purple"), labels = c("fresh+salt (2)", "salt only (3)")) + stat_summary(fun.data=mean_cl_boot,size=0.75) 
 p1=p+geom_smooth(method="lm")
 p1 + theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.line = element_line(colour = "black")) +theme(axis.title=element_text(vjust=1,size=16,face="bold"), axis.text=element_text(size=14), axis.text.x = element_text(vjust=0.65, hjust=0.5, size=14), panel.border = element_rect(colour = "black",size=1)) + theme(axis.ticks.length=unit(0.3,"cm")) + labs(x = "Salinity", y = (expression(paste("C Mineralization (ng CO"[2]," mL"^-{1}," day"^-{1},")")))) + theme(strip.text.x = element_text(size=16, face="bold"), strip.text.y = element_text(size=16, face="bold"), strip.background = element_rect(colour="black", fill="white", size=1))
 
 ggsave("../figures/carbon_mineralization.pdf", plot=last_plot(), device=NULL, path=NULL, scale=1, width=NA, height=NA, dpi=300, limitsize=TRUE)
 
-p <- ggplot(csi.full.ns.Cmin, aes(x=Salinity_real, y=Cmin, color=as.factor(Dispersal)))+ scale_color_manual(name="Dispersal Treatment", values=c("black","purple"), labels = c("fresh (2)", "fresh+salt (3)")) + stat_summary(fun.data=mean_cl_boot,size=0.75) 
+p <- ggplot(csi.full.ns.Cmin, aes(x=Salinity_real, y=Cmin, color=as.factor(Dispersal)))+ scale_color_manual(name="Dispersal Treatment", values=c("black","purple"), labels = c("fresh+salt (2)", "salt only (3)")) + stat_summary(fun.data=mean_cl_boot,size=0.75) 
 p1=p+geom_smooth(method="lm")
 p1 + theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.line = element_line(colour = "black")) +theme(axis.title=element_text(vjust=1,size=16,face="bold"), axis.text=element_text(size=14), axis.text.x = element_text(vjust=0.65, hjust=0.5, size=14), panel.border = element_rect(colour = "black",size=1)) + theme(axis.ticks.length=unit(0.3,"cm")) + labs(x = "Salinity", y = (expression(paste("C Mineralization (ng CO"[2]," mL"^-{1}," day"^-{1},")")))) + theme(strip.text.x = element_text(size=16, face="bold"), strip.text.y = element_text(size=16, face="bold"), strip.background = element_rect(colour="black", fill="white", size=1))
 
@@ -759,6 +760,7 @@ pcoa.cent.treats3 <- rownames(pcoa.cent.dataframe3)
 
 pcoa.col3 <- as.factor(sapply(strsplit(pcoa.cent.treats3, "_"), `[`, 2)) # Dispersal
 pcoa.shape3 <- as.factor(sapply(strsplit(pcoa.cent.treats3, "_"), `[`, 1))  # Date
+##order of dispersal is TRT 2, TRT 3, Control00, Source0, Source13
 ```
 
 # PLOT GGPLOT WITH SOURCE TANKS + treatment tanks date x dispersal type
@@ -775,8 +777,8 @@ theme(panel.background = element_blank()) +
   geom_errorbar(aes(ymax=V2+V2e, ymin=V2-V2e, width=0.01), colour="black") + 
   scale_colour_manual(labels = c("0","5","9","13", "extra"), 
                       values = c("#FFFFFF", "#CCFF00", "#00CC00", "#336600", "darkgray")) + 
-  scale_fill_manual(labels = c("TRT fresh","TRT fresh+salt","Control (no dispersal)","Source fresh","Source salt"), 
-                    values = c("#FFFFFF", "#CCFF00", "#00CC00", "#336600", "darkgray")) + 
+  scale_fill_manual(labels = c("TRT fresh+salt (2)","TRT salt only (3)","Control (no dispersal)","Source fresh","Source salt"), 
+                    #values = c("#FFFFFF", "#CCFF00", "#00CC00", "#336600", "darkgray")) + 
   scale_shape_manual(labels = c("0","18","45"),
                      values = c(22, 21, 24)) +
   theme(axis.title = element_text(size=18), axis.text=element_text(size=14), 
@@ -789,6 +791,7 @@ theme(panel.background = element_blank()) +
          shape = guide_legend(override.aes = list(size = 4, fill="black")))
 
 ggsave("../figures/16SrRNA_CSI_Rplot_SourceAndTrt.pdf", plot=last_plot(), device=NULL, path=NULL, scale=1, width=NA, height=NA, dpi=900, limitsize=TRUE)
+
 ```
 
 #PCoA set up WITH source tanks All data - need to get Day to be labeled on symbol
@@ -860,7 +863,7 @@ theme(panel.background = element_blank()) +
                     values = c("#FFFFFF", "#00FFFF", "#33CCCC", "#0066CC")) + 
   #scale_fill_manual(labels = c("0","5","9","13"), 
                     #values = c("#FFFFFF", "#00FFFF", "#33CCCC", "#0066CC")) + 
-  scale_shape_manual(labels = c("TRT fresh","TRT fresh+salt","Control (no dispersal)","Source fresh","Source salt"),
+  scale_shape_manual(labels = c("TRT fresh+salt (2)","TRT salt only (3)","Control (no dispersal)","Source fresh","Source salt"),
                     values = c(22, 21, 8, 23, 24)) +
   geom_text(aes(label=pcoa.date), colour = "black",hjust=0, vjust=0, nudge_x = 0.04) +
   theme(axis.title = element_text(size=18), axis.text=element_text(size=14), 
@@ -1028,7 +1031,7 @@ PD.reg <- lm(PD~Salinity_real, data = csi.phylo.ns)
 summary(PD.reg)
 
 # Phylogenetic Diversity - Treatment Salinity
-p <- ggplot(csi.phylo.ns, aes(x=Salinity, y=PD, color=as.factor(Dispersal)))+ scale_color_manual(name="Dispersal Treatment", values=c("black","purple"), labels = c("fresh (2)", "fresh+salt (3)")) + stat_summary(fun.data=mean_cl_boot,size=0.75) 
+p <- ggplot(csi.phylo.ns, aes(x=Salinity, y=PD, color=as.factor(Dispersal)))+ scale_color_manual(name="Dispersal Treatment", values=c("black","purple"), labels = c("fresh+salt (2)", "salt only (3)")) + stat_summary(fun.data=mean_cl_boot,size=0.75) 
 p1=p+geom_smooth(method="lm")+facet_wrap(~Date2)+facet_grid(. ~ Date2, labeller=labeller(Date2 = labels))
 p1 + theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.line = element_line(colour = "black")) +theme(axis.title=element_text(vjust=1,size=16,face="bold"), axis.text=element_text(size=14), axis.text.x = element_text(vjust=0.65, hjust=0.5, size=14), panel.border = element_rect(colour = "black",size=1)) + theme(axis.ticks.length=unit(0.3,"cm")) + labs(x = "Salinity", y = "Phylogenetic Diversity (PD)") + theme(strip.text.x = element_text(size=16, face="bold"), strip.text.y = element_text(size=16, face="bold"), strip.background = element_rect(colour="black", fill="white", size=1))
 
