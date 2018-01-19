@@ -222,3 +222,23 @@ Ammonium increased with both salinity (t=20.255,p<0.001) and effective diversity
 nitmod1<-lm(log(nitr)~Dispersal+true+sreal*Date2,data = bigdata)
 ```
 
+
+Change from NMDS to PCoA to match microbial data and add middle date
+
+```{r}
+# just dates 1, 18, 45
+
+data_3dates <- bigdata %>%
+  subset(Date2 == c(0,18,45))
+
+#only community data
+
+comm <- data_3dates[,c(5:31)]
+
+#distance matrix
+comm_dist <- vegdist(comm,method = "bray")
+
+#run PCoA
+zoo_pcoa <- cmdscale(comm_dist,k=3,eig = TRUE, add = FALSE)
+
+```
