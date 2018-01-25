@@ -11,8 +11,8 @@ library(lme4)
 library(MASS)
 library(vegan)
 library(reshape2)
-library(tidyr)
-library(dplyr)
+library(tidyverse)
+library(ggplot2)
 load("msfinal.Rdata")
 
 ```
@@ -325,6 +325,29 @@ sum.eiga <- sum(var1a, var2a)
 ```
 
 Now to graph
+```{r}
+theme_set(theme_bw()) 
+theme_update(axis.text.x = element_text(size = 12),
+             axis.text.y = element_text(size = 12),
+             axis.title.x = element_text(size = 14),
+             axis.title.y = element_text(size = 14),
+             legend.title = element_text(size = 10),
+             legend.text = element_text(size = 8),
+             legend.spacing = unit(0.25, "cm"),
+             legend.key.width = unit(0.35, "cm"),
+             panel.grid.major = element_blank(),
+             panel.grid.minor = element_blank(),
+             strip.background = element_blank(),
+             panel.spacing = unit(0, "lines"),
+             #      legend.key.size = unit(.15, "cm"),
+             legend.key = element_rect(fill = "white"),
+             panel.spacing.y = unit(-0.25, "lines"),
+             panel.border = element_rect(colour = "black", 
+                                         fill = NA, size = 1),
+             strip.text.x = element_text(size = 18, colour = "black", 
+                                         face = "bold"))
+
+```
 
 ```{r}
 #need date, salinity, treatment and PCoA points in one dataframe
@@ -353,23 +376,29 @@ g1 <- ggplot(data= cent1, aes(Axis1, Axis2)) +
 g2 <- g1 + geom_errorbar(aes(ymax= Axis2+sd2, ymin= Axis2-sd2)) + 
   geom_errorbarh(aes(xmax=Axis1+sd1, xmin=Axis1-sd1))
 
-g3 <- g2 + facet_wrap(~date2, ncol = 1)
+g3 <- g2 + facet_wrap(~date2, ncol = 1) 
 
-g4 <- g3 +  scale_shape_discrete(name = "Dispersal", 
+g4 <- g3 +  scale_shape_manual(name = "Dispersal", 
+                               values = c(15,16,17,18),
                                        breaks = c(0,1,2,3),
-                                       labels = c("a","b","c","d")) +
-#alternate
+                                       labels = c("Source","Control Fresh","Mixed Salt and   Fresh","Salt Only"))
+
+  
+  
+  #alternate
+
+Dispersal1 <- rep(c(rep("Source",2),"Control Fresh", rep("Mixed Salt and Fresh", 4),
+                     rep("Salt Only",4)),3)
+  
+cent1$Dispersal1 <- Dispersal1
+
 g1 <- ggplot(data= cent1, aes(Axis1, Axis2)) +geom_point(aes(color=as.factor(Salinity), shape = as.factor(date2)), size = 5)
 
 g2 <- g1 + geom_errorbar(aes(ymax= Axis2+sd2, ymin= Axis2-sd2)) + 
   geom_errorbarh(aes(xmax=Axis1+sd1, xmin=Axis1-sd1))
 
-g3 <- g2 + facet_wrap(~Dispersal, ncol = 2)
+g3 <- g2 + facet_wrap(~Dispersal1, ncol = 2)
 
-
-
-
-
-
+g4 <- g3 + labs(color = "Salinity")+ labs(shape = "Date")
 
 ```
