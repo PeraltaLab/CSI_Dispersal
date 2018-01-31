@@ -402,3 +402,21 @@ g3 <- g2 + facet_wrap(~Dispersal1, ncol = 2)
 g4 <- g3 + labs(color = "Salinity")+ labs(shape = "Date")
 
 ```
+
+Mantel tests comparing zooplankton relative abundance and decomposition
+```{r}
+
+# from full data only want community data and remove any rows with all zeros
+
+full_data_alt <- full_data[rowSums(full_data[,-c(1:5)]) != 0,]
+comm_dat <- full_data_alt[,-c(1:5)]
+
+#remove rows with all zeros
+
+dist.zoop <- vegdist(comm_dat, method = "bray")
+dist.bact <- vegdist(csi_relabun.ns, method = "bray")
+
+require(ade4)
+mantel.rtest(dist.zoop, dist.bact, nrepet = 999)
+
+```
