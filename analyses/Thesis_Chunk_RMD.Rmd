@@ -12,7 +12,7 @@ editor_options:
 Project Description: Analysis of salinity and dispersal of saline aquatic communities on bacterial community structure and function.
 
 # Setting up working directory, packages
-```{r (1), include=FALSE}
+```{r Setup, include=FALSE}
 #PC - set WD manually by Session -> Set Working Directory -> Choose Directory...
 if(Sys.info()[1] == "Darwin"){
   setwd("~/GitHub/CSI_Dispersal/analyses/")
@@ -52,7 +52,7 @@ ci <- function(x, ...) {
 ```
 
 #Loading data file
-```{r (2), include=FALSE}
+```{r Loading Files, include=FALSE}
 #NOTE: Tank 3 only had fresh water added. Tank 1 was the source for the salt and tank 2 was the source for the fresh water.
 #NOTE: Dispersal 0 (treatments 1 and 2) were source tanks-- no dispersal. Dispersal 1 (treatment 3) only received fresh water. Dispersal 3 (treatments 4,6,8,10) only got salt water. And dispersal 2 (treatments 5,7,9,11) received both fresh and salt.
 
@@ -78,6 +78,7 @@ design.env.full <- read.csv("../data/CSI_Design_ENV_Source.csv", row.names=1)
 csi.tax <- read.tax(taxonomy = "../data/CSI.0.03.cons.taxonomy", 
                     format = "rdp", tax.levels = 6, col.tax = 3)
 ```
+
 # nutrient plots - all data - supplemental
 ```{r (Supp Summary - ENV day 45 only), echo=TRUE}
 #design.env.full
@@ -107,7 +108,7 @@ multiplot(ammonium, nitrate, phosphate, cols=1)
 dev.off()
 ```
 #function plots - all data - supplemental
-```{r (Summary - ENV day 45 only), echo=TRUE}
+```{r (Summary - Cmin/Decomp day 45 only), echo=TRUE}
 #design.env.full
 str(design.env.full)
 
@@ -142,7 +143,7 @@ dev.off()
 ```
 
 # manipulate data files for statistical analyses and graphing
-```{r (3), include=FALSE}
+```{r Bacterial Community Composition, include=FALSE}
 # remove extra site (no mock community)
 
 # design only with source tanks
@@ -162,7 +163,7 @@ csi_low_remov <- otu_removal[which(rowSums(otu_removal) >= 13000), ]
 dim(csi_low_remov)
 
 # OTU table - odd sites in bacterial composition data and remove in design file
-odd.sites <- c("CSI033","CSI101")
+odd.sites <- c("CSI033","CSI101") #IUbarcode
 
 otu_final <- csi_low_remov[setdiff(rownames(csi_low_remov), odd.sites), ]
 design_final <- design.full[setdiff(rownames(design.full), odd.sites), ]
@@ -219,7 +220,48 @@ levels(treatments1) <- c("0","5","9","13")
 treatments2 <- as.factor(design.ns.final$Dispersal)
 levels(treatments2) <- c("2","3")
 
-date_1 <- as.factor(design.ns.final$Date2)
+#date_1 <- as.factor(desighn.ns.final$Date2)
+```
+
+# zooplankton community - bacterial community matrix comparisons
+```{r}
+#matrix comparison - Is there a relationship between zooplankton and bacterial community? = YES Mantel r = 0.409, P<0.0001
+dim(otu_final.ns)
+
+zoop.ns <- read.csv("../data/zoop_CSI_NoSource.csv", row.names=1)
+str(zoop.ns)
+dim(zoop.ns)
+
+#odd sites for bacteria CSI033 is ShortID ECU_CSI_034
+#odd sites for bacteria CSI101 is Short ID	ECU_CSI_103
+#deleted IUbarcode CSI041 = CSI 42 - double check
+#CSI 27 has zero individuals after source tanks removed
+odd.sites <- c("27","42","103") 
+
+zoop.ns2 <- zoop.ns[setdiff(rownames(zoop.ns), odd.sites), ]
+dim(zoop.ns2)
+
+# Make Relative Abundance Matrices 
+zoop.ns3 <- zoop.ns2[,-c(1:4)]
+zoopREL <- zoop.ns3
+for(i in 1:dim(zoop.ns3)[1]){
+  zoopREL[i,] <- zoop.ns3[i,]/sum(zoop.ns3[i,])
+}
+
+# use csi_relabun.ns but drop CSI 27 sample/ IUbarcode ID CSI026	is CSI-027
+csi_relabun.ns
+odd.sites <- c("CSI026")
+dim(csi_relabun.ns)
+csi_relabun.ns2 <- csi_relabun.ns[setdiff(rownames(csi_relabun.ns), odd.sites), ]
+
+dim(csi_relabun.ns2)
+dim(zoop.ns3)
+
+dist.zoop <- vegdist(zoopREL, method = "bray")
+dist.bact <- vegdist(csi_relabun.ns2, method = "bray")
+
+require(ade4)
+mantel.rtest(dist.zoop, dist.bact, nrepet = 999)
 ```
 
 # Venn Diagram
