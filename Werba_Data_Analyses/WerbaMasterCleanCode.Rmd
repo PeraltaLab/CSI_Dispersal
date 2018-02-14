@@ -407,7 +407,7 @@ Mantel tests comparing zooplankton relative abundance and decomposition
 ```{r}
 
 # from full data only want community data and remove any rows with all zeros
-
+rem_col<-  full_data[rowSums(full_data[,-c(1:5)]) == 0,] #from final date Rep A treat 1 disp 0 and Rep B treat 7 (which never exisited) 
 full_data_alt <- full_data[rowSums(full_data[,-c(1:5)]) != 0,]
 comm_dat <- full_data_alt[,-c(1:5)]
 
@@ -418,8 +418,15 @@ for (i in 1:dim(comm_dat)[1]) {
   zoo_rel[i, ] <- comm_dat[i, ]/sum(comm_dat[i,])
 }
 
+# take only the final day, first add date column back in
+zoo_rel_45<- cbind(zoo_rel,full_data_alt[,1]) 
+#take rows only from the last day ==42211
+zoo_rel_45a<- zoo_rel_45[zoo_rel_45$`full_data_alt[, 1]` == 42211,]
+#remove date column
+zoo_rel_45b <- zoo_rel_45a[,-32]
+
 #distance matrix zooplankton
-dist.zoop <- vegdist(zoo_rel, method = "bray")
+dist.zoop <- vegdist(zoo_rel_45b, method = "bray")
 
 #distance matrix decomposition
 #first read in full data
@@ -433,9 +440,10 @@ decomp$diff_spar <- with(decomp, Spartina-DryWt_Spartina)
 
 #take only the difference columns
 decomp_final <- decomp[, c(7:9)]
-
+#remove rows that were removed from zooplankton (e.g. zero zooplankton)
+decomp_finala <- decomp_final[-1, ]
 #make distance matrix
-dist.decomp <- vegdist(decomp_final, method = "euclidean" )
+dist.decomp <- vegdist(decomp_finala, method = "euclidean" )
 
 #dist.bact <- vegdist(csi_relabun.ns, method = "bray")
 #run mantel test
