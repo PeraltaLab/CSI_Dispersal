@@ -37,7 +37,6 @@ require("png")
 require("MASS")
 require("grid")
 require("ape")
-require("png")
 require("picante")
 # require("venneuler")
 require("Hmisc")
@@ -198,7 +197,7 @@ dist.zoop <- vegdist(zoopREL, method = "bray")
 dist.bact <- vegdist(csi_relabun.ns2, method = "bray")
 
 require(ade4)
-mantel.rtest(dist.zoop, dist.bact, nrepet = 999)
+mantel.rtest(dist.zoop, dist.bact, nrepet = 999) #rsquared 0.408, p=.001
 ```
 
 # Calculating Diversity Metrics
