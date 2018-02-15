@@ -359,17 +359,22 @@ graph_dat$Point1 <- all_pcoa$points[,1]
 graph_dat$Point2 <- all_pcoa$points[,2]
 
 #need centroids and sd by group 
-cent1 <- graph_dat %>%
-  group_by(Date, Dispersal, Salinity) %>%
-  summarize(Axis1= mean(Point1), sd1 = sd(Point1), 
-            Axis2 = mean(Point2), sd2 =sd(Point2))
-cent1 <- data.frame(cent1)
-cent1$Salinity <- factor(as.character(cent1$Salinity),levels= c("0","5","9","13"))
-cent1$date2 <- rep(c(0,18,45), each =11 )
+#cent1 <- graph_dat %>% 
+ # group_by(Date, Dispersal, Salinity) %>% 
+  #summarize_all(Axis1 = mean(Point1), sd1 = sd(Point1), 
+   #         Axis2 = mean(Point2), sd2 = sd(Point2))
+
+cent1.g <- group_by(graph_dat, Date, Dispersal, Salinity)
+cent1.gs <- summarise(cent1.g, Axis1=mean(Point1),sd1 = sd(Point1), 
+   Axis2 = mean(Point2), sd2 = sd(Point2))
+
+cent1.gs <- data.frame(cent1.gs)
+cent1.gs$Salinity <- factor(as.character(cent1.gs$Salinity),levels= c("0","5","9","13"))
+cent1.gs$date2 <- rep(c(0,18,45), each =11 )
 
 #now to graph
 
-g1 <- ggplot(data= cent1, aes(Axis1, Axis2)) +
+g1 <- ggplot(data= cent1.gs, aes(Axis1, Axis2)) +
   geom_point(aes(color=Salinity,
                  shape = as.factor(Dispersal)), size = 5)
 
@@ -390,16 +395,16 @@ g4 <- g3 +  scale_shape_manual(name = "Dispersal",
 Dispersal1 <- rep(c(rep("Source",2),"Control Fresh", rep("Mixed Salt and Fresh", 4),
                      rep("Salt Only",4)),3)
   
-cent1$Dispersal1 <- Dispersal1
+cent1.gs$Dispersal1 <- Dispersal1
 
-g1 <- ggplot(data= cent1, aes(Axis1, Axis2)) +geom_point(aes(color=as.factor(Salinity), shape = as.factor(date2)), size = 5)
+ng1 <- ggplot(data= cent1.gs, aes(Axis1, Axis2)) +geom_point(aes(color=as.factor(Salinity), shape = as.factor(date2)), size = 5)
 
-g2 <- g1 + geom_errorbar(aes(ymax= Axis2+sd2, ymin= Axis2-sd2)) + 
+ng2 <- ng1 + geom_errorbar(aes(ymax= Axis2+sd2, ymin= Axis2-sd2)) + 
   geom_errorbarh(aes(xmax=Axis1+sd1, xmin=Axis1-sd1))
 
-g3 <- g2 + facet_wrap(~Dispersal1, ncol = 2)
+ng3 <- ng2 + facet_wrap(~Dispersal1, ncol = 2)
 
-g4 <- g3 + labs(color = "Salinity")+ labs(shape = "Date")
+ng4 <- ng3 + labs(color = "Salinity")+ labs(shape = "Date")
 
 ```
 
@@ -449,5 +454,5 @@ dist.decomp <- vegdist(decomp_finala, method = "euclidean" )
 #run mantel test
 require(ade4)
 mantel.rtest(dist.zoop, dist.decomp, nrepet = 999)
-
+#p=.151 rsqaured= 0.0557893
 ```
