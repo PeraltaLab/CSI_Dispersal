@@ -208,7 +208,7 @@ teen_3 <- teen_2 %>%
 
 The next results are about the decomposition data. All this data is found in the dataframe decomp, also in the .Rdata file.
 
-I found a significant inverse relationship between salinity and the amount of decomposition for three leaf types; Acer rubrum leaves (F=6.7, df=2,28, p=0.004) (figure 14), Spartina sp (F=34.47, df=1,32, p<0.01) (figure 15), and Phragmites australis (F=7.04, df=1,32, p<0.01). I failed to find a significant effect of dispersal type on decomposition rate for any of the leaf types (Acer rubrum t=0.548,p=0.548; Spartina sp t=1.056,p=0.3), however decomposition of Phragmites australis was ~13% greater in the communities saltwater dispersal (t=1.82,p=0.07).
+I found a significant inverse relationship between salinity and the amount of decomposition for three leaf types; Acer rubrum leaves (F=6.7, df=2,28, p=0.004) (figure 14), Spartina sp (F=34.47, df=1,32, p<0.01) (figure 15), and Phragmites australis (F=7.04, df=1,32, p<0.01). I failed to see a significant effect of dispersal type on decomposition rate for any of the leaf types (Acer rubrum t=0.548,p=0.548; Spartina sp t=1.056,p=0.3), however decomposition of Phragmites australis was ~13% greater in the communities saltwater dispersal (t=1.82,p=0.07).
 
 ```{r}
 maple<-lm(log(Maple/DryWt_Maple)~Salinity+Dispersal,data = decomp)
@@ -311,6 +311,7 @@ full_data <-read.csv("full_data.csv")
 all_3dates <- full_data [full_data$Date==42166 | full_data$Date==42184 |full_data$Date==42211, ]
 #remove all rows that sums = zero
 all_3dates1 <- all_3dates[rowSums(all_3dates[,-c(1:5)]) != 0,]
+
 # just community data
 comm_3dates <- all_3dates1[,-c(1:5)]
 #distance matrix
@@ -321,8 +322,44 @@ all_pcoa <- cmdscale(all_dist, k=3, eig = TRUE, add = FALSE)
 var1a <- round(all_pcoa$eig[1] / sum(all_pcoa$eig), 3) * 100  #31.6
 var2a <- round(all_pcoa$eig[2] / sum(all_pcoa$eig), 3) * 100  #14.1
 sum.eiga <- sum(var1a, var2a)
-
+#just source
+js_3dates <- all_3dates1[all_3dates1$Dispersal==0, ]
+js_comm <- js_3dates[,-c(1:5)]
+js_dist <- vegdist(js_comm, method = "bray")
+js_pcoa <- cmdscale(js_dist, k=3, eig = TRUE, add = FALSE)
+#no source
+ns_3dates <- all_3dates1[all_3dates1$Dispersal!= 0 & all_3dates1$Dispersal!=1, ]
+ns_comm <- ns_3dates[,-c(1:5)]
+ns_dist <- vegdist(ns_comm, method = "bray")
+ns_pcoa <- cmdscale(ns_dist, k=3, eig = TRUE, add = FALSE)
 ```
+
+Permanova
+```{r}
+#remove rows will all zeros
+no_zero <- full_data[rowSums(full_data[,-c(1:5)]) != 0, ]
+adonis = adonis(no_zero[,-c(1:5)] ~ Date*Dispersal*Salinty, method = "bray",data=no_zero, perm=1000)
+adonis
+```
+output: 
+Permutation: free
+Number of permutations: 1000
+
+Terms added sequentially (first to last)
+
+                        Df SumsOfSqs MeanSqs F.Model      R2   Pr(>F)    
+Date                     1     2.605  2.6053  10.306 0.02986 0.000999 ***
+Dispersal                1     2.622  2.6221  10.373 0.03005 0.000999 ***
+Salinty                  1    16.959 16.9592  67.088 0.19437 0.000999 ***
+Date:Dispersal           1     0.610  0.6097   2.412 0.00699 0.016983 *  
+Date:Salinty             1     1.750  1.7503   6.924 0.02006 0.000999 ***
+Dispersal:Salinty        1     0.411  0.4105   1.624 0.00470 0.125874    
+Date:Dispersal:Salinty   1     0.363  0.3633   1.437 0.00416 0.158841    
+Residuals              245    61.933  0.2528         0.70981             
+Total                  252    87.254                 1.00000             
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
 
 Now to graph
 ```{r}
@@ -334,7 +371,7 @@ theme_update(axis.text.x = element_text(size = 12),
              legend.title = element_text(size = 10),
              legend.text = element_text(size = 8),
              legend.spacing = unit(0.25, "cm"),
-             legend.key.width = unit(0.35, "cm"),
+             legend.key.xdwidth = unit(0.35, "cm"),
              panel.grid.major = element_blank(),
              panel.grid.minor = element_blank(),
              strip.background = element_blank(),
@@ -348,6 +385,82 @@ theme_update(axis.text.x = element_text(size = 12),
                                          face = "bold"))
 
 ```
+
+```{r}
+#graph just source
+graph_dat1 <- data.frame (cbind(js_3dates$Date, as.character(js_3dates$Dispersal),
+                               js_3dates$Salinty))
+names(graph_dat1) <- c("Date", "Dispersal","Salinity")
+
+graph_dat1$Point1 <- js_pcoa$points[,1]
+graph_dat1$Point2 <- js_pcoa$points[,2]
+
+#need centroids and sd by group 
+#cent1 <- graph_dat %>% 
+ # group_by(Date, Dispersal, Salinity) %>% 
+  #summarize_all(Axis1 = mean(Point1), sd1 = sd(Point1), 
+   #         Axis2 = mean(Point2), sd2 = sd(Point2))
+
+cent1.g <- group_by(graph_dat1, Date, Dispersal, Salinity)
+cent1.gs <- summarise(cent1.g, Axis1=mean(Point1),sd1 = sd(Point1), 
+   Axis2 = mean(Point2), sd2 = sd(Point2))
+
+cent1.gs <- data.frame(cent1.gs)
+cent1.gs$Salinity <- factor(as.character(cent1.gs$Salinity),levels= c("0","13"))
+cent1.gs$date2 <- rep(c(0,18,45), each =2)
+
+#now to graph
+
+g1 <- ggplot(data= cent1.gs, aes(Axis1, Axis2)) +
+  geom_point(aes(color=Salinity), size = 5)
+
+g2 <- g1 + geom_errorbar(aes(ymax= Axis2+sd2, ymin= Axis2-sd2)) + 
+  geom_errorbarh(aes(xmax=Axis1+sd1, xmin=Axis1-sd1))
+
+g3 <- g2 + facet_wrap(~date2, ncol = 1) 
+
+  
+```
+
+Graph all treatments without sources
+```{r}
+graph_dat1 <- data.frame (cbind(ns_3dates$Date, as.character(ns_3dates$Dispersal),
+                               ns_3dates$Salinty))
+names(graph_dat1) <- c("Date", "Dispersal","Salinity")
+
+graph_dat1$Point1 <- ns_pcoa$points[,1]
+graph_dat1$Point2 <- ns_pcoa$points[,2]
+
+#need centroids and sd by group 
+#cent1 <- graph_dat %>% 
+ # group_by(Date, Dispersal, Salinity) %>% 
+  #summarize_all(Axis1 = mean(Point1), sd1 = sd(Point1), 
+   #         Axis2 = mean(Point2), sd2 = sd(Point2))
+
+cent1.g <- group_by(graph_dat1, Date, Dispersal, Salinity)
+cent1.gs <- summarise(cent1.g, Axis1=mean(Point1),sd1 = sd(Point1), 
+   Axis2 = mean(Point2), sd2 = sd(Point2))
+
+cent1.gs <- data.frame(cent1.gs)
+cent1.gs$Salinity <- factor(as.character(cent1.gs$Salinity),levels= c("0","5","9","13"))
+cent1.gs$date2 <- rep(c(0,18,45), each =4)
+
+#now to graph
+
+g1 <- ggplot(data= cent1.gs, aes(Axis1, Axis2)) +
+  geom_point(aes(color=Salinity, shape= Dispersal), size = 5)
+
+g2 <- g1 + geom_errorbar(aes(ymax= Axis2+sd2, ymin= Axis2-sd2)) + 
+  geom_errorbarh(aes(xmax=Axis1+sd1, xmin=Axis1-sd1))
+
+g3 <- g2 + facet_wrap(~date2, ncol = 1) 
+
+g4 <- g3 +  scale_shape_manual(name = "Dispersal", 
+                               values = c(17,18),
+                                       breaks = c(2,3),
+                                       labels = c("Mixed Salt and Fresh","Salt Only"))
+```
+
 
 ```{r}
 #need date, salinity, treatment and PCoA points in one dataframe

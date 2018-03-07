@@ -197,7 +197,7 @@ dist.zoop <- vegdist(zoopREL, method = "bray")
 dist.bact <- vegdist(csi_relabun.ns2, method = "bray")
 
 require(ade4)
-mantel.rtest(dist.zoop, dist.bact, nrepet = 999) #rsquared 0.408, p=.001
+mantel.rtest(dist.zoop, dist.bact, nrepet = 999) #rsquared 0.409, p=.001
 ```
 
 # Calculating Diversity Metrics
