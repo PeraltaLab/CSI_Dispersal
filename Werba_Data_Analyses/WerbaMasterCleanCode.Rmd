@@ -412,12 +412,12 @@ cent1.gs$date2 <- rep(c(0,18,45), each =2)
 #now to graph
 
 g1 <- ggplot(data= cent1.gs, aes(Axis1, Axis2)) +
-  geom_point(aes(color=Salinity), size = 5)
+  geom_point(aes(color=Salinity, shape=as.factor(date2)), size = 5)
 
 g2 <- g1 + geom_errorbar(aes(ymax= Axis2+sd2, ymin= Axis2-sd2)) + 
   geom_errorbarh(aes(xmax=Axis1+sd1, xmin=Axis1-sd1))
 
-g3 <- g2 + facet_wrap(~date2, ncol = 1) 
+#g3 <- g2 + facet_wrap(~date2, ncol = 1) 
 
   
 ```
