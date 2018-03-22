@@ -3,15 +3,20 @@
 
 library(lme4)
 library(vegan)
-library(betareg)
+library(tidyverse)
+
 
 full_data <-read.csv("full_data.csv")
 
+#make just a community dataframe
+community <- full_data %>% 
+  select(-c(Date,Day,Replicate,Treatment,Salinity_Treat,Dispersal,Salinity_Measured))
+
 # calculate richness 
-richness <- specnumber(full_data[,-c(1:6)], MARGIN = 1)
+richness <- specnumber(community, MARGIN = 1)
 
 #calculate shannon's diversity 
-shannon_div <- diversity(full_data[,-c(1:6)], index = "shannon", MARGIN = 1, base = exp(2))
+shannon_div <- diversity(community, index = "shannon", MARGIN = 1, base = exp(2))
 
 #calculate evenness -- Pielous evennnes shannon diversity/ log(richness)
 evenness <- shannon_div/log(richness)
@@ -29,15 +34,25 @@ no_source_all <- alpha[alpha$Dispersal!= 0 & alpha$Dispersal!=1, ]
 source_all <- alpha[alpha$Dispersal== 0 & alpha$Dispersal==1, ]
 
 # richness over time given treatment for non-source tanks
-# I used poisson because it is count data but was slightly underdispersed so switched to quasipoisson
-Rich_no_source<-glm(richness~Dispersal+sal*Date,data = no_source_all,family =quasipoisson)
+# I used poisson because it is count data but was slightly underdispersed so switched to quasipoisson- same for both
+Rich_no_source<-glm(richness~Dispersal+Salinity_Measured*Day,data = no_source_all,family =quasipoisson)
+
+Rich_source<-glm(richness~Salinity_Measured*Day,data = no_source_all,family =quasipoisson)
 
 #check for model assumptions
 plot(resid(Rich_no_source))
+plot(resid(Rich_source))
 
 #evenness over time given treatment for non-source tanks
-# here I use a beta distribution because evennenss is constrained between 0 and 1 but is not success/failure
-#even_no_source <- betareg(evenness~Dispersal+sal*Date,data = no_source_all)-- evennness is very weird in this data because some tanks only have one species
+# evennness is very weird in this data because some tanks only have one species
+
+# Shannon's Diversity- accounts for both richness and evenness in some way
+Shannon_no_source<-lm(shannon_div~Dispersal+Salinity_Measured*Day,data = no_source_all)
 
 
+
+#check for model assumptions ## hmm this really isn't normal... not sure what my assumption would be for shannon's index
+plot(resid(Shannon_no_source))
+qqnorm(resid(Shannon_no_source))
+qqline(resid(Shannon_no_source))
 
