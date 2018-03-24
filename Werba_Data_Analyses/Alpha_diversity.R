@@ -31,13 +31,13 @@ alpha <- alpha[-which(alpha$Replicate =="B" & alpha$Treatment==7),]
 no_source_all <- alpha[alpha$Dispersal!= 0 & alpha$Dispersal!=1, ]
 
 # ony source tanks
-source_all <- alpha[alpha$Dispersal== 0 & alpha$Dispersal==1, ]
+source_all <- alpha[alpha$Dispersal== 0 | alpha$Dispersal==1, ]
 
 # richness over time given treatment for non-source tanks
 # I used poisson because it is count data but was slightly underdispersed so switched to quasipoisson- same for both
 Rich_no_source<-glm(richness~Dispersal+Salinity_Measured*Day,data = no_source_all,family =quasipoisson)
 
-Rich_source<-glm(richness~Salinity_Measured*Day,data = no_source_all,family =quasipoisson)
+Rich_source<-glm(richness~Salinity_Measured*Day,data = source_all,family =quasipoisson)
 
 #check for model assumptions
 plot(resid(Rich_no_source))
@@ -50,9 +50,14 @@ plot(resid(Rich_source))
 Shannon_no_source<-lm(shannon_div~Dispersal+Salinity_Measured*Day,data = no_source_all)
 
 
+Shannon_source<-lm(shannon_div~Salinity_Measured*Day,data = source_all)
 
 #check for model assumptions ## hmm this really isn't normal... not sure what my assumption would be for shannon's index
 plot(resid(Shannon_no_source))
 qqnorm(resid(Shannon_no_source))
 qqline(resid(Shannon_no_source))
+
+plot(resid(Shannon_source))
+qqnorm(resid(Shannon_source))
+qqline(resid(Shannon_source))
 
