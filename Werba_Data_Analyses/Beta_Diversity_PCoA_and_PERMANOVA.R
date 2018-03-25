@@ -39,11 +39,11 @@ ns_pcoa <- cmdscale(ns_dist, k=3, eig = TRUE, add = FALSE)
 
 
 #PERMANOVA ---- this combines source and no source
-#remove rows will all zeros
+#remove rows with all zeros
 no_zero <- dat[rowSums(dat[,-c(1:6)]) != 0, ]
 
 #run PERMANOVA
-adonis = adonis(no_zero[,-c(1:6)] ~ Date*Dispersal*sal, method = "bray",data=no_zero, perm=1000)
+adonis = adonis(no_zero[,-c(1:6)] ~ Day*Dispersal*Salinity_Measured, method = "bray",data=no_zero, perm=1000)
 
 
 
