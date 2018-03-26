@@ -8,6 +8,9 @@ library(tidyverse)
 
 full_data <-read.csv("full_data.csv")
 
+#remove tank B7 which didn't exist due to leaking
+full_data <- full_data[-which(full_data$Replicate =="B" & full_data$Treatment==7),]
+
 #make just a community dataframe
 community <- full_data %>% 
   select(-c(Date,Day,Replicate,Treatment,Salinity_Treat,Dispersal,Salinity_Measured))
@@ -23,9 +26,6 @@ evenness <- shannon_div/log(richness)
 
 #make a dataframe with all alpha diversity indices and all data from full data
 alpha <- as.data.frame(cbind(full_data,richness, shannon_div,evenness))
-
-#remove tank B7 which didn't exist due to leaking
-alpha <- alpha[-which(alpha$Replicate =="B" & alpha$Treatment==7),]
 
 # remove source tanks
 no_source_all <- alpha[alpha$Dispersal!= 0 & alpha$Dispersal!=1, ]
