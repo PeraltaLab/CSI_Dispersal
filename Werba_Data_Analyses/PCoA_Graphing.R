@@ -58,3 +58,4 @@ g3 <- g2 + facet_wrap(~date2, ncol = 1)
 
 (g4 <- g3 +  scale_shape_manual(name = "Dispersal", values = c(16,17),breaks = c(2,3),labels = c("Mixed Salt and Fresh","Salt Only")) + 
     scale_color_brewer(type = "seq",palette = "Dark2" ))
+

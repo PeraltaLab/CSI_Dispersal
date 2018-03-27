@@ -30,16 +30,17 @@ dist.zoop <- vegdist(zoo_rel_final, method = "bray")
 #first read in full data
 decomp_full <- read.csv("decomp_full.csv")
 
+
 #make new columns with proportional difference in weights
 decomp_full$diff_phrag <- with(decomp_full, Phragmites/DryWt_Phragmites)
 decomp_full$diff_maple <- with(decomp_full, Maple/DryWt_Maple)
 decomp_full$diff_spar <- with(decomp_full, Spartina/DryWt_Spartina)
 
 #remove rows that were removed from zooplankton (e.g. zero zooplankton)
-decomp_full <- decomp_full[-1, ]
+decomp_final <- decomp_full[-1, ]
 
 #take only the difference columns 
-decomp_final <- decomp_full %>%
+decomp_final <- decomp_final %>%
   select(c(diff_phrag,diff_maple,diff_spar)) 
 
 
@@ -63,26 +64,31 @@ mantel.rtest(dist.zoop, dist.carb, nrepet = 999)
 
 
 ## linear model with richness?? how is alpha div related to ecosystem function
+#bring in micorbial data
+div <-read.csv("Microbial_Diversity.csv")
 
 #first need a new dataframe with all the decomp differences into one column and add a type column
-
-dat_gather_decomp <- decomp_final %>%
+##start here just changed decompp final to full maybe will work w/o lines afterward?
+dat_gather_decomp <- decomp_full %>%
   gather(diff_phrag,diff_maple,diff_spar, key = "Leaf_Type", value = "weight_change" )
 
-# add in salinity and dispersal information
-dat_gather_decomp$salinity <- rep(decomp_full$Salinity,3)
-dat_gather_decomp$dispersal <- rep(decomp_full$Dispersal,3)
 
 #add in richness information
-richness <- alpha$richness[alpha$Day == 45]
-#remove column with no zooplankton
-richness <- richness[-1]
-#add to dataframe
-dat_gather_decomp$richness <- rep(richness, 3)
+dat_gather_decomp$z_richness <- rep(alpha$richness[alpha$Day == 45],3)
+
+#remove source tanks
+dat_gather_decomp_ns <- dat_gather_decomp %>% 
+  filter(Dispersal == 3 | Dispersal == 2)
+
+#add microbial richness
+dat_gather_decomp_ns$m_richness <- rep(div$richness[div$Date2 == 45], 3)
+
 
 #run linear model
 #used log(data) since proportions can't be negative
-rich_decomp <- lm(log(weight_change)~(richness+salinity+dispersal)*Leaf_Type, data = dat_gather_decomp)
+
+rich_decomp <- lm(log(weight_change)~(z_richness+m_richness+Salinity+Dispersal)*Leaf_Type, 
+                  data = dat_gather_decomp_ns)
 
 #check model # some weird tails
 plot(resid(rich_decomp))

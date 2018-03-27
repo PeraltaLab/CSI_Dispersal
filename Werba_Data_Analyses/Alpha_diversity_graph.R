@@ -22,8 +22,9 @@ rich_g2 <- rich_g1 + geom_line(data = newdat, aes(Salinity_Measured, richness, l
     ylab("Richness") + xlab("Salinity") +
   scale_shape_manual(name = "Dispersal",values = c(16,17), breaks = c(2,3),labels = c("Mixed Salt and Fresh","Salt Only"))+
     labs(color = "Salinity Treatment") +
-    scale_linetype_manual(name = "Dispersal Prediction Lines",values = c(1,2), breaks = c(2,3),labels = c("Mixed Salt and Fresh","Salt Only"))
-  )
+    scale_linetype_manual(name = "Dispersal Prediction Lines",values = c(1,2), breaks = c(2,3),labels = c("Mixed Salt and Fresh","Salt Only")))
+
+ 
 
 #richness in source tanks (supplementary Figure # X)
 
@@ -39,9 +40,10 @@ rich_source_g1 <- ggplot(data=source_all, aes(Salinity_Measured,richness)) +
 
 rich_source_g2 <- rich_source_g1 + geom_line(data = newdat1, aes(Salinity_Measured, richness),size=1) 
 
-(rich_source_g3 <- rich_source_g2 + facet_wrap(~(as.factor(Day)))+scale_color_brewer(type = "seq",palette = "Dark2")+
-    ylab("Richness") + xlab("Salinity") +labs(color = "Salinity Treatment") )
+rich_source_g3 <- rich_source_g2 + facet_wrap(~(as.factor(Day)))+scale_color_brewer(type = "seq",palette = "Dark2")+
+    ylab("Richness") + xlab("Salinity") +labs(color = "Salinity Treatment") 
 
+rich_source_g3 + theme(legend.position = c(0.5,0.9), legend.background = element_rect(fill = "gray90"))
 
 #evenness vs time (Supplementary Figure XX)
 even_g1 <- ggplot(data = alpha, aes(Day,evenness)) + geom_jitter(aes(color = as.factor(Dispersal)), size =3 )
@@ -89,5 +91,8 @@ shannon_source_g1 <- ggplot(data=source_all, aes(Salinity_Measured,shannon_div))
 shannon_source_g2 <- shannon_source_g1 + geom_line(data = newdat3, aes(Salinity_Measured, shannon_div),size=1) 
 
 
-(shannon_g3 <- shannon_source_g2 + facet_wrap(~(as.factor(Day)),ncol=2,nrow = 3)+scale_color_brewer(type = "seq",palette = "Dark2")+
-    ylab("Shannon Diversity") + xlab("Salinity") +labs(color = "Salinity Treatment"))
+shannon_source_g3 <- shannon_source_g2 + facet_wrap(~(as.factor(Day)),ncol=2,nrow = 3)+scale_color_brewer(type = "seq",palette = "Dark2")+
+    ylab("Shannon Diversity (H')") + xlab("Salinity") +labs(color = "Salinity Treatment")
+
+shannon_source_g3 + theme(legend.position = c(0.3,0.75),legend.direction = "horizontal", 
+                          legend.background = element_rect(fill = "gray90"))
