@@ -35,7 +35,7 @@ source_all <- alpha[alpha$Dispersal== 0 | alpha$Dispersal==1, ]
 
 # richness over time given treatment for non-source tanks
 # I used poisson because it is count data but was slightly underdispersed so switched to quasipoisson- same for both
-Rich_no_source<-glm(richness~Dispersal+Salinity_Measured*Day,data = no_source_all,family =quasipoisson)
+Rich_no_source<-glm(richness~as.factor(Dispersal)+Salinity_Measured*Day,data = no_source_all,family =quasipoisson)
 
 Rich_source<-glm(richness~Salinity_Measured*Day,data = source_all,family =quasipoisson)
 
@@ -47,7 +47,7 @@ plot(resid(Rich_source))
 # evennness is very weird in this data because some tanks only have one species
 
 # Shannon's Diversity- accounts for both richness and evenness in some way
-Shannon_no_source<-lm(shannon_div~Dispersal+Salinity_Measured*Day,data = no_source_all)
+Shannon_no_source<-lm(shannon_div~as.factor(Dispersal)+Salinity_Measured*Day,data = no_source_all)
 
 
 Shannon_source<-lm(shannon_div~Salinity_Measured*Day,data = source_all)
