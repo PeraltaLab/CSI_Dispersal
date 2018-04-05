@@ -2,7 +2,9 @@
 ## PCoA and permanova
 library(vegan)
 
-full_data <-read.csv("full_data.csv")
+#full_data <-read.csv("full_data.csv")
+
+full_data <-read.csv("family_data.csv")
 
 #remove tank B7 which didn't exist due to leaking
 dat <- full_data[-which(full_data$Replicate =="B" & full_data$Treatment==7),]

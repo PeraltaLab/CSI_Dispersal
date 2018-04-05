@@ -24,3 +24,7 @@ plot(resid(rich_lm))
 even_lm <- betareg(J ~ as.factor(Dispersal)+Salinity_real*Date2, data = div)
 
 plot(resid(even_lm))
+
+
+
+

@@ -1,4 +1,4 @@
-source("Alpha_diversity.R")
+source("alpha_family.R")
 source("Graphing_Set_Up.R")
 
 # graph results from richness model with no sources
