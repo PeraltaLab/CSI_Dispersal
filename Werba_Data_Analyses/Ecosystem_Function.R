@@ -3,7 +3,7 @@
 ## linear model with richness, salinity and dispersal?? how is alpha div related to ecosystem function
 
 library(ade4)
-source("Alpha_diversity.R")
+source("alpha_family.R")
 
 #make relative abundance matrix
 zoo_rel <- community
@@ -36,11 +36,9 @@ decomp_full$diff_phrag <- with(decomp_full, Phragmites/DryWt_Phragmites)
 decomp_full$diff_maple <- with(decomp_full, Maple/DryWt_Maple)
 decomp_full$diff_spar <- with(decomp_full, Spartina/DryWt_Spartina)
 
-#remove rows that were removed from zooplankton (e.g. zero zooplankton)
-decomp_final <- decomp_full[-1, ]
 
 #take only the difference columns 
-decomp_final <- decomp_final %>%
+decomp_final <- decomp_full %>%
   select(c(diff_phrag,diff_maple,diff_spar)) 
 
 
@@ -49,7 +47,7 @@ dist.decomp <- vegdist(decomp_final, method = "euclidean" )
 
 #run mantel test
 mantel.rtest(dist.zoop, dist.decomp, nrepet = 999)
-#p=.174 rsqaured= 0.051
+#p=.473 rsqaured= 0.006
 
 #now do for Carbon and zooplankton
 carbon <- decomp_full %>% 
@@ -60,7 +58,7 @@ dist.carb <- vegdist(carbon,method = "euclidean")
 
 #run mantel test
 mantel.rtest(dist.zoop, dist.carb, nrepet = 999)
-#p= 0.044, rsquared = 0.09
+#p= 0.003, r = 0.269
 
 
 ## linear model with richness?? how is alpha div related to ecosystem function
@@ -83,11 +81,14 @@ dat_gather_decomp_ns <- dat_gather_decomp %>%
 #add microbial richness
 dat_gather_decomp_ns$m_richness <- rep(div$richness[div$Date2 == 45], 3)
 
+#add actual salinity not just treatment #
+dat_gather_decomp_ns$salinity_measured <- rep(div$Salinity_real[div$Date2== 45],3)
 
 #run linear model
 #used log(data) since proportions can't be negative
 
-rich_decomp <- lm(log(weight_change)~(z_richness+m_richness+Salinity+Dispersal)*Leaf_Type, 
+rich_decomp <- lm(log(weight_change)~(z_richness+m_richness+salinity_measured+
+                                        as.factor(Dispersal))*Leaf_Type, 
                   data = dat_gather_decomp_ns)
 
 #check model # some weird tails
