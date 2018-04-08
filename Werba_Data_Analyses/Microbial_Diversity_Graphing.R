@@ -1,6 +1,7 @@
 source("Microbial_Diversity.R")
 source("Graphing_Set_Up.R")
 
+#first graph for only treatment tanks
 #richness
 #make dataframe for prediction lines 
 newdat <- expand.grid(
@@ -74,3 +75,71 @@ even_g3 <- even_g2 + facet_wrap(~(as.factor(Date2)),ncol=2,nrow = 3) +scale_colo
 
 (even_g3 + theme(legend.position = c(0.75,0.2), legend.direction = "vertical", 
                  legend.box = "vertical", legend.background = element_blank()))
+
+
+## graphs for source tanks only
+
+#richness
+#make dataframe for prediction lines 
+newdat <- expand.grid(
+  richness.source = 0,
+  Date2 = unique(s_div$Date2),
+  Salinity_Measured = seq(0,15,0.0005)
+)
+newdat$richness.source <- exp(predict(rich_lm_s,newdata = newdat))
+
+rich_g1_s <- ggplot(data=s_div, aes(Salinity_Measured,richness.source)) + 
+  geom_jitter(aes(color=as.factor(Salinity)),size=3)
+
+rich_g2_s <- rich_g1_s + geom_line(data = newdat, aes(Salinity_Measured, richness.source),size=1) 
+
+
+rich_g3_s <- rich_g2_s + facet_wrap(~(as.factor(Date2)),ncol=2,nrow = 3) +scale_color_brewer(type = "seq",palette = "Dark2")+
+  ylab("Richness") + xlab("Salinity") +
+  labs(color = "Salinity Treatment") 
+
+rich_g3_s + theme(legend.position = c(0.75,0.2),
+                legend.direction = "vertical", legend.box = "vertical", legend.background = element_blank())
+
+#shannon
+newdat <- expand.grid(
+  shannon.source = 0,
+  Date2 = unique(s_div$Date2),
+  Salinity_Measured = seq(0,15,0.0005)
+)
+newdat$shannon.source <- predict(shan_lm_s,newdata = newdat)
+
+shan_g1_s <- ggplot(data=s_div, aes(Salinity_Measured,shannon.source)) + 
+  geom_jitter(aes(color=as.factor(Salinity)),size=3)
+
+shan_g2_s <- shan_g1_s + geom_line(data = newdat, aes(Salinity_Measured, shannon.source),size=1) 
+
+
+shan_g3_s <- shan_g2_s + facet_wrap(~(as.factor(Date2)),ncol=2,nrow = 3) +scale_color_brewer(type = "seq",palette = "Dark2")+
+  ylab("Shannon Diveristy Index (H')") + xlab("Salinity") +
+  labs(color = "Salinity Treatment") 
+
+shan_g3_s + theme(legend.position = c(0.75,0.2),
+                  legend.direction = "vertical", legend.box = "vertical", legend.background = element_blank())
+
+
+#Evenness
+newdat <- expand.grid(
+  J.source = 0,
+  Date2 = unique(s_div$Date2),
+  Salinity_Measured = seq(0,15,0.0005)
+)
+newdat$J.source <- predict(even_lm_s,type = "response", newdata = newdat)
+
+even_g1_s <- ggplot(data=s_div, aes(Salinity_Measured,J.source)) + 
+  geom_jitter(aes(color=as.factor(Salinity)),size=3)
+
+even_g2_s <- even_g1_s + geom_line(data = newdat, aes(Salinity_Measured, J.source),size=1) 
+
+
+even_g3_s <- even_g2_s + facet_wrap(~(as.factor(Date2)),ncol=2,nrow = 3) +scale_color_brewer(type = "seq",palette = "Dark2")+
+  ylab("Peilou's Evennens (J')") + xlab("Salinity") +
+  labs(color = "Salinity Treatment") 
+
+even_g3_s + theme(legend.position = c(0.75,0.2),
+                  legend.direction = "vertical", legend.box = "vertical", legend.background = element_blank())

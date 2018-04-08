@@ -4,7 +4,7 @@
 library(lme4)
 library(vegan)
 library(tidyverse)
-
+detach(package:MASS)
 
 full_data <-read.csv("full_data.csv")
 
