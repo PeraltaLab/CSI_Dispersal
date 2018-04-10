@@ -1,4 +1,4 @@
-Sample #,Replicate,Number,Salinity,Dispersal,Date,Maple,Spartina,Phragmites,DryWt_Maple,DryWt_Spartina,DryWt_Phragmites,Cmin
+Sample #,Replicate,Treatment,Salinity,Dispersal,Date,Maple,Spartina,Phragmites,DryWt_Maple,DryWt_Spartina,DryWt_Phragmites,Cmin
 A_1_11JUN15,A,1,13,0,6/11/2015,4.005,6.95,10.04,3.2049,7.03,10.13,0.19
 A_10_11JUN15,A,10,13,3,6/11/2015,3.9997,6.98,9.98,1.7681,5.32,4.5,110.67
 A_11_11JUN15,A,11,0,2,6/11/2015,4.0063,7.02,9.98,1.4821,5.17,4.78,64.06
