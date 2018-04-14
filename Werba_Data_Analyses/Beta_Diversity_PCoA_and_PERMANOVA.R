@@ -26,6 +26,8 @@ js_dist <- vegdist(js_comm, method = "bray")
 
 #run PCoA
 js_pcoa <- cmdscale(js_dist, k=3, eig = TRUE, add = FALSE)
+(expvar1_s <- round(js_pcoa$eig[1] / sum(js_pcoa$eig), 3) * 100)  #45.1
+(expvar2_s <- round(js_pcoa$eig[2] / sum(js_pcoa$eig), 3) * 100)  #14.3
 
 #no source for PCoA
 ns_3dates <- all_3dates1[all_3dates1$Dispersal!= 0 & all_3dates1$Dispersal!=1, ]
@@ -38,8 +40,8 @@ ns_dist <- vegdist(ns_comm, method = "bray")
 
 #run PCoA
 ns_pcoa <- cmdscale(ns_dist, k=3, eig = TRUE, add = FALSE)
-
-
+expvar1 <- round(ns_pcoa$eig[1] / sum(ns_pcoa$eig), 3) * 100  #34.3
+expvar2 <- round(ns_pcoa$eig[2] / sum(ns_pcoa$eig), 3) * 100  #16.8
 #PERMANOVA ---- this combines source and no source
 #remove rows with all zeros
 no_zero <- dat[rowSums(dat[,-c(1:6)]) != 0, ]
