@@ -31,7 +31,7 @@ alpha <- as.data.frame(cbind(full_data,richness, shannon_div,evenness))
 no_source_all <- alpha[alpha$Dispersal!= 0 & alpha$Dispersal!=1, ]
 
 # ony source tanks
-source_all <- alpha[alpha$Dispersal== 0 | alpha$Dispersal==1, ]
+source_all <- alpha[alpha$Dispersal== 0, ]
 
 # richness over time given treatment for non-source tanks
 # I used poisson because it is count data but was slightly underdispersed so switched to quasipoisson- same for both

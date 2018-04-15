@@ -42,6 +42,8 @@ ns_dist <- vegdist(ns_comm, method = "bray")
 ns_pcoa <- cmdscale(ns_dist, k=3, eig = TRUE, add = FALSE)
 expvar1 <- round(ns_pcoa$eig[1] / sum(ns_pcoa$eig), 3) * 100  #34.3
 expvar2 <- round(ns_pcoa$eig[2] / sum(ns_pcoa$eig), 3) * 100  #16.8
+
+
 #PERMANOVA ---- this combines source and no source
 #remove rows with all zeros
 no_zero <- dat[rowSums(dat[,-c(1:6)]) != 0, ]

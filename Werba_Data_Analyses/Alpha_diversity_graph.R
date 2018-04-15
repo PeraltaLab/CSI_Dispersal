@@ -88,7 +88,7 @@ newdat4$shannon_div <- predict(Shannon_source,newdata = newdat4)
 shannon_source_g1 <- ggplot(data=source_all, aes(Salinity_Measured,shannon_div)) + 
   geom_jitter(aes(color=as.factor(Salinity_Treat)),size=3)
 
-shannon_source_g2 <- shannon_source_g1 + geom_line(data = newdat3, aes(Salinity_Measured, shannon_div),size=1) 
+shannon_source_g2 <- shannon_source_g1 + geom_line(data = newdat4, aes(Salinity_Measured, shannon_div),size=1) 
 
 
 shannon_source_g3 <- shannon_source_g2 + facet_wrap(~(as.factor(Day)),ncol=2,nrow = 3)+scale_color_brewer(type = "seq",palette = "Dark2")+
