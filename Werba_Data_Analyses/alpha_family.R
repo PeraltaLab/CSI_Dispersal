@@ -13,7 +13,7 @@ full_data <- full_data[-which(full_data$Replicate =="B" & full_data$Treatment==7
 
 #make just a community dataframe
 community <- full_data %>% 
-  select(-c(Date,Day,Replicate,Treatment,Salinity_Treat,Dispersal,Salinity_Measured))
+  dplyr::select(-c(Date,Day,Replicate,Treatment,Salinity_Treat,Dispersal,Salinity_Measured))
 
 # calculate richness 
 richness <- specnumber(community, MARGIN = 1)

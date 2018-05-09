@@ -26,6 +26,8 @@ rich_g2 <- rich_g1 + geom_line(data = newdat, aes(Salinity_Measured, richness, l
 
  
 
+
+
 #richness in source tanks (supplementary Figure # X)
 
 newdat1 <- expand.grid(

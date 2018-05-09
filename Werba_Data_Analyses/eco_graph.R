@@ -6,7 +6,7 @@ newdat <- expand.grid(
   Dispersal = unique(dat_gather_decomp_ns$Dispersal),
 #  Salinity_Measured = seq(0,15,0.05),
   z_rich = mean(dat_gather_decomp_ns$z_rich),
-  m_rich = seq(300,990,5),
+  m_rich = seq(300,1000,1),
   Leaf_Type = unique(dat_gather_decomp_ns$Leaf_Type),
   Salinity_Measured = unique(dat_gather_decomp_ns$Salinity)
 )
@@ -26,7 +26,7 @@ g2 <- g1 + geom_line(data = newdat, aes(m_rich, weight_change,
 
 g3 <- g2 + facet_grid(Leaf_Type~. )
 
-(g4 <- g3 + xlab("Microbial Richness") + ylab("Dry Weight Change (g)") +
+(g4 <- g3 + xlab("Microbial Richness") + ylab("Proportion Leaf Remaining") +
     scale_color_brewer(name = "Salinity Treatment", type = "seq", palette = "Dark2")+
     scale_linetype_manual(name = "Dispersal Prediction Lines",values = c(1,2),
                           breaks = c(2,3),
