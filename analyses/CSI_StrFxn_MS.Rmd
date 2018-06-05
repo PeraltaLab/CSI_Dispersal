@@ -67,14 +67,17 @@ design.full <- design.full[-c(grep("mock community", design.full$CSI_ID)), ]
 dim(design.full)
 
 # load OTU file
-csi_otu <- read.otu("../data/CSI.shared")
+#csi_otu <- read.otu("../data/CSI.shared")
+csi_otu <- read.otu("../data/CSIvsearch.shared")
 dim(csi_otu)
 
 # load environ/function file - includes expt design, decomp data, Cmin, nutrients day 45 only - need sreal
 design.env.full <- read.csv("../data/CSI_Design_ENV_Source.csv", row.names=1)
 
 # import taxonomy file for later
-csi.tax <- read.tax(taxonomy = "../data/CSI.0.03.cons.taxonomy", 
+#csi.tax <- read.tax(taxonomy = "../data/CSI.0.03.cons.taxonomy", 
+                    format = "rdp", tax.levels = 6, col.tax = 3)
+csi.tax <- read.tax(taxonomy = "../data/CSIvsearch.0.03.cons.taxonomy", 
                     format = "rdp", tax.levels = 6, col.tax = 3)
 ```
 
@@ -99,7 +102,7 @@ csi_low_remov <- otu_removal[which(rowSums(otu_removal) >= 13000), ]
 dim(csi_low_remov)
 
 # OTU table - odd sites in bacterial composition data and remove in design file
-odd.sites <- c("CSI033","CSI101") #IUbarcode
+odd.sites <- c("CSI033","CSI101", "CSI130") #IUbarcode #CSI130 is mock community
 
 otu_final <- csi_low_remov[setdiff(rownames(csi_low_remov), odd.sites), ]
 design_final <- design.full[setdiff(rownames(design.full), odd.sites), ]
@@ -202,7 +205,9 @@ mantel.rtest(dist.zoop, dist.bact, nrepet = 999) #rsquared 0.409, p=.001
 
 # Calculating Diversity Metrics
 ```{r (Diversity Metrics), echo=TRUE}
-# Rarefy Abundances (min abundance is 13,240. We are sampling to 13,000)
+# Rarefy Abundances (min abundance is 13,240. We are sampling to 13,000) for uchime mothur run
+# Rarefy Abundances (min abundance is 13,229. We are sampling to 13,000) for vsearch mothur run
+
 min(rowSums(otu_final.ns))
 otu.rarefy <- rrarefy(otu_final.ns, 13000)
 
@@ -215,10 +220,11 @@ richness <- rowSums((otu.rarefy >= 1))
 # Pielou’s evenness
 J <- shannon/log(specnumber(otu.rarefy[,-c(1:1)]))
 
-# Dombined design,shannon,richness,evenness - no source tanks
+# Combined design,shannon,richness,evenness - no source tanks
 csi_otu.div <- cbind(design.ns.final,shannon,richness,J)
 
-# Rarefy Abundances with SOURCES (min abundance is 13,240. We are sampling to 13,000)
+# Rarefy Abundances (min abundance is 13,240. We are sampling to 13,000) for uchime mothur run
+# Rarefy Abundances (min abundance is 13,229. We are sampling to 13,000) for vsearch mothur run
 min(rowSums(otu_final))
 otu.rarefy <- rrarefy(otu_final, 13000)
 
@@ -231,7 +237,7 @@ richness.source <- rowSums((otu.rarefy >= 1))
 # Pielou’s evenness
 J.source <- shannon.source/log(specnumber(otu.rarefy[,-c(1:1)]))
 
-# Dombined design,shannon,richness,evenness - no source tanks
+# Combined design,shannon,richness,evenness - no source tanks
 csi_otu.div.source <- cbind(design_final, shannon.source, 
                             richness.source,J.source)
 ```
