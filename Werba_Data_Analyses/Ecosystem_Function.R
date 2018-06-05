@@ -111,3 +111,14 @@ qqline(resid(rich_decomp))
 
 #exp(-0.295114) = 0.744 therefore when e fold increase in  microbes regardless of everything else, .74 fold less of leaf remaining than you would have had at half the microbes
 # == 1.34x the loss
+
+
+#linear model for carbon mineralization
+
+cmin_lm <-lm(Cmin~((z_rich)+(m_rich)+Salinity_Measured+
+                                   as.factor(Dispersal)), 
+             data = dat_gather_decomp_ns) 
+#check model
+plot(resid(cmin_lm))
+qqnorm(resid(cmin_lm))
+qqline(resid(cmin_lm))
