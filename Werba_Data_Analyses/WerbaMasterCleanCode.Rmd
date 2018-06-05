@@ -402,3 +402,44 @@ g3 <- g2 + facet_wrap(~Dispersal1, ncol = 2)
 g4 <- g3 + labs(color = "Salinity")+ labs(shape = "Date")
 
 ```
+
+Mantel tests comparing zooplankton relative abundance and decomposition
+```{r}
+
+# from full data only want community data and remove any rows with all zeros
+
+full_data_alt <- full_data[rowSums(full_data[,-c(1:5)]) != 0,]
+comm_dat <- full_data_alt[,-c(1:5)]
+
+
+#make relative abundance matrix
+zoo_rel <- comm_dat
+for (i in 1:dim(comm_dat)[1]) {
+  zoo_rel[i, ] <- comm_dat[i, ]/sum(comm_dat[i,])
+}
+
+#distance matrix zooplankton
+dist.zoop <- vegdist(zoo_rel, method = "bray")
+
+#distance matrix decomposition
+#first read in full data
+decomp_full <- read.csv("decomp_full.csv")
+#subset original and final weights
+decomp <- decomp_full[,c(7:ncol(decomp_full))]
+#make new columns with difference in weights
+decomp$diff_phrag <- with(decomp, Phragmites-DryWt_Phragmites)
+decomp$diff_maple <- with(decomp, Maple-DryWt_Maple)
+decomp$diff_spar <- with(decomp, Spartina-DryWt_Spartina)
+
+#take only the difference columns
+decomp_final <- decomp[, c(7:9)]
+
+#make distance matrix
+dist.decomp <- vegdist(decomp_final, method = "euclidean" )
+
+#dist.bact <- vegdist(csi_relabun.ns, method = "bray")
+#run mantel test
+require(ade4)
+mantel.rtest(dist.zoop, dist.decomp, nrepet = 999)
+
+```
