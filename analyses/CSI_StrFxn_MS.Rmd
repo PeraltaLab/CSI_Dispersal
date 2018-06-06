@@ -76,7 +76,7 @@ design.env.full <- read.csv("../data/CSI_Design_ENV_Source.csv", row.names=1)
 
 # import taxonomy file for later
 #csi.tax <- read.tax(taxonomy = "../data/CSI.0.03.cons.taxonomy", 
-                    format = "rdp", tax.levels = 6, col.tax = 3)
+#                    format = "rdp", tax.levels = 6, col.tax = 3)
 csi.tax <- read.tax(taxonomy = "../data/CSIvsearch.0.03.cons.taxonomy", 
                     format = "rdp", tax.levels = 6, col.tax = 3)
 ```
@@ -568,11 +568,17 @@ df.decomp <- csi.full.ns.Cmin[,c(12:14)] #decomp
 df.decompCmin <- csi.full.ns.Cmin[,c(12:15)] #decompCmin
 
 #bray curtis for bact comm
-dist.bcc <- vegdist(df.bcc, method = "bray")
+dist.bcc <- vegdist(df.bcc[,-1], method = "bray")
 #euclidean distance for leaf litter decomp
 dist.decomp <- vegdist(df.decomp, method = "euclidean")
 #euclidean distance for leaf litter decomp and Cmin
 dist.decompCmin <- vegdist(df.decompCmin, method = "euclidean")
+#euclidean distance for cmin
+cmin.df <- df.env.bcc %>% dplyr::select(Cmin)
+dist.cmin <- vegdist(cmin.df,method = "euclidean")
+
+#matrix comparison cmin and microbial composition
+mantel.rtest(dist.bcc, dist.cmin, nrepet = 999) # r=0.22, p=0.006
 
 #matrix comparison
 mantel.rtest(dist.bcc, dist.decomp, nrepet = 999) #bacteria compared to decomp correlation r = 0.231, P=0.006

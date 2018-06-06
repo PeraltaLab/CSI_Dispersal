@@ -2,7 +2,7 @@
 library(lme4)
 library(MASS)
 library(betareg)
-div <- read.csv("Microbial_Diversity.csv")
+div <- read.csv("Microbial_Treatment_Diversity.csv")
 
 #Shannon Diversity
 
@@ -27,7 +27,8 @@ plot(resid(even_lm))
 
 
 ## for source tanks
-s_div <- read.csv("Microbe_Source_Div.csv")
+s_div <- read.csv("Microbial_Source_Diversity.csv")
+
 #Shannon Diversity
 
 shan_lm_s <- lm(shannon.source ~ Salinity_Measured*Date2, data = s_div)

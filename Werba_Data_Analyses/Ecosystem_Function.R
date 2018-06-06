@@ -61,9 +61,9 @@ mantel.rtest(dist.zoop, dist.carb, nrepet = 999)
 #p= 0.001, r = 0.269
 
 
-## linear model with richness?? how is alpha div related to ecosystem function
+## linear model with richness- how is alpha div related to ecosystem function
 #bring in micorbial data
-div <-read.csv("Microbial_Diversity.csv")
+div <-read.csv("Microbial_Treatment_Diversity.csv")
 div1 <- div %>%
   dplyr::select (Replicate, Treatment, richness, Date2 ) %>%
   filter (Date2 == 45)
@@ -112,6 +112,8 @@ qqline(resid(rich_decomp))
 #exp(-0.295114) = 0.744 therefore when e fold increase in  microbes regardless of everything else, .74 fold less of leaf remaining than you would have had at half the microbes
 # == 1.34x the loss
 
+
+#microbial mantel test with cim
 
 #linear model for carbon mineralization
 
