@@ -52,6 +52,17 @@ mantel.rtest(dist.zoop, dist.decomp, nrepet = 999)
 #now do for Carbon and zooplankton
 carbon <- decomp_full %>% 
   dplyr::select(Cmin)
+carbon <- data.frame(carbon)
+#RDA
+zoo_final <- alpha %>%
+  filter(Day == 45) %>%
+  dplyr::select(-c(Date,X,Day,Replicate,Treatment,Salinity_Treat,
+                   Dispersal, Salinity_Measured,richness,shannon_div,
+                   evenness))
+
+
+crda <- rda(zoo_final~carbon$Cmin)
+plot(crda,choices=c(1,2))
 
 #distance matrix
 dist.carb <- vegdist(carbon,method = "euclidean")
