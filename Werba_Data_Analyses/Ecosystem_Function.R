@@ -27,7 +27,7 @@ div1 <- div1 %>%
 names(div1) <- c("Day","Replicate","Treatment","Salinity_Measured","richness")
 div1$Dispersal <- as.factor(0)
 #combine the source and treatment tanks into one dataframe
-
+library(plyr)
 micro_div <- cbind(names=c(rownames(div), rownames(div1)),
                    rbind.fill(list(div, div1)))
 
@@ -84,7 +84,7 @@ qqline(resid(rich_decomp))
 
 cmin_lm <-lm(log(Cmin+1)~(z_rich)+(m_rich)+Salinity_Measured +
                as.factor(Dispersal), 
-             data = dat_gather_decomp) 
+             data = dat_gather_decomp)
 #check model
 plot(resid(cmin_lm))
 qqnorm(resid(cmin_lm))
