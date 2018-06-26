@@ -1,8 +1,7 @@
 ## ecosystem functions
 ## linear model with richness, salinity and dispersal?? how is alpha div related to ecosystem function
-
-source("alpha_family.R")  #alpha dataframe includes all dates, tanks, zooplankton, richness
 library(plyr)
+source("alpha_family.R")  #alpha dataframe includes all dates, tanks, zooplankton, richness
 #first read in ecosystem function data
 decomp_full <- read.csv("decomp_full.csv")
 
@@ -27,9 +26,9 @@ div1 <- div1 %>%
 names(div1) <- c("Day","Replicate","Treatment","Salinity_Measured","richness")
 div1$Dispersal <- as.factor(0)
 #combine the source and treatment tanks into one dataframe
-library(plyr)
+
 micro_div <- cbind(names=c(rownames(div), rownames(div1)),
-                   rbind.fill(list(div, div1)))
+                   plyr::rbind.fill(list(div, div1)))
 
 micro_dat <- micro_div %>%
   dplyr::select(Day, Replicate,Treatment,richness)
@@ -81,10 +80,12 @@ qqline(resid(rich_decomp))
 
 
 #linear model for carbon mineralization
-
-cmin_lm <-lm(log(Cmin+1)~(z_rich)+(m_rich)+Salinity_Measured +
+#remove tank A8 that has a 0 in carbon mineralization
+dat_gather_decomp2 <- dat_gather_decomp %>%
+  filter(Cmin != 0)
+cmin_lm <-lm(log(Cmin)~(z_rich)+(m_rich)+Salinity_Measured +
                as.factor(Dispersal), 
-             data = dat_gather_decomp)
+             data = dat_gather_decomp2)
 #check model
 plot(resid(cmin_lm))
 qqnorm(resid(cmin_lm))
