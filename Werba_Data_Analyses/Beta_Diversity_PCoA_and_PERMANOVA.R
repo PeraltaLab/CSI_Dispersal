@@ -2,7 +2,6 @@
 ## PCoA and permanova
 library(vegan)
 
-#full_data <-read.csv("full_data.csv")
 
 full_data <-read.csv("family_data.csv")
 

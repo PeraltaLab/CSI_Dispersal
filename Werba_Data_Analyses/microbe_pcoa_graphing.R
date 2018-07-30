@@ -31,7 +31,7 @@ g3 <- g2 + facet_wrap(~Date, ncol = 1)
 (g4 <- g3 +  scale_shape_manual(name = "Dispersal", values = c(16,17),breaks = c(2,3),labels = c("Mixed Salt and Fresh","Salt Only")) + 
     scale_color_brewer(name = "Salinity", type = "seq",palette = "Dark2", 
                        labels = c("0", "5", "9","13") ) +
-    xlab("PCoA 1 (17.2%)") + ylab("PCoA 2 (7.4%)"))
+    xlab("PCoA 1 (17.3%)") + ylab("PCoA 2 (7.3%)"))
 
 
 ## source only pcoa
@@ -60,5 +60,5 @@ g2 <- g1 + geom_errorbar(aes(ymax= Axis2+sd2, ymin= Axis2-sd2)) +
 
 (g3 <- g2 + scale_color_brewer(name = "Salinity", type = "seq",palette = "Dark2", 
                        labels = c("0", "13") ) + labs(shape = "Day") +
-    xlab("PCoA 1 (29.1%)") + ylab("PCoA 2 (9.8%)"))
+    xlab("PCoA 1 (29.3%)") + ylab("PCoA 2 (9.7%)"))
 
