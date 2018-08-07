@@ -2,7 +2,7 @@
 # Current Shared File: CSI.15.trim.contigs.good.unique.good.filter.unique.precluster.pick.pick.pick.opti_mcc.unique_list.shared
 
 # The following we run in mothur
-get.oturep(list=CSI.15.trim.contigs.good.unique.good.filter.unique.precluster.pick.pick.pick.opti_mcc.unique_list.list, fasta=CSI.15.trim.contigs.good.unique.good.filter.unique.precluster.pick.pick.pick.fasta, count=CSI.15.trim.contigs.good.unique.good.filter.unique.precluster.denovo.vsearch.pick.pick.pick.count_table, method=abundance, label=0.03)
+get.oturep(list=CSI.trim.contigs.good.unique.good.filter.unique.precluster.denovo.vsearch.pick.pick.count_table, fasta=CSI.trim.contigs.good.unique.good.filter.unique.precluster.pick.pick.fasta, count=CSI.trim.contigs.good.unique.good.filter.unique.precluster.denovo.vsearch.pick.pick.count_table, method=abundance, label=0.03)
 system(cp ./CSI.15.trim.contigs.good.unique.good.filter.unique.precluster.pick.pick.pick.opti_mcc.unique_list.0.03.rep.fasta ./CSI.final.0.03.rep.fasta)
 
 # Fast Tree
