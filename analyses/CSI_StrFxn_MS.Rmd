@@ -292,7 +292,8 @@ ggsave("../figures/ms/shannon.source.pdf", plot=last_plot(), device=NULL, path=N
 # run full parametric statistical model
 J.lm <- lm(J ~ Dispersal*Salinity*Date, data = csi_otu.div)
 plot(J.lm)
-anova(J.lm)
+library(car)
+Anova(J.lm)
 
 # run linear regression measured salinity used instead of 'factor' salinity
 J.reg <- lm(J~Salinity_real, data = csi_otu.div)
@@ -783,3 +784,147 @@ split(indicator.bac$Class, indicator.bac$Cluster)
 plot(as.factor(indicator.bac$Cluster), as.factor(indicator.bac$Phylum))
 
 ```
+
+# Phylogenetic Analysis
+```{r}
+library("ggtree"); library("ape")
+tree <- read.tree("../data/CSI.bac.rename.tree")
+
+# otu_final, design_final
+design.45 <- design_final[which(design_final$Date2 == "45"), ]
+design.45 <- design.45[which(design.45$Dispersal %in% c(2, 3)), ]
+otus.45 <- otu_final[which(rownames(otu_final) %in% rownames(design.45)), ]
+otus.45 <- otus.45[, which(colSums(otus.45) > 100)]
+
+otus.45 <- otus.45[, -c(which(colnames(otus.45) %in% 
+                                csi.tax$OTU[csi.tax$Phylum %in%
+                                c("Bacteria_unclassified", "OD1", 
+                                  "BRC1", "Spirochaetes", 
+                                  "Tenericutes", "Deferribacteres",
+                                  "Chloroflexi", "Deinococcus-Thermus", "WS3")]))]
+
+otus.45 <- otus.45[, -c(which(colnames(otus.45) %in% 
+                                csi.tax$OTU[csi.tax$Class %in%
+                                c("Bacteroidetes_unclassified",
+                           "Bacteroidetes_incertae_sedis_class_incertae_sedis",
+                           "Proteobacteria_unclassified", "WS3", "Bacteroidia", "Chlorobi", "Epsilonproteobacteria")]))]
+
+tree$tip.label <- gsub(".{1}$", "", tree$tip.label)
+
+tree.labs <- tree$tip.label
+tree.labs %in% colnames(otus.45)
+
+rm.otus <- setdiff(tree.labs, colnames(otus.45))
+
+tree.2 <- drop.tip(tree, rm.otus)
+
+str(tree.2)
+
+length(tree.2$tip.label)
+sum(tree.2$tip.label %in% colnames(otus.45))
+
+tree.otus <- tree.2$tip.label
+tree.tax <- csi.tax[which(csi.tax$OTU %in% tree.otus), ]
+table(tree.tax$Class)
+
+tree.tax.2 <- tree.tax[order(match(tree.tax$OTU, tree.2$tip.label)), ]
+all.equal(as.character(tree.tax.2$OTU), tree.2$tip.label)
+
+phylum2 <- tree.tax.2$Phylum
+for(i in 1:length(phylum2)){
+  if (phylum2[i] == "Proteobacteria"){
+    phylum2[i] <- tree.tax.2$Class[i]
+  }
+  if (phylum2[i] == "Bacteroidetes"){
+    phylum2[i] <- tree.tax.2$Class[i]
+  }
+}
+
+table(phylum2)
+
+groupInfo <- split(tree.2$tip.label, phylum2)
+Phy.tree <- groupOTU(tree.2, groupInfo, group_name = "phylum2")
+levels(attributes(Phy.tree)$phylum2) <- c(names(groupInfo))
+
+p <- ggtree(Phy.tree, layout="rectangular") + theme(legend.position="top", 
+        legend.key = element_rect(colour = NA)) + 
+  geom_tippoint(aes(color=phylum2)) 
+
+
+# Set treatments
+treatments1 <- as.factor(design.45$Salinity) 
+levels(treatments1) <- c("0","5","9","13")
+
+sal.ind <- indval(otus.45, treatments1)
+levels(treatments1)
+summary(sal.ind)
+sal.inds <- which(sal.ind$pval <= 0.05)
+sal.indicators <- as.data.frame(matrix(NA, nrow = length(sal.inds), ncol = 4))
+colnames(sal.indicators) <- c("OTU", "Cluster", "IndVal", "Prob")
+sal.indicators$OTU <- names(sal.inds)
+sal.indicators$Cluster <- sal.ind$maxcls[sal.inds]
+sal.indicators$IndVal <- sal.ind$indcls[sal.inds]
+sal.indicators$Prob <- sal.ind$pval[sal.inds]
+
+sal.dat <- as.data.frame(matrix(NA, ncol = 5, nrow = length(tree.2$tip.label)))
+rownames(sal.dat) <- tree.2$tip.label
+colnames(sal.dat) <- c(levels(treatments1), ">0")
+
+for(i in 1:dim(sal.indicators)[1]){
+  temp <- sal.indicators[i, ]
+  sal.dat[which(row.names(sal.dat) == temp$OTU), temp$Cluster] <- 10
+}
+
+
+treatments1 <- as.factor(design.45$Salinity) 
+levels(treatments1) <- c("0","1","1","1")
+sal.ind <- indval(otus.45, treatments1)
+levels(treatments1)
+summary(sal.ind)
+sal.inds <- which(sal.ind$pval <= 0.05)
+sal.indicators <- as.data.frame(matrix(NA, nrow = length(sal.inds), ncol = 4))
+colnames(sal.indicators) <- c("OTU", "Cluster", "IndVal", "Prob")
+sal.indicators$OTU <- names(sal.inds)
+sal.indicators$Cluster <- sal.ind$maxcls[sal.inds]
+sal.indicators$IndVal <- sal.ind$indcls[sal.inds]
+sal.indicators$Prob <- sal.ind$pval[sal.inds]
+
+for(i in 1:dim(sal.indicators)[1]){
+  temp <- sal.indicators[i, ]
+  if(temp$Cluster == 2){
+    sal.dat[which(row.names(sal.dat) == temp$OTU), 5] <- 10
+  }
+}
+
+
+treatments2 <- droplevels(as.factor(design.45$Dispersal))
+levels(treatments2) <- c("2", "3")
+
+dis.ind <- indval(otus.45, treatments2)
+levels(treatments2)
+summary(dis.ind)
+dis.inds <- which(dis.ind$pval <= 0.05)
+dis.indicators <- as.data.frame(matrix(NA, nrow = length(dis.inds), ncol = 4))
+colnames(dis.indicators) <- c("OTU", "Cluster", "IndVal", "Prob")
+dis.indicators$OTU <- names(dis.inds)
+dis.indicators$Cluster <- dis.ind$maxcls[dis.inds]
+dis.indicators$IndVal <- dis.ind$indcls[dis.inds]
+dis.indicators$Prob <- dis.ind$pval[dis.inds]
+
+csi.tax[which(csi.tax$OTU %in% dis.indicators$OTU), ]
+csi.tax[which(csi.tax$OTU %in% sal.indicators$OTU), ]
+
+gheatmap(p, sal.dat, width = 0.5, colnames_angle=90, hjust=1, 
+         low = "red", high = "red")
+
+ggsave("../figures/indicator.tree.pdf", width = 10, height = 8, units = "in")
+
+```
+
+
+
+
+
+
+
+
