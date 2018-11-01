@@ -15,7 +15,10 @@ qqline(resid(shan_lm))
 #richness- this is a count so I used poisson- but was super overdispersed (38) so changed to negative binomial 
 #now dispersion is close to expected 1 (1.05)
 
-rich_lm <- glm.nb(richness ~ as.factor(Dispersal)+Salinity_real*Date2, data = div)
+div$Rep <- paste(div$Replicate,div$Treatment)
+
+rich_lm1 <- glm.nb(richness ~ as.factor(Dispersal)*Date2+Salinity_real*Date2, data = div)
+rich_lm <- glmer.nb(richness ~ as.factor(Dispersal)*Date2+Salinity_real*Date2+ (1+Date2|Rep), data = div)
 
 plot(resid(rich_lm))
 

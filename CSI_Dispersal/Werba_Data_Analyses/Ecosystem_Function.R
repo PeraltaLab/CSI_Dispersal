@@ -1,7 +1,8 @@
 ## ecosystem functions
 ## linear model with richness, salinity and dispersal?? how is alpha div related to ecosystem function
-library(plyr)
+
 source("alpha_family.R")  #alpha dataframe includes all dates, tanks, zooplankton, richness
+library(plyr)
 #first read in ecosystem function data
 decomp_full <- read.csv("decomp_full.csv")
 
@@ -26,9 +27,9 @@ div1 <- div1 %>%
 names(div1) <- c("Day","Replicate","Treatment","Salinity_Measured","richness")
 div1$Dispersal <- as.factor(0)
 #combine the source and treatment tanks into one dataframe
-
+library(plyr)
 micro_div <- cbind(names=c(rownames(div), rownames(div1)),
-                   plyr::rbind.fill(list(div, div1)))
+                   rbind.fill(list(div, div1)))
 
 micro_dat <- micro_div %>%
   dplyr::select(Day, Replicate,Treatment,richness)
@@ -61,21 +62,13 @@ colnames(dat_gather_decomp)[which(names(dat_gather_decomp) == "richness")] <-
 dat_gather_decomp1 <- dat_gather_decomp %>%
   gather(diff_phrag,diff_maple,diff_spar, key = "Leaf_Type", value = "weight_change" )
 
-dat_gather_decomp2 <- dat_gather_decomp1 %>% filter(Dispersal != 0 )
 
 #run linear model
 #used log(data) since proportions can't be negative
-library(betareg)
-
-rich_decomp <- betareg(weight_change~(z_rich)+(m_rich)+as.factor(Dispersal)+
-                    Leaf_Type*Salinity_Measured, 
-                  data = dat_gather_decomp2)
-
-
 
 rich_decomp <- lm(log(weight_change)~(z_rich)+(m_rich)+as.factor(Dispersal)+
                                         Leaf_Type*Salinity_Measured, 
-                  data = dat_gather_decomp2)
+                  data = dat_gather_decomp1)
 
 
 
@@ -88,12 +81,10 @@ qqline(resid(rich_decomp))
 
 
 #linear model for carbon mineralization
-#remove tank A8 that has a 0 in carbon mineralization
-dat_gather_decomp3 <- dat_gather_decomp2 %>%
-  filter(Cmin != 0)
-cmin_lm <-lm(log(Cmin)~(z_rich)+(m_rich)+Salinity_Measured +
+
+cmin_lm <-lm(log(Cmin+1)~(z_rich)+(m_rich)+Salinity_Measured +
                as.factor(Dispersal), 
-             data = dat_gather_decomp3)
+             data = dat_gather_decomp)
 #check model
 plot(resid(cmin_lm))
 qqnorm(resid(cmin_lm))
