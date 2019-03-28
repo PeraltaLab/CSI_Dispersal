@@ -26,21 +26,14 @@ source("../bin/DiversityFunctions.R")
 source("../bin/MothurTools.R")
 
 #load req'd packages
-require("vegan")
-require("dplyr")
-require("nlme")
-require("reshape2")
-require("ecodist")
-require("ggplot2")
-require("ade4")
-require("png")
-require("MASS")
-require("grid")
-require("ape")
-require("picante")
+library("knitr");library("vegan");library("ecodist")
+library("dplyr"); library("reshape2");library("Hmisc")
+library("MASS");library("nlme"); library("ade4")
+library("ape");library("picante");library("phylofactor")
+library("grid");library("png");library("ggplot2")
+library("car");library("labdsv")
 # require("venneuler")
-require("Hmisc")
-require("knitr")
+
 # set std err
 se <- function(x, ...) {
 sd(x, na.rm = TRUE)/sqrt(length(na.omit(x)))
@@ -52,29 +45,37 @@ ci <- function(x, ...) {
 
 #Loading data file
 ```{r Loading Files, include=FALSE}
-#NOTE: Tank 3 only had fresh water added. Tank 1 was the source for the salt and tank 2 was the source for the fresh water.
-#NOTE: Dispersal 0 (treatments 1 and 2) were source tanks-- no dispersal. Dispersal 1 (treatment 3) only received fresh water. Dispersal 3 (treatments 4,6,8,10) only got salt water. And dispersal 2 (treatments 5,7,9,11) received both fresh and salt.
+#NOTE: Tank 3 only had fresh water added. 
+#      Tank 1 was the source for the salt and 
+#      Tank 2 was the source for the fresh water.
+#
+#NOTE: Dispersal 0 (treatments 1 and 2) were source tanks-- no dispersal 
+#      Dispersal 1 (treatment 3) only received fresh water
+#      Dispersal 3 (treatments 4,6,8,10) only got salt water. And 
+#      Dispersal 2 (treatments 5,7,9,11) received both fresh and salt.
 
-# load design file - no source tanks
+# Load Design File - No Source Tanks
 design.ns <- read.csv("../data/CSI_Design_ENV_NoSourceTanks.csv", row.names=1)
 #head(design.ns)
 #str(design.ns)
 dim(design.ns)
 
-# load design file - with source tanks but missing decomp, nutrients, sreal, Date2 columns
+# Load Design File - With Source Tanks 
+#                    but missing decomp, nutrients, sreal, Date2 columns
 design.full <- read.csv("../data/design_CSI.csv", row.names=1)
 design.full <- design.full[-c(grep("mock community", design.full$CSI_ID)), ]
 dim(design.full)
 
-# load OTU file
+# Load OTU File
 #csi_otu <- read.otu("../data/CSI.shared")
 csi_otu <- read.otu("../data/CSIvsearch.shared")
 dim(csi_otu)
 
-# load environ/function file - includes expt design, decomp data, Cmin, nutrients day 45 only - need sreal
+# Load Environ/Function File - 
+#   includes expt design, decomp data, Cmin, nutrients day 45 only - need sreal
 design.env.full <- read.csv("../data/CSI_Design_ENV_Source.csv", row.names=1)
 
-# import taxonomy file for later
+# Import Taxonomy File for Later
 #csi.tax <- read.tax(taxonomy = "../data/CSI.0.03.cons.taxonomy", 
 #                    format = "rdp", tax.levels = 6, col.tax = 3)
 csi.tax <- read.tax(taxonomy = "../data/CSIvsearch.0.03.cons.taxonomy", 
@@ -199,7 +200,6 @@ dim(zoop.ns3)
 dist.zoop <- vegdist(zoopREL, method = "bray")
 dist.bact <- vegdist(csi_relabun.ns2, method = "bray")
 
-require(ade4)
 mantel.rtest(dist.zoop, dist.bact, nrepet = 999) #rsquared 0.411, p=.001
 ```
 
@@ -292,7 +292,6 @@ ggsave("../figures/ms/shannon.source.pdf", plot=last_plot(), device=NULL, path=N
 # run full parametric statistical model
 J.lm <- lm(J ~ Dispersal*Salinity*Date, data = csi_otu.div)
 plot(J.lm)
-library(car)
 Anova(J.lm)
 
 # run linear regression measured salinity used instead of 'factor' salinity
@@ -676,7 +675,7 @@ plot(df.rda)
 ```
 # Indicator Species Analysis
 ```{r}
-library("labdsv")
+
 #http://rfunctions.blogspot.com/2013/02/multivariate-analysis-indicator-value.html
 
 # bind design and bact files NO Source
@@ -787,7 +786,6 @@ plot(as.factor(indicator.bac$Cluster), as.factor(indicator.bac$Phylum))
 
 # Phylogenetic Analysis
 ```{r}
-library("ggtree"); library("ape")
 tree <- read.tree("../data/CSI.bac.rename.tree")
 
 # otu_final, design_final
@@ -812,6 +810,9 @@ otus.45 <- otus.45[, -c(which(colnames(otus.45) %in%
 tree$tip.label <- gsub(".{1}$", "", tree$tip.label)
 
 tree.labs <- tree$tip.label
+tree.labs[1:5]
+colnames(otus.45)[1:5]
+
 tree.labs %in% colnames(otus.45)
 
 rm.otus <- setdiff(tree.labs, colnames(otus.45))
@@ -1006,7 +1007,82 @@ p1 + theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor = e
 ggsave("../figures/ms/Cmin_PD.pdf", plot=last_plot(), device=NULL, path=NULL, scale=1, width=NA, height=NA, dpi=300, limitsize=TRUE)
 ```
 
+# PhyloFactor
+```{r}
+library("phylofactor")
+data("FTmicrobiome")
 
+OTUTable <- FTmicrobiome$OTUTable   #Our OTU table. Rows are OTUs and columns are samples
+OTUTable[1:5,1:5]
+
+body.site <- FTmicrobiome$X         #Our independent variable
+str(body.site)
+
+tree <- FTmicrobiome$tree           #Our phylogeny
+tree
+
+taxonomy <- FTmicrobiome$taxonomy   #Our taxonomy
+taxonomy[1:3,]
+
+common.otus <- which(rowSums(OTUTable>0)>10)
+
+OTUTable <- OTUTable[common.otus,]                        
+tree <- ape::drop.tip(tree,setdiff(tree$tip.label,rownames(OTUTable)))  #trim our tree accordingly
+
+```
+
+
+```{r}
+# Organize Data
+
+# OTU Table w/ Only "Common Taxa"
+OTUtable <- t(otu_final.ns)
+OTUtable[1:5, 1:5]
+OTUtable <- OTUtable[which(rowSums(OTUtable) > 10), ]
+
+# Independent Variables: Salinity
+all.equal(colnames(OTUtable), rownames(csi.full.ns))
+trt <- as.factor(csi.full.ns$Salinity)
+levels(trt) <- c("0","5","9","13")
+
+# Phylogenetic Tree
+csi.tree <- read.tree("../data/CSI.bac.rename.tree")
+csi.tree$tip.label <- gsub(".{1}$", "", csi.tree$tip.label)
+sum((rownames(OTUtable) %in% csi.tree$tip.label) == FALSE)
+tree <- csi.tree
+tree <- ape::drop.tip(tree,setdiff(tree$tip.label,rownames(OTUtable)))
+
+# Taxonomy
+csi.tax.common <- csi.tax[which(csi.tax$OTU %in% rownames(OTUtable)), ]
+taxonomy <- tax.merge(csi.tax.common)
+
+
+# PhyloFactorization
+PF <- PhyloFactor(OTUTable, tree, trt, nfactors = 3 )
+class(PF)
+
+
+
+### Stopping Point
+
+
+tree.labs <- tree$tip.label
+tree.labs[1:5]
+colnames(otus.45)[1:5]
+
+tree.labs %in% colnames(otus.45)
+
+  
+# bind design and bact files NO Source
+csi.full.ns <- cbind(design.ns.final,csi_relabun.ns)
+
+csi.ns <- cbind(design.ns.final,otu_final.ns)
+
+# Set treatments
+treatments1 <- as.factor(csi.full.ns$Salinity)
+levels(treatments1) <- c("0","5","9","13")
+
+```
 
 
 
