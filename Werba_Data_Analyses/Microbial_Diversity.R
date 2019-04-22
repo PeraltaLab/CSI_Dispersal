@@ -17,8 +17,25 @@ qqline(resid(shan_lm))
 
 div$Rep <- paste(div$Replicate,div$Treatment)
 
-rich_lm1 <- glm.nb(richness ~ as.factor(Dispersal)*Date2+Salinity_real*Date2, data = div)
-rich_lm <- glmer.nb(richness ~ as.factor(Dispersal)*Date2+Salinity_real*Date2+ (1+Date2|Rep), data = div)
+rich_lm <- glmer.nb(richness ~ Salinity_real*Date2+
+                      as.factor(Dispersal)*Salinity_real+ 
+                      (1+Date2|Rep), data = div)
+
+rich_lm1 <- glmer(richness ~ Salinity_real*Date2+
+                    as.factor(Dispersal)*Salinity_real+ 
+                    (1+Date2|Rep), data = div, family = "poisson")
+
+
+overdisp_fun <- function(model) {
+  rdf <- df.residual(model)
+  rp <- residuals(model,type="pearson")
+  Pearson.chisq <- sum(rp^2)
+  prat <- Pearson.chisq/rdf
+  pval <- pchisq(Pearson.chisq, df=rdf, lower.tail=FALSE)
+  c(chisq=Pearson.chisq,ratio=prat,rdf=rdf,p=pval)
+}
+
+overdisp_fun(rich_lm1)
 
 plot(resid(rich_lm))
 

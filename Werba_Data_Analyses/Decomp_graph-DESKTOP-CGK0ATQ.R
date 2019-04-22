@@ -9,13 +9,13 @@ newdat <- expand.grid(
   Leaf_Type = unique(dat_gather_decomp2$Leaf_Type),
   Dispersal = unique(dat_gather_decomp2$Dispersal),
   #Salinity_Measured = unique(dat_gather_decomp2$Salinity),
-  Salinity_Measured = mean(unique(dat_gather_decomp2$Salinity)),
+  Salinity_Measured = median(unique(dat_gather_decomp2$Salinity)),
   weight_change = 0
 )
 
 newdat$weight_change <- predict(rich_decomp,newdata = newdat, type = "response")
-#newdat$weight_change <- linkinv(predict(rich_decomp,newdata=newdat))
-#newdat$weight_change <- plogis(predict(rich_decomp,newdata=newdat))
+newdat$weight_change <- linkinv(predict(rich_decomp,newdata=newdat))
+newdat$weight_change <- plogis(predict(rich_decomp,newdata=newdat))
 
 
 easyPredCI <- function(model,newdata,alpha=0.05) {
@@ -38,19 +38,22 @@ easyPredCI <- function(model,newdata,alpha=0.05) {
 
 #cpred1.CI <- easyPredCI(rich_decomp,newdat)
 
-#pred0 <- predict(rich_decomp,newdata=newdat)
-#X <- model.matrix(formula(rich_decomp),newdat)
-#V <-vcov(rich_decomp)[-10,-10]
-#pred.se <- sqrt(diag(X %*% V %*% t(X))) 
+pred0 <- predict(rich_decomp,newdata=newdat)
+X <- model.matrix(formula(rich_decomp),newdat)
+V <-vcov(rich_decomp)[-10,-10]
+pred.se <- sqrt(diag(X %*% V %*% t(X))) 
 
-#linkinv <- rich_decomp$link$mean$linkinv
+linkinv <- rich_decomp$link$mean$linkinv
 
-#newdat$lower <- linkinv(pred0-1.96*pred.se)
-#newdat$upper <- linkinv(pred0+1.96*pred.se)
+newdat$lower <- linkinv(pred0-1.96*pred.se)
+newdat$upper <- linkinv(pred0+1.96*pred.se)
 
-#newdat_check <- newdat %>% 
-  #group_by(Leaf_Type, m_rich) %>%
-  #summarise(mean_change = mean(weight_change))
+newdat_check <- newdat %>% 
+  group_by(Leaf_Type, m_rich) %>%
+  summarise(mean_change = mean(weight_change))
+
+## change salinity label in newdat to read 5 (even though predicted at 7)- so graph legend isn't messed up
+newdat$Salinity_Measured <- 5
 
 #ggplot(newdat_check, aes(m_rich, mean_change)) + geom_point(aes(colour = Leaf_Type))
   
@@ -58,34 +61,24 @@ easyPredCI <- function(model,newdata,alpha=0.05) {
 leaf_type_names <- c("diff_maple" ="Maple", "diff_phrag" = "Phragmites","diff_spar" = "Spartina")
 
 
-## change name of salinity in newdat for legend
-
-newdat$Salinity_Measured <- 5
-
 dec_g <- ggplot(dat_gather_decomp2, aes(m_rich, weight_change)) + 
-  geom_point(aes(color=as.factor(Salinity), shape = as.factor(Dispersal)),size = 3)
+  geom_point(aes(color=as.factor(Salinity), shape=as.factor(Dispersal)),size = 4)
 
 dec_g1 <- dec_g +
-  #geom_ribbon(data = newdat, aes(ymin=lower,ymax=upper, 
-                                 #fill = as.factor(Dispersal)), alpha =0.3)+ 
-  geom_line(data = newdat, aes(m_rich,weight_change, 
+  
+  geom_line(data = newdat, aes(m_rich,weight_change,
                                linetype = as.factor(Dispersal)), size = 1)
 
 (dec_g3 <- dec_g1 + facet_grid(Leaf_Type ~ ., labeller = as_labeller(leaf_type_names)) + 
     scale_color_brewer(type = "seq",palette = "Dark2") +
-    ylab("Proportion Remaining in Dry Weight (g)") + xlab("Observed Microbial Richness") + labs(color = "Salinity")+
-    scale_linetype_manual(name = "Dispersal",values = c(1,2),
-                          breaks = c(2,3),labels = c("Mixed Salt and Fresh","Salt Only")) +
-    scale_shape_manual(name = "Dispersal",values = c(16,17), 
-                       breaks = c(2,3),labels = c("Mixed Salt and Fresh","Salt Only"))+
-    labs(color = "Salinity Treatment")
-  
-  ) #+
-    
-
-#scale_fill_manual(name = "Dispersal Prediction Lines",
-                      #values = c("lightsteelblue4","lightsteelblue1"), 
-                      #breaks = c(2,3),labels = c("Mixed Salt and Fresh","Salt Only")))
+    ylab("Proportional Change in Dry Weight") + xlab("Microbial Richness") + labs(color = "Salinity")+
+    scale_linetype_manual(name = "Dispersal Prediction Lines",values = c(1,2),
+                          breaks = c(2,3),labels = c("Mixed Salt and Fresh","Salt Only"))+
+    scale_shape_manual(name = "Dispersal Prediction Lines",values = c(16,17),
+                          breaks = c(2,3),labels = c("Mixed Salt and Fresh","Salt Only"))+
+    scale_fill_manual(name = "Dispersal Prediction Lines",
+                      values = c("lightsteelblue4","lightsteelblue1"), 
+                      breaks = c(2,3),labels = c("Mixed Salt and Fresh","Salt Only")))
 
 
 

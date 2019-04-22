@@ -36,7 +36,28 @@ source_all <- alpha[alpha$Dispersal== 0, ]
 
 # richness over time given treatment for non-source tanks
 # I used poisson because it is count data but was slightly underdispersed so switched to quasipoisson- same for both
-Rich_no_source<-glmer.nb(richness~as.factor(Dispersal)*Day+Salinity_Measured*Day+(1+Day|Rep),data = no_source_all,family = quasipoisson(link = "log"))
+Rich_no_source<-glmer.nb(richness~ 
+                           Salinity_Measured*as.factor(Dispersal)+
+                           Salinity_Measured*Day+
+                           (1+Day|Rep),
+                         data = no_source_all,family = quasipoisson(link = "log"))
+
+
+Rich_no_source2<-glmer(richness~as.factor(Dispersal)*Day+
+                         Salinity_Measured*Day+ as.factor(Dispersal)+
+                         (1+Day|Rep),data = no_source_all,family = "poisson" )
+
+
+overdisp_fun <- function(model) {
+  rdf <- df.residual(model)
+  rp <- residuals(model,type="pearson")
+  Pearson.chisq <- sum(rp^2)
+  prat <- Pearson.chisq/rdf
+  pval <- pchisq(Pearson.chisq, df=rdf, lower.tail=FALSE)
+  c(chisq=Pearson.chisq,ratio=prat,rdf=rdf,p=pval)
+}
+
+overdisp_fun(Rich_no_source2)  ## chisq 67, ratio = .381, rdf = 177, p= 1
 
 Rich_no_source1<-glm(richness~as.factor(Dispersal)*Day+Salinity_Measured*Day,data = no_source_all,family = quasipoisson(link = "log"))
 

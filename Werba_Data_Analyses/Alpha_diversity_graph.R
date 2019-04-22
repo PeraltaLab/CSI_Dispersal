@@ -38,7 +38,7 @@ rich_g2 <- rich_g1 + geom_line(data = newdat, aes(Salinity_Measured, richness,
 
 (rich_g3 <- rich_g2 + facet_wrap(~(as.factor(Day)),ncol=2,nrow = 3) +
     scale_color_brewer(type = "seq",palette = "Dark2")+
-    ylab("Richness") + xlab("Salinity (psu)") +
+    ylab("Zooplankton Order Count") + xlab("Salinity (psu)") +
   scale_shape_manual(name = "Dispersal",values = c(16,17), 
                      breaks = c(2,3),labels = c("Mixed Salt and Fresh","Salt Only"))+
     labs(color = "Salinity Treatment") +

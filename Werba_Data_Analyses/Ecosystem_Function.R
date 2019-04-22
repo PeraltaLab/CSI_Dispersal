@@ -63,19 +63,25 @@ dat_gather_decomp1 <- dat_gather_decomp %>%
 
 dat_gather_decomp2 <- dat_gather_decomp1 %>% filter(Dispersal != 0 )
 
+## try shifting the intercept
+dat_gather_decomp2 <- dat_gather_decomp2 %>% 
+  mutate(m_rich = m_rich - min(m_rich))
+
 #run linear model
 #used log(data) since proportions can't be negative
 library(betareg)
 
-rich_decomp <- betareg(weight_change~(z_rich)+(m_rich)+as.factor(Dispersal)+
-                    Leaf_Type*Salinity_Measured, 
+rich_decomp <- betareg(weight_change~(z_rich)+
+                         m_rich+
+                         as.factor(Dispersal)+
+                         Salinity_Measured*Leaf_Type
+                         # Salinity_Measured
+                    , 
                   data = dat_gather_decomp2)
 
-
-
-rich_decomp <- lm(log(weight_change)~(z_rich)+(m_rich)+as.factor(Dispersal)+
-                                        Leaf_Type*Salinity_Measured, 
-                  data = dat_gather_decomp2)
+#rich_decomp <- lm(log(weight_change)~(z_rich)+(m_rich)+as.factor(Dispersal)+
+ #                                       Leaf_Type*Salinity_Measured, 
+  #                data = dat_gather_decomp2)
 
 
 
