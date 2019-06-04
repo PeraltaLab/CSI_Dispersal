@@ -9,23 +9,44 @@ newdat <- expand.grid(
   Dispersal = unique(no_source_all$Dispersal),
   Day = unique(no_source_all$Day),
   Salinity_Measured = seq(0,15,0.05)
+ 
 )
-newdat$richness <- exp(predict(Rich_no_source,newdata = newdat))
+newdat$richness <- predict(Rich_no_source,newdata = newdat,type=("response"),re.form = NA)
+
+set.seed(101)
+new_bb<- bootMer(Rich_no_source,
+                FUN=function(x)
+                  predict(x,re.form=NA,newdata=newdat,
+                          type="response"),
+                nsim=400)
+boot.CI <- t(apply(new_bb$t,2,quantile,c(0.025,0.975),na.rm=TRUE))
+
+newdat$lower <- boot.CI[,1]
+newdat$upper <- boot.CI[,2]
+
+#no_source_all <- no_source_all1
+
+#no_source_all <- no_source_all[no_source_all$Salinity_Treat == "5" , ]
 
 rich_g1 <- ggplot(data=no_source_all, aes(Salinity_Measured,richness)) + 
   geom_jitter(aes(color=as.factor(Salinity_Treat), shape=as.factor(Dispersal)),size=3)
 
-rich_g2 <- rich_g1 + geom_line(data = newdat, aes(Salinity_Measured, richness, linetype=as.factor(Dispersal)),size=1) 
+rich_g2 <- rich_g1 + geom_line(data = newdat, aes(Salinity_Measured, richness, 
+                                                  linetype=as.factor(Dispersal)),size=1) +
+  geom_ribbon( data = newdat, aes(ymin=lower,ymax=upper, 
+                                  fill = as.factor(Dispersal)), alpha = 0.5) 
 
-
-(rich_g3 <- rich_g2 + facet_wrap(~(as.factor(Day)),ncol=2,nrow = 3) +scale_color_brewer(type = "seq",palette = "Dark2")+
-    ylab("Richness") + xlab("Salinity") +
-  scale_shape_manual(name = "Dispersal",values = c(16,17), breaks = c(2,3),labels = c("Mixed Salt and Fresh","Salt Only"))+
+(rich_g3 <- rich_g2 + facet_wrap(~(as.factor(Day)),ncol=2,nrow = 3) +
+    scale_color_brewer(type = "seq",palette = "Dark2")+
+    ylab("Zooplankton Order Count") + xlab("Salinity (psu)") +
+  scale_shape_manual(name = "Dispersal",values = c(16,17), 
+                     breaks = c(2,3),labels = c("Mixed Salt and Fresh","Salt Only"))+
     labs(color = "Salinity Treatment") +
-    scale_linetype_manual(name = "Dispersal Prediction Lines",values = c(1,2), breaks = c(2,3),labels = c("Mixed Salt and Fresh","Salt Only")))
-
- 
-
+    scale_linetype_manual(name = "Dispersal Prediction Lines",values = c(1,2), 
+                          breaks = c(2,3),labels = c("Mixed Salt and Fresh","Salt Only")) +
+  scale_fill_manual(name = "Dispersal Prediction Lines",
+                    values = c("lightsteelblue4","lightsteelblue1"), 
+                    breaks = c(2,3),labels = c("Mixed Salt and Fresh","Salt Only")))
 
 
 #richness in source tanks (supplementary Figure # X)
@@ -43,7 +64,7 @@ rich_source_g1 <- ggplot(data=source_all, aes(Salinity_Measured,richness)) +
 rich_source_g2 <- rich_source_g1 + geom_line(data = newdat1, aes(Salinity_Measured, richness),size=1) 
 
 rich_source_g3 <- rich_source_g2 + facet_wrap(~(as.factor(Day)))+scale_color_brewer(type = "seq",palette = "Dark2")+
-    ylab("Richness") + xlab("Salinity") +labs(color = "Salinity Treatment") 
+    ylab("Richness") + xlab("Salinity (psu)") +labs(color = "Salinity Treatment") 
 
 rich_source_g3 + theme(legend.position = c(0.5,0.9), legend.background = element_rect(fill = "gray90"))
 
