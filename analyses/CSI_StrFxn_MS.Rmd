@@ -68,7 +68,9 @@ dim(design.full)
 
 # Load OTU File
 #csi_otu <- read.otu("../data/CSI.shared")
-csi_otu <- read.otu("../data/CSIvsearch.shared")
+# csi_otu <- read.otu("../data/CSIvsearch.shared")
+csi_otu <- read.otu("../mothur/CSI.bac.final.shared")
+
 dim(csi_otu)
 
 # Load Environ/Function File - 
@@ -78,7 +80,9 @@ design.env.full <- read.csv("../data/CSI_Design_ENV_Source.csv", row.names=1)
 # Import Taxonomy File for Later
 #csi.tax <- read.tax(taxonomy = "../data/CSI.0.03.cons.taxonomy", 
 #                    format = "rdp", tax.levels = 6, col.tax = 3)
-csi.tax <- read.tax(taxonomy = "../data/CSIvsearch.0.03.cons.taxonomy", 
+#csi.tax <- read.tax(taxonomy = "../data/CSIvsearch.0.03.cons.taxonomy", 
+#                    format = "rdp", tax.levels = 6, col.tax = 3)
+csi.tax <- read.tax(taxonomy = "../mothur/CSI.bac.final.taxonomy", 
                     format = "rdp", tax.levels = 6, col.tax = 3)
 ```
 
@@ -96,7 +100,7 @@ otu_removal <- csi_otu[, which(colSums(csi_otu) >= 2)]
 dim(otu_removal)
 
 aa <- (rowSums(otu_removal))
-aa # CSI033-7180 reads CSI101=75 reads - removed
+aa # CSI033-7180 reads CSI101=78 reads - removed
 
 # OTU table - removed low abundance samples
 csi_low_remov <- otu_removal[which(rowSums(otu_removal) >= 13000), ]
@@ -483,6 +487,7 @@ theme(panel.background = element_blank()) +
 
 ggsave("../figures/ms/16SrRNA_CSI_Rplot_SalinityDispersal_NoSource.pdf", plot=last_plot(), device=NULL, path=NULL, scale=1, width=NA, height=NA, dpi=900, limitsize=TRUE)
 ```
+
 # PCoA Plot Design (salinity x dispersal) without Source
 ```{r (PCoA), include=FALSE}
 all.equal(rownames(design.ns.final), rownames(csi_relabun.ns))
@@ -530,7 +535,7 @@ pcoa.shape <- as.factor(sapply(strsplit(pcoa.cent.treats, "_"), `[`, 1))  # Disp
 
 df1a <- as.data.frame(pcoa.cent.dataframe)
 plot1a <- ggplot(df1a, aes(x=V1, y=V2, colour=pcoa.col, shape = pcoa.shape,
-                 group = interaction(Date2, pcoa.col, pcoa.shape))) + theme_bw() 
+                 group = interaction(Date, pcoa.col, pcoa.shape))) + theme_bw() 
 plot1b <- plot1a + theme(panel.grid.major = element_blank(), 
                panel.grid.minor = element_blank(), 
                axis.line = element_line(colour = "black")) + 
@@ -553,7 +558,7 @@ theme(panel.background = element_blank()) +
   guides(fill = guide_legend(override.aes = list(pch=21, size = 4, colour="black")),
          shape = guide_legend(override.aes = list(size = 4, fill="black")))
 
-plot1b + facet_wrap(~Date, ncol=1) +facet_grid(. ~ Date2, labeller=labeller(Date2 = labels)) #facet_wrap(~Date2, ncol = 1) 
+plot1b + facet_wrap(~Date, ncol=1) +facet_grid(. ~ Date, labeller=labeller(Date = labels)) #facet_wrap(~Date2, ncol = 1) 
 plot1
 ggsave("../figures/ms/16SrRNA_CSI_Rplot_SalinityDispersal_NoSource.pdf", plot=last_plot(), device=NULL, path=NULL, scale=1, width=NA, height=NA, dpi=900, limitsize=TRUE)
 ```

@@ -13,80 +13,74 @@ Project Description: Analysis of salinity and dispersal of saline aquatic commun
 
 # Setting up working directory, packages
 ```{r Setup, include=FALSE}
-#PC - set WD manually by Session -> Set Working Directory -> Choose Directory...
-if(Sys.info()[1] == "Darwin"){
-  setwd("~/GitHub/CSI_Dispersal/analyses/")
-} else {
-  # setwd(choose.dir())
-}
+setwd("~/GitHub/CSI_Dispersal/analyses/")
 rm(list = ls())
 
-#Set source R tools
+# Set Source R Tools
 source("../bin/DiversityFunctions.R")
 source("../bin/MothurTools.R")
 
-#load req'd packages
-require("vegan")
-require("dplyr")
-require("nlme")
-require("reshape2")
-require("ecodist")
-require("ggplot2")
-require("ade4")
-require("png")
-require("MASS")
-require("grid")
-require("ape")
-require("picante")
-# require("venneuler")
-require("Hmisc")
-require("knitr")
-library(ggpubr)
-if (!requireNamespace("BiocManager", quietly = TRUE))
-    install.packages("BiocManager")
-BiocManager::install("ggtree")
-BiocManager::install("labdsv")
-library("labdsv")
-# set std err
+# Load Req'd Packages
+library("vegan"); library("ecodist"); library("Hmisc")
+library("dplyr"); library("reshape2"); library("labdsv")
+library("nlme"); library("MASS"); library("ade4")
+library("png"); library("grid"); library("ggplot2")
+library("ape"); library("picante"); library("ggtree")
+
+# Set Std Err Functions
 se <- function(x, ...) {
 sd(x, na.rm = TRUE)/sqrt(length(na.omit(x)))
 }
+
 ci <- function(x, ...) {
 1.96 * sd(x, na.rm = TRUE)
 }
 ```
-#Loading data file
-```{r Loading Files, include=FALSE}
-#NOTE: Tank 3 only had fresh water added. Tank 1 was the source for the salt and tank 2 was the source for the fresh water.
-#NOTE: Dispersal 0 (treatments 1 and 2) were source tanks-- no dispersal. Dispersal 1 (treatment 3) only received fresh water. Dispersal 3 (treatments 4,6,8,10) only got salt water. And dispersal 2 (treatments 5,7,9,11) received both fresh and salt.
 
-# load design file - no source tanks
+# Loading data file
+```{r Loading Files, include=FALSE}
+# NOTES: Tank 3 only had fresh water added 
+#        Tank 1 was the source for the salt  
+#        Tank 2 was the source for the fresh water
+#
+# NOTES: Dispersal 0 (treatments 1 and 2) were source tanks-- no dispersal.
+#        Dispersal 1 (treatment 3) only received fresh water 
+#        Dispersal 3 (treatments 4,6,8,10) only got salt water
+#        Dispersal 2 (treatments 5,7,9,11) received both fresh and salt
+
+# Load design file - no source tanks
 design.ns <- read.csv("../data/CSI_Design_ENV_NoSourceTanks.csv", row.names=1)
 #head(design.ns)
 #str(design.ns)
 dim(design.ns)
 
-# load design file - with source tanks but missing decomp, nutrients, sreal, Date2 columns
+# Load design file - with source tanks but 
+#                    missing decomp, nutrients, sreal, Date2 columns
 design.full <- read.csv("../data/design_CSI.csv", row.names=1)
 design.full <- design.full[-c(grep("mock community", design.full$CSI_ID)), ]
 dim(design.full)
 
 # load OTU file
-#csi_otu <- read.otu("../data/CSI.shared")
-csi_otu <- read.otu("../data/CSIvsearch.shared")
+csi_otu <- read.otu("../mothur/CSI.bac.final.shared")
 dim(csi_otu)
 
-# load environ/function file - includes expt design, decomp data, Cmin, nutrients day 45 only - need sreal
+# load environ/function file - 
+# includes expt design, decomp data, Cmin, nutrients day 45 only - need sreal
 design.env.full <- read.csv("../data/CSI_Design_ENV_Source.csv", row.names=1)
 
-# import taxonomy file for later
-#csi.tax <- read.tax(taxonomy = "../data/CSI.0.03.cons.taxonomy", 
-#                    format = "rdp", tax.levels = 6, col.tax = 3)
-csi.tax <- read.tax(taxonomy = "../data/CSIvsearch.0.03.cons.taxonomy", 
+# Import Taxonomy File for later
+csi.tax <- read.tax(taxonomy = "../mothur/CSI.bac.final.taxonomy", 
                     format = "rdp", tax.levels = 6, col.tax = 3)
+
+# Import Tree File
+tree <- read.tree("../mothur/CSI.bac.rename.tree")
+
+# Import UniFrac Distnce Matrix
+UniFrac.raw <- read.delim("../mothur/CSI.bac.tree1.weighted.phylip.dist", skip = 1, header = F, row.names = 1)
+colnames(UniFrac.raw) <- rownames(UniFrac.raw)
 ```
 
-# manipulate data files for statistical analyses and graphing
+# Manipulate data files for statistical analyses and graphing
 ```{r Bacterial Community Composition, include=FALSE}
 # remove extra site (no mock community)
 
@@ -173,7 +167,7 @@ levels(treatments2) <- c("2","3")
 # Rarefy Abundances (min abundance is 13,229. We are sampling to 13,000) for vsearch mothur run
 
 min(rowSums(otu_final.ns))
-otu.rarefy <- rrarefy(otu_final.ns, 13000)
+otu.rarefy <- rrarefy(otu_final.ns, 20000)
 
 # Calculate Shannon H' (called shannon) using full data set (WITH source tanks)
 shannon <- diversity(otu.rarefy, "shannon")
@@ -190,7 +184,7 @@ csi_otu.div <- cbind(design.ns.final,shannon,richness,J)
 # Rarefy Abundances (min abundance is 13,240. We are sampling to 13,000) for uchime mothur run
 # Rarefy Abundances (min abundance is 13,229. We are sampling to 13,000) for vsearch mothur run
 min(rowSums(otu_final))
-otu.rarefy <- rrarefy(otu_final, 13000)
+otu.rarefy <- rrarefy(otu_final, 17000)
 
 # Calculate Shannon H' (called shannon) using full data set (WITH source tanks)
 shannon.source <- diversity(otu.rarefy, "shannon")
@@ -206,19 +200,44 @@ csi_otu.div.source <- cbind(design_final, shannon.source,
                             richness.source,J.source)
 ```
 
-#graph Cmin/Shannon day 45 only
+# Graph Cmin/Shannon day 45 only
 ```{r (Cmin/Shannon day 45 only), echo=FALSE}
 csi_otu.div.day45 <- subset(csi_otu.div, Date2 == "45")
 
-p <- ggplot(csi_otu.div.day45, aes(x=shannon, y=Cmin, color=as.factor(Dispersal)))+ scale_color_manual(name="Dispersal Treatment", values=c("black","gray"), labels = c("fresh+salt (2)", "salt only (3)")) + stat_summary(fun.data=mean_cl_boot,size=1) 
-p1=p+geom_smooth(method="lm", se=FALSE)+geom_point(size=4)
-p1 + theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.line = element_line(colour = "black")) +theme(axis.title=element_text(vjust=1,size=16,face="bold"), axis.text=element_text(size=16), axis.text.x = element_text(vjust=0.65, hjust=0.5, size=16), panel.border = element_rect(colour = "black",size=1)) + theme(axis.ticks.length=unit(0.3,"cm")) + labs(x = "Shannon Diversity Index (H')", y = (expression(paste("C Mineralization (ng CO"[2]," mL"^-{1}," day"^-{1},")")))) + theme(strip.text.x = element_text(size=16, face="bold"), strip.text.y = element_text(size=16, face="bold"), strip.background = element_rect(colour="black", fill="white", size=1))
+p <- ggplot(csi_otu.div.day45, aes(x=shannon, y=Cmin, 
+                                   color = as.factor(Dispersal))) +
+  scale_color_manual(name="Dispersal Treatment", 
+                     values=c("black","gray"), 
+                     labels = c("fresh+salt (2)", "salt only (3)")) # +
+  # stat_summary(fun.data = "mean_cl_boot", size=1) 
+p1 = p + geom_smooth(method="lm", se=FALSE) + geom_point(size=4) 
+p1 + theme_bw() + theme(panel.grid.major = element_blank(), 
+                        panel.grid.minor = element_blank(), 
+                        axis.line = element_line(colour = "black")) + 
+  theme(axis.title=element_text(vjust=1,size=16,face="bold"), 
+        axis.text = element_text(size=16), 
+        axis.text.x = element_text(vjust=0.65, hjust=0.5, size=16), 
+        panel.border = element_rect(colour = "black",size=1)) + 
+  theme(axis.ticks.length=unit(0.3,"cm")) + 
+  labs(x = "Shannon Diversity Index (H')", 
+       y = (expression(paste("C Mineralization (ng CO"[2]," mL"^-{1}," 
+                             day"^-{1},")")))) + 
+  theme(strip.text.x = element_text(size=16, face="bold"), 
+        strip.text.y = element_text(size=16, face="bold"), 
+        strip.background = element_rect(colour="black", 
+                                        fill="white", size=1))
 
-ggsave("../figures/Cmin_shannon.pdf", plot=last_plot(), device=NULL, path=NULL, scale=1, width=NA, height=NA, dpi=300, limitsize=TRUE)
+ggsave("../figures/Cmin_shannon.pdf", plot=last_plot(), device=NULL, 
+       path=NULL, scale=1, width=NA, height=NA, dpi=300, limitsize=TRUE)
 
 #graph Cmin/richness day 45 only
 
-p <- ggplot(csi_otu.div.day45, aes(x=richness, y=Cmin, color=as.factor(Dispersal)))+ scale_color_manual(name="Dispersal Treatment", values=c("black","gray"), labels = c("fresh+salt (2)", "salt only (3)")) + stat_summary(fun.data=mean_cl_boot,size=1) 
+p <- ggplot(csi_otu.div.day45, 
+            aes(x=richness, y=Cmin, color=as.factor(Dispersal))) + 
+  scale_color_manual(name="Dispersal Treatment", 
+                     values=c("black","gray"), 
+                     labels = c("fresh+salt (2)", "salt only (3)")) 
+# +  stat_summary(fun.data="mean_cl_boot",size=1) 
 p1=p+geom_smooth(method="lm", se=FALSE)+geom_point(size=4)
 p1 + theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.line = element_line(colour = "black")) +theme(axis.title=element_text(vjust=1,size=16,face="bold"), axis.text=element_text(size=16), axis.text.x = element_text(vjust=0.65, hjust=0.5, size=16), panel.border = element_rect(colour = "black",size=1)) + theme(axis.ticks.length=unit(0.3,"cm")) + labs(x = "Species Richness", y = (expression(paste("C Mineralization (ng CO"[2]," mL"^-{1}," day"^-{1},")")))) + theme(strip.text.x = element_text(size=16, face="bold"), strip.text.y = element_text(size=16, face="bold"), strip.background = element_rect(colour="black", fill="white", size=1))
 
@@ -228,14 +247,7 @@ ggsave("../figures/Cmin_richness.pdf", plot=last_plot(), device=NULL, path=NULL,
 
 # Phylogenetic Analysis
 ```{r}
-library("ggtree"); library("ape"); library("labdsv")
-
-# Subset the FASTA File to remove spurious OTUs
-fasta.raw <- read.FASTA("../data/Mothur_Original_Files_vsearch/")
-
-
-
-tree <- read.tree("../data/Phylo/CSI.bac.rename.tree")
+str(tree)
 
 # otu_final, design_final
 design.45 <- design_final[which(design_final$Date2 == "45"), ]
@@ -243,13 +255,12 @@ design.45 <- design.45[which(design.45$Dispersal %in% c(2, 3)), ]
 otus.45 <- otu_final[which(rownames(otu_final) %in% rownames(design.45)), ]
 otus.45 <- otus.45[, which(colSums(otus.45) > 100)]
 
+low.phy <- names(which(table(csi.tax$Phylum) < 20))
 otus.45 <- otus.45[, -c(which(colnames(otus.45) %in% 
                                 csi.tax$OTU[csi.tax$Phylum %in%
-                                c("Bacteria_unclassified", "OD1", 
-                                  "BRC1", "Spirochaetes", 
-                                  "Tenericutes", "Deferribacteres",
-                                  "Chloroflexi", "Deinococcus-Thermus", "WS3")]))]
+                                c(low.phy)]))]
 
+low.cla <- names(which(table(csi.tax$Class) < 20))
 otus.45 <- otus.45[, -c(which(colnames(otus.45) %in% 
                                 csi.tax$OTU[csi.tax$Class %in%
                                 c("Bacteroidetes_unclassified",
@@ -380,8 +391,7 @@ sum(tree$tip.label %in% colnames(csi_otu) == FALSE)
 sum(tree$edge.length < 0.0000001)
 
 # Import Unifrac Matrix
-unifrac.raw <- read.delim("../data/CSI.bac.tree1.weighted.phylip.dist",
-                             header = F, skip = 1, row.names = 1)
+str(UniFrac.raw)
 
 row.names(unifrac.raw) <- gsub("    ", "", row.names(unifrac.raw))
 
