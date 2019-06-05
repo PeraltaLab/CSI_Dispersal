@@ -71,6 +71,7 @@ design.env.full <- read.csv("../data/CSI_Design_ENV_Source.csv", row.names=1)
 # Import Taxonomy File for later
 csi.tax <- read.tax(taxonomy = "../mothur/CSI.bac.final.taxonomy", 
                     format = "rdp", tax.levels = 6, col.tax = 3)
+csi.tax$Phylum[which(csi.tax$Phylum == "Cyanobacteria/Chloroplast")] <- "Cyanobacteria"
 
 # Import Tree File
 tree <- read.tree("../mothur/CSI.bac.rename.tree")
@@ -220,8 +221,8 @@ p1 + theme_bw() + theme(panel.grid.major = element_blank(),
         panel.border = element_rect(colour = "black",size=1)) + 
   theme(axis.ticks.length=unit(0.3,"cm")) + 
   labs(x = "Shannon Diversity Index (H')", 
-       y = (expression(paste("C Mineralization (ng CO"[2]," mL"^-{1}," 
-                             day"^-{1},")")))) + 
+       y = (expression(paste("C Mineralization (ng CO"[2],
+                             " mL"^-{1},"day"^-{1},")")))) + 
   theme(strip.text.x = element_text(size=16, face="bold"), 
         strip.text.y = element_text(size=16, face="bold"), 
         strip.background = element_rect(colour="black", 
@@ -238,8 +239,22 @@ p <- ggplot(csi_otu.div.day45,
                      values=c("black","gray"), 
                      labels = c("fresh+salt (2)", "salt only (3)")) 
 # +  stat_summary(fun.data="mean_cl_boot",size=1) 
-p1=p+geom_smooth(method="lm", se=FALSE)+geom_point(size=4)
-p1 + theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.line = element_line(colour = "black")) +theme(axis.title=element_text(vjust=1,size=16,face="bold"), axis.text=element_text(size=16), axis.text.x = element_text(vjust=0.65, hjust=0.5, size=16), panel.border = element_rect(colour = "black",size=1)) + theme(axis.ticks.length=unit(0.3,"cm")) + labs(x = "Species Richness", y = (expression(paste("C Mineralization (ng CO"[2]," mL"^-{1}," day"^-{1},")")))) + theme(strip.text.x = element_text(size=16, face="bold"), strip.text.y = element_text(size=16, face="bold"), strip.background = element_rect(colour="black", fill="white", size=1))
+p1 = p + geom_smooth(method="lm", se=FALSE) + geom_point(size=4)
+p1 + theme_bw() + theme(panel.grid.major = element_blank(), 
+                        panel.grid.minor = element_blank(), 
+                        axis.line = element_line(colour = "black")) + 
+  theme(axis.title = element_text(vjust=1,size=16,face="bold"), 
+        axis.text = element_text(size=16), 
+        axis.text.x = element_text(vjust=0.65, hjust=0.5, size=16), 
+        panel.border = element_rect(colour = "black",size=1)) + 
+  theme(axis.ticks.length=unit(0.3,"cm")) + 
+  labs(x = "Species Richness", 
+       y = (expression(paste("C Mineralization (ng CO"[2],
+                             " mL"^-{1}," day"^-{1},")")))) + 
+  theme(strip.text.x = element_text(size=16, face="bold"), 
+        strip.text.y = element_text(size=16, face="bold"), 
+        strip.background = element_rect(colour="black", 
+                                        fill="white", size=1))
 
 ggsave("../figures/Cmin_richness.pdf", plot=last_plot(), device=NULL, path=NULL, scale=1, width=NA, height=NA, dpi=300, limitsize=TRUE)
 
@@ -247,18 +262,9 @@ ggsave("../figures/Cmin_richness.pdf", plot=last_plot(), device=NULL, path=NULL,
 
 # Phylogenetic Analysis
 ```{r}
-<<<<<<< HEAD
 str(tree)
-=======
-library("ggtree"); library("ape"); library("labdsv")
 
-# Subset the FASTA File to remove spurious OTUs
-fasta.raw <- read.FASTA("../data/Mothur_Original_Files_vsearch/")
-
-
-
-tree <- read.tree("../data/Phylo/CSI.bac.rename.tree")
->>>>>>> AP/master
+# tree <- midpoint.root(tree)
 
 # otu_final, design_final
 design.45 <- design_final[which(design_final$Date2 == "45"), ]
@@ -267,17 +273,33 @@ otus.45 <- otu_final[which(rownames(otu_final) %in% rownames(design.45)), ]
 otus.45 <- otus.45[, which(colSums(otus.45) > 100)]
 
 low.phy <- names(which(table(csi.tax$Phylum) < 20))
-otus.45 <- otus.45[, -c(which(colnames(otus.45) %in% 
+low.cla <- names(which(table(csi.tax$Class) < 20))
+
+otus.45 <- otus.45[, -c(which(colnames(otus.45) %in%
                                 csi.tax$OTU[csi.tax$Phylum %in%
                                 c(low.phy)]))]
 
-low.cla <- names(which(table(csi.tax$Class) < 20))
+otus.45 <- otus.45[, -c(which(colnames(otus.45) %in%
+                                csi.tax$OTU[csi.tax$Class %in%
+                                c(low.cla)]))]
+
+
+otus.45 <- otus.45[, -c(which(colnames(otus.45) %in% 
+                                csi.tax$OTU[csi.tax$Phylum %in%
+                                c("Acidobacteria", "Bacteria_unclassified",
+                                  "OD1", "Parcubacteria", "Ignavibacteriae",
+                                  "BRC1", "Spirochaetes", "Armatimonadetes", 
+                                  "Tenericutes", "Deferribacteres",
+                                  "Chlamydiae", "Gemmatimonadetes", 
+                                  "WS3", "Firmicutes",
+                                  "Chloroflexi", "Deinococcus-Thermus")]))]
 otus.45 <- otus.45[, -c(which(colnames(otus.45) %in% 
                                 csi.tax$OTU[csi.tax$Class %in%
                                 c("Bacteroidetes_unclassified",
                            "Bacteroidetes_incertae_sedis_class_incertae_sedis",
                            "Proteobacteria_unclassified", "WS3", "Bacteroidia", "Chlorobi", "Epsilonproteobacteria")]))]
 
+# Rename Error (Fixed in the actual file to prevent errors)
 # tree$tip.label <- gsub(".{1}$", "", tree$tip.label)
 
 tree.labs <- tree$tip.label
@@ -294,7 +316,7 @@ sum(tree.2$tip.label %in% colnames(otus.45))
 
 tree.otus <- tree.2$tip.label
 tree.tax <- csi.tax[which(csi.tax$OTU %in% tree.otus), ]
-table(tree.tax$Class)
+table(tree.tax$Phylum)
 
 tree.tax.2 <- tree.tax[order(match(tree.tax$OTU, tree.2$tip.label)), ]
 all.equal(as.character(tree.tax.2$OTU), tree.2$tip.label)
@@ -304,10 +326,12 @@ for(i in 1:length(phylum2)){
   if (phylum2[i] == "Proteobacteria"){
     phylum2[i] <- tree.tax.2$Class[i]
   }
-  if (phylum2[i] == "Bacteroidetes"){
-    phylum2[i] <- tree.tax.2$Class[i]
-  }
 }
+
+#   if (phylum2[i] == "Bacteroidetes"){
+#     phylum2[i] <- tree.tax.2$Class[i]
+#   }
+# }
 
 table(phylum2)
 
@@ -384,11 +408,14 @@ csi.tax[which(csi.tax$OTU %in% dis.indicators$OTU), ]
 csi.tax[which(csi.tax$OTU %in% sal.indicators$OTU), ]
 
 gheatmap(p, sal.dat, width = 0.5, colnames_angle=90, hjust=1, 
-         low = "red", high = "red")
+         low = "black", high = "black")+ theme(legend.position = "right") + guides(fill = FALSE)   
 
 ggsave("../figures/indicator.tree.pdf", width = 10, height = 8, units = "in")
 
 ```
+
+
+### Stopping Point 6/5/19
 
 ```{r (Phylogenetic Diversity), include=FALSE}
 # Phylogenetic Diversity - analysis by Mario Muscarella
