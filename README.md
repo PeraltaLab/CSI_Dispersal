@@ -31,9 +31,9 @@ Project (2)
 
 ## Contributors
 
-[Jo Werba]: Graduate Student, Department of Biology, McMaster University
+Jo Werba: PhD Student, Department of Biology, McMaster University (former MS Student at East Carolina University)
 
-[Alexandra Stucy]: Graduate Student, Department of Biology, East Carolina University
+Alexandra Stucy: MS Student, Department of Biology, East Carolina University
 
 [Dr. Ariane Peralta](http://www.peraltalab.com): Principal Investigator, Assistant Professor, Department of Biology, East Carolina University. Principal Investigator of the [Peralta Lab](http://www.peraltalab.com)
 
