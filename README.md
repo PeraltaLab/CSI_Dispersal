@@ -31,12 +31,12 @@ Project (2)
 
 ## Contributors
 
-[Jo Werba]( ): Graduate Student, Department of Biology, McMaster University
+[Jo Werba]: Graduate Student, Department of Biology, McMaster University
 
-[Alexandra Stucy]( ): Graduate Student, Department of Biology, East Carolina University
+[Alexandra Stucy]: Graduate Student, Department of Biology, East Carolina University
 
-[Dr. Ariane Peralta]( ): Principal Investigator, Assistant Professor, Department of Biology, East Carolina University. Principal Investigator of the [Peralta Lab](http://www.peraltalab.com)
+[Dr. Ariane Peralta](http://www.peraltalab.com): Principal Investigator, Assistant Professor, Department of Biology, East Carolina University. Principal Investigator of the [Peralta Lab](http://www.peraltalab.com)
 
-[Dr. Mike McCoy]( ): Principal Investigator, Associate Professor, Department of Biology, East Carolina University. Principal Investigator of the [Mike McCoy Lab](http://mikemccoylab.weebly.com/)
+[Dr. Mike McCoy](http://mikemccoylab.weebly.com/): Principal Investigator, Associate Professor, Department of Biology, East Carolina University. Principal Investigator of the [Mike McCoy Lab](http://mikemccoylab.weebly.com/)
 
 [Dr. Mario Muscarella](http://mmuscarella.github.io/): Postdoc in the [O'Dwyer Lab](https://publish.illinois.edu/odwyerlab/) at the University of Illinois at Urbana-Champaign
