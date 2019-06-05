@@ -247,7 +247,18 @@ ggsave("../figures/Cmin_richness.pdf", plot=last_plot(), device=NULL, path=NULL,
 
 # Phylogenetic Analysis
 ```{r}
+<<<<<<< HEAD
 str(tree)
+=======
+library("ggtree"); library("ape"); library("labdsv")
+
+# Subset the FASTA File to remove spurious OTUs
+fasta.raw <- read.FASTA("../data/Mothur_Original_Files_vsearch/")
+
+
+
+tree <- read.tree("../data/Phylo/CSI.bac.rename.tree")
+>>>>>>> AP/master
 
 # otu_final, design_final
 design.45 <- design_final[which(design_final$Date2 == "45"), ]
