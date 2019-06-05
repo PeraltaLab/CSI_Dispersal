@@ -6,12 +6,12 @@ get.oturep(list=CSI.trim.contigs.good.unique.good.filter.unique.precluster.pick.
 system(cp ./CSI.trim.contigs.good.unique.good.filter.unique.precluster.pick.pick.opti_mcc.0.03.rep.fasta ./CSI.final.0.03.rep.fasta)
 
 # Fast Tree
-python name_change.py CSI.final.0.03.rep.fasta CSI.final.0.03.rep.rename.fasta
+python name_change.py CSI.bac.final.rep.fasta CSI.bac.final.rep.rename.fasta
 
-FastTree -gtr -nt -gamma CSI.final.0.03.rep.rename.fasta > CSI.bac.rename.tree
-FastTree -gtr -nt -gamma CSI.final.0.03.rep.fasta > CSI.bac.tree
+FastTree -gtr -nt -gamma CSI.bac.final.rep.rename.fasta > CSI.bac.rename.tree
+FastTree -gtr -nt -gamma CSI.bac.final.rep.fasta > CSI.bac.tree
 
 # Make PhyloDist in mothur
-unifrac.weighted(tree=CSI.bac.tree, count=CSI.trim.contigs.good.unique.good.filter.unique.precluster.pick.pick.opti_mcc.0.03.rep.count_table, distance=square, processors=16)
+unifrac.weighted(tree=CSI.bac.tree, count=CSI.trim.contigs.good.unique.good.filter.unique.precluster.pick.pick.opti_mcc.0.03.rep.count_table, distance=square, processors=12)
 
 output: CSI.bac.tree1.weighted.phylip.dist
