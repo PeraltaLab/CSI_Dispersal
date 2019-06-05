@@ -127,6 +127,7 @@ for (i in 1:dim(otu_final)[1]) {
 # REMOVE source tanks Number 1,2,3 from otu_final and use design.ns (manually removed source tanks)
 temp <- rownames(design_final[which(design_final$Number %in% c(1,2,3)), ])
 otu_final.ns <- otu_final[-(which(rownames(otu_final) %in% temp)), ]
+otu_final.ns <- otu_final.ns[, which(colSums(otu_final.ns) > 0)]
 dim(otu_final.ns)
 dim(design.ns)
 
@@ -144,8 +145,7 @@ all.equal(rownames(design.ns2), rownames(otu_final.ns))
 csi_pres_abs.ns <- (otu_final.ns > 0) * 1
 csi_relabun.ns <- otu_final.ns
 for (i in 1:dim(otu_final.ns)[1]) {
-csi_relabun.ns[i, ] <- otu_final.ns[i, ]/sum(otu_final.ns[i,
-])
+  csi_relabun.ns[i, ] <- otu_final.ns[i, ]/sum(otu_final.ns[i, ])
 }
 # bind design and bact files NO Source
 csi.full.ns <- cbind(design.ns.final,csi_relabun.ns)
@@ -228,8 +228,14 @@ ggsave("../figures/Cmin_richness.pdf", plot=last_plot(), device=NULL, path=NULL,
 
 # Phylogenetic Analysis
 ```{r}
-library("ggtree"); library("ape")
-tree <- read.tree("../data/CSI.bac.rename.tree")
+library("ggtree"); library("ape"); library("labdsv")
+
+# Subset the FASTA File to remove spurious OTUs
+fasta.raw <- read.FASTA("../data/Mothur_Original_Files_vsearch/")
+
+
+
+tree <- read.tree("../data/Phylo/CSI.bac.rename.tree")
 
 # otu_final, design_final
 design.45 <- design_final[which(design_final$Date2 == "45"), ]
@@ -250,7 +256,7 @@ otus.45 <- otus.45[, -c(which(colnames(otus.45) %in%
                            "Bacteroidetes_incertae_sedis_class_incertae_sedis",
                            "Proteobacteria_unclassified", "WS3", "Bacteroidia", "Chlorobi", "Epsilonproteobacteria")]))]
 
-tree$tip.label <- gsub(".{1}$", "", tree$tip.label)
+# tree$tip.label <- gsub(".{1}$", "", tree$tip.label)
 
 tree.labs <- tree$tip.label
 tree.labs %in% colnames(otus.45)
@@ -285,7 +291,7 @@ table(phylum2)
 
 groupInfo <- split(tree.2$tip.label, phylum2)
 Phy.tree <- groupOTU(tree.2, groupInfo, group_name = "phylum2")
-levels(attributes(Phy.tree)$phylum2) <- c(names(groupInfo))
+levels(attributes(Phy.tree)$phylum2) <- c("Root", names(groupInfo))
 
 p <- ggtree(Phy.tree, layout="rectangular") + theme(legend.position="top", 
         legend.key = element_rect(colour = NA)) + 
@@ -365,7 +371,7 @@ ggsave("../figures/indicator.tree.pdf", width = 10, height = 8, units = "in")
 ```{r (Phylogenetic Diversity), include=FALSE}
 # Phylogenetic Diversity - analysis by Mario Muscarella
 # Load Tree
-tree <- read.tree("../data/CSI.bac.rename.tree")
+tree <- read.tree("../data/Phylo/CSI.bac.rename.tree")
 tree$tip.label <- gsub("\\|", "", tree$tip.label)
 
 sum(tree$tip.label %in% colnames(csi_otu) == FALSE)

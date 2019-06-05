@@ -79,3 +79,23 @@ read.tax <- function(taxonomy = " ", format = c("rdp", "gg"),
   }
   return(tax)
 }
+
+tax.merge <- function(x){
+  if(paste(c(colnames(x)), collapse = "; ") != 
+     "OTU; Domain; Phylum; Class; Order; Family; Genus") {
+    stop("Data not in correct format: \n 
+         OTU, Domain, Phylum, Class, Order, Family, Genus")
+  } else { 
+    otu <- as.vector(x$OTU)
+    tax <- x[, 2:7]
+    tax$Domain <- paste0("k__", tax$Domain)
+    tax$Phylum <- paste0("p__", tax$Phylum)
+    tax$Class <- paste0("c__", tax$Class)
+    tax$Order <- paste0("o__", tax$Order)
+    tax$Family <- paste0("f__", tax$Family)
+    tax$Genus <- paste0("g__", tax$Genus)
+    merged.tax <- as.vector(apply(tax, 1, paste, collapse = "; "))
+    out <- data.frame("OTU_ID" = otu, "taxonomy" = merged.tax)
+    return(out)
+  }
+}
