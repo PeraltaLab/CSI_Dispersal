@@ -61,13 +61,27 @@ colnames(dat_gather_decomp)[which(names(dat_gather_decomp) == "richness")] <-
 dat_gather_decomp1 <- dat_gather_decomp %>%
   gather(diff_phrag,diff_maple,diff_spar, key = "Leaf_Type", value = "weight_change" )
 
+dat_gather_decomp2 <- dat_gather_decomp1 %>% filter(Dispersal != 0 )
+
+## try shifting the intercept
+dat_gather_decomp2 <- dat_gather_decomp2 %>% 
+  mutate(m_rich = m_rich - min(m_rich))
 
 #run linear model
 #used log(data) since proportions can't be negative
+library(betareg)
 
-rich_decomp <- lm(log(weight_change)~(z_rich)+(m_rich)+as.factor(Dispersal)+
-                                        Leaf_Type*Salinity_Measured, 
-                  data = dat_gather_decomp1)
+rich_decomp <- betareg(weight_change~(z_rich)+
+                         m_rich+
+                         as.factor(Dispersal)+
+                         Salinity_Measured*Leaf_Type
+                         # Salinity_Measured
+                    , 
+                  data = dat_gather_decomp2)
+
+#rich_decomp <- lm(log(weight_change)~(z_rich)+(m_rich)+as.factor(Dispersal)+
+ #                                       Leaf_Type*Salinity_Measured, 
+  #                data = dat_gather_decomp2)
 
 
 
@@ -81,11 +95,11 @@ qqline(resid(rich_decomp))
 
 #linear model for carbon mineralization
 #remove tank A8 that has a 0 in carbon mineralization
-dat_gather_decomp2 <- dat_gather_decomp %>%
+dat_gather_decomp3 <- dat_gather_decomp2 %>%
   filter(Cmin != 0)
 cmin_lm <-lm(log(Cmin)~(z_rich)+(m_rich)+Salinity_Measured +
                as.factor(Dispersal), 
-             data = dat_gather_decomp2)
+             data = dat_gather_decomp3)
 #check model
 plot(resid(cmin_lm))
 qqnorm(resid(cmin_lm))

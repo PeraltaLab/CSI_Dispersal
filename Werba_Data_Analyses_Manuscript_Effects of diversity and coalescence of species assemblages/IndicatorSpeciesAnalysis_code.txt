@@ -1,0 +1,110 @@
+# Indicator Species Analysis
+```{r}
+library("labdsv")
+#http://rfunctions.blogspot.com/2013/02/multivariate-analysis-indicator-value.html
+
+# bind design and bact files NO Source
+csi.full.ns <- cbind(design.ns.final,csi_relabun.ns)
+
+csi.ns <- cbind(design.ns.final,otu_final.ns)
+
+# Set treatments
+treatments1 <- as.factor(csi.full.ns$Salinity)
+levels(treatments1) <- c("0","5","9","13")
+
+indval.default <- function(x,clustering,numitr=1000, ...)
+{
+    if (!is.data.frame(x)) x <- data.frame(x)
+
+    clustering <- clustify(clustering)
+    levels <- levels(clustering)
+    clustering <- as.integer(clustering)
+
+    if (any(apply(x>0,2,sum)==0)) stop('All species must occur in at least one plot')
+    numplt <- nrow(x)
+    numspc <- ncol(x)
+    numcls <- as.integer(length(table(clustering)))
+    maxcls <- rep(0,numspc)
+    relfrq <- matrix(0,nrow=numspc,ncol=numcls)
+    relabu <- matrix(0,nrow=numspc,ncol=numcls)
+    indval <- matrix(0,nrow=numspc,ncol=numcls)
+    indcls <- rep(0,numspc)
+    pval <- rep(0,numspc)
+    tmpfrq <- rep(0.0,numcls)
+    tmpabu <- rep(0.0,numcls)
+    pclass <- rep(0,numplt)
+    tclass <- rep(0,numplt)
+    errcod <- 0
+    tmp <- .Fortran("duleg",
+        as.double(as.matrix(x)),
+        as.integer(numplt),
+        as.integer(numspc),
+        as.integer(factor(clustering)),
+        as.integer(table(clustering)),
+        as.integer(numcls),
+        as.integer(numitr),
+        relfrq = relfrq,
+        relabu = relabu,
+        indval = indval,
+        pval = pval,
+        indcls = indcls,
+        maxcls = as.integer(maxcls),
+        as.double(tmpfrq),
+        as.double(tmpabu),
+        as.integer(pclass),
+        as.integer(tclass),
+        errcod = as.integer(errcod),
+        PACKAGE='labdsv')
+    out <- list(relfrq=data.frame(tmp$relfrq),relabu=data.frame(tmp$relabu),
+              indval=data.frame(tmp$indval),maxcls=tmp$maxcls,indcls=tmp$indcls,
+              pval=tmp$pval,error=tmp$errcod)
+    row.names(out$relfrq) <- names(x)
+    row.names(out$relabu) <- names(x)
+    row.names(out$indval) <- names(x)
+    names(out$maxcls) <- names(x)
+    names(out$indcls) <- names(x)
+    names(out$pval) <- names(x)
+    names(out$relfrq) <- levels
+    names(out$relabu) <- levels
+    names(out$indval) <- levels
+    class(out) <- 'indval'
+    if (out$error == 1) cat('WARNING: one or more species not assigned to any cluster\n')
+    out
+}
+
+csi_relabun.ns <- csi_relabun.ns[, colSums(csi_relabun.ns) > 0.05]
+bac.ind <- indval(csi_relabun.ns, treatments1)
+levels(treatments1)
+summary(bac.ind)
+
+inds <- which(bac.ind$pval <= 0.05)
+bac.indicators <- as.data.frame(matrix(NA, nrow = length(inds), ncol = 4))
+colnames(bac.indicators) <- c("OTU", "Cluster", "IndVal", "Prob")
+
+bac.indicators$OTU <- names(inds)
+bac.indicators$Cluster <- bac.ind$maxcls[inds]
+bac.indicators$IndVal <- bac.ind$indcls[inds]
+bac.indicators$Prob <- bac.ind$pval[inds]
+
+ind.tax <- csi.tax[which(as.character(csi.tax$OTU) %in% bac.indicators$OTU), ]
+ind.tax <- ind.tax[match(ind.tax$OTU, bac.indicators$OTU), ]
+
+indicator.bac <- cbind(bac.indicators, ind.tax[, -c(1)])
+
+indicator.bac <- indicator.bac[order(as.numeric(indicator.bac$Cluster)), ]
+
+table(indicator.bac$Cluster)
+table(indicator.bac$Phylum)
+table(indicator.bac$Cluster)
+levels(treatments1)
+
+# Export Bacteria Indicator Table
+write.table(indicator.bac, "../data/BacterialIndicators.txt",
+            sep="\t", row.names = F, quote = F)
+
+split(indicator.bac$Phylum, indicator.bac$Cluster)
+split(indicator.bac$Class, indicator.bac$Cluster)
+
+plot(as.factor(indicator.bac$Cluster), as.factor(indicator.bac$Phylum))
+
+```

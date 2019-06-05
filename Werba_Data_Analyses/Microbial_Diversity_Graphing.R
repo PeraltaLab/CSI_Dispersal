@@ -8,24 +8,46 @@ newdat <- expand.grid(
   richness = 0,
   Dispersal = unique(div$Dispersal),
   Date2 = unique(div$Date2),
-  Salinity_real = seq(0,15,0.05)
+  Salinity_real = seq(0,15,1)#,
+#  Rep = unique(div$Rep)
 )
-newdat$richness <- exp(predict(rich_lm,newdata = newdat))
+newdat$richness <-predict(rich_lm,newdata = newdat, type= "response",re.form = NA)
+
+set.seed(101)
+new_bb<- bootMer(rich_lm,
+                 FUN=function(x)
+                   predict(x,re.form=NA,newdata=newdat,
+                           type="response"),
+                 nsim=400)
+boot.CI <- t(apply(new_bb$t,2,quantile,c(0.025,0.975),na.rm=TRUE))
+
+newdat$lower <- boot.CI[,1]
+newdat$upper <- boot.CI[,2]
 
 rich_g1 <- ggplot(data=div, aes(Salinity_real,richness)) + 
   geom_jitter(aes(color=as.factor(Salinity), shape=as.factor(Dispersal)),size=3)
 
-rich_g2 <- rich_g1 + geom_line(data = newdat, aes(Salinity_real, richness, linetype=as.factor(Dispersal)),size=1) 
+rich_g2 <- rich_g1 + geom_line(data = newdat, aes(Salinity_real, richness,
+                                                  linetype=as.factor(Dispersal)),size=1)+ 
+  geom_ribbon(data = newdat, aes(ymin=lower,ymax=upper, 
+                                  fill = as.factor(Dispersal)), alpha = 0.5) 
 
 
-rich_g3 <- rich_g2 + facet_wrap(~(as.factor(Date2)),ncol=2,nrow = 3) +scale_color_brewer(type = "seq",palette = "Dark2")+
-    ylab("Richness") + xlab("Salinity") +
-    scale_shape_manual(name = "Dispersal",values = c(16,17), breaks = c(2,3),labels = c("Mixed Salt and Fresh","Salt Only"))+
+rich_g3 <- rich_g2 + facet_wrap(~(as.factor(Date2)),ncol=2,nrow = 3) + 
+  scale_color_brewer(type = "seq",palette = "Dark2")+
+    ylab("Observed Microbial Richness") + xlab("Salinity (psu)") +
+    scale_shape_manual(name = "Dispersal",values = c(16,17), 
+                       breaks = c(2,3),labels = c("Mixed Salt and Fresh","Salt Only"))+
     labs(color = "Salinity Treatment") +
-    scale_linetype_manual(name = "Dispersal Prediction Lines",values = c(1,2), breaks = c(2,3),labels = c("Mixed Salt and Fresh","Salt Only"))
+    scale_linetype_manual(name = "Dispersal Prediction Lines",values = c(1,2), 
+                          breaks = c(2,3),labels = c("Mixed Salt and Fresh","Salt Only")) +
+  scale_fill_manual(name = "Dispersal Prediction Lines",
+                    values = c("lightsteelblue4","lightsteelblue1"), 
+                    breaks = c(2,3),labels = c("Mixed Salt and Fresh","Salt Only"))
 
 rich_g3 + theme(legend.position = c(0.75,0.2),
-                legend.direction = "vertical", legend.box = "vertical", legend.background = element_blank())
+                legend.direction = "vertical", legend.box = "vertical", 
+                legend.background = element_blank())
 
 #shannon
 newdat <- expand.grid(

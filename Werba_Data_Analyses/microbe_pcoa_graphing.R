@@ -31,12 +31,12 @@ g3 <- g2 + facet_wrap(~Date, ncol = 1)
 (g4 <- g3 +  scale_shape_manual(name = "Dispersal", values = c(16,17),breaks = c(2,3),labels = c("Mixed Salt and Fresh","Salt Only")) + 
     scale_color_brewer(name = "Salinity", type = "seq",palette = "Dark2", 
                        labels = c("0", "5", "9","13") ) +
-    xlab("PCoA 1 (17.3%)") + ylab("PCoA 2 (7.3%)"))
+    xlab("PCoA 1 (17.3%)") + ylab("PCoA 2 (7.3%)") + ylim(-0.6,0.6)+ xlim(-0.6,0.6))
 
 
 ## source only pcoa
 graph_source <- data.frame(csi.relabun.full2 %>%
-  select(c(Date2,Salinity)))
+  dplyr::select(c(Date2,Salinity)))
 names(graph_source) <- c("Date","Salinity")
 
 graph_source$Point1 <- source_pcoa$points[,1]
@@ -60,5 +60,5 @@ g2 <- g1 + geom_errorbar(aes(ymax= Axis2+sd2, ymin= Axis2-sd2)) +
 
 (g3 <- g2 + scale_color_brewer(name = "Salinity", type = "seq",palette = "Dark2", 
                        labels = c("0", "13") ) + labs(shape = "Day") +
-    xlab("PCoA 1 (29.3%)") + ylab("PCoA 2 (9.7%)"))
+    xlab("PCoA 1 (29.3%)") + ylab("PCoA 2 (9.7%)")+ ylim(-0.5,0.5)+ xlim(-0.5,0.5))
 
