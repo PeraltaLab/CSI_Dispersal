@@ -78,6 +78,7 @@ tree <- read.tree("../mothur/CSI.bac.rename.tree")
 
 # Import UniFrac Distnce Matrix
 UniFrac.raw <- read.delim("../mothur/CSI.bac.tree1.weighted.phylip.dist", skip = 1, header = F, row.names = 1)
+row.names(UniFrac.raw) <- gsub("    ", "", row.names(UniFrac.raw))
 colnames(UniFrac.raw) <- rownames(UniFrac.raw)
 ```
 
@@ -260,7 +261,7 @@ ggsave("../figures/Cmin_richness.pdf", plot=last_plot(), device=NULL, path=NULL,
 
 ```
 
-# Phylogenetic Analysis
+# Phylogenetic Indicator Figure Analysis
 ```{r}
 str(tree)
 
@@ -414,38 +415,30 @@ ggsave("../figures/indicator.tree.pdf", width = 10, height = 8, units = "in")
 
 ```
 
-
-### Stopping Point 6/5/19
-
+# Phylogenetic Diversity 
 ```{r (Phylogenetic Diversity), include=FALSE}
-# Phylogenetic Diversity - analysis by Mario Muscarella
-# Load Tree
-tree <- read.tree("../data/Phylo/CSI.bac.rename.tree")
-tree$tip.label <- gsub("\\|", "", tree$tip.label)
+str(tree)
+dim(otu_final)
+dim(csi_otu)
 
-sum(tree$tip.label %in% colnames(csi_otu) == FALSE)
+sum(tree$tip.label %in% colnames(csi_otu) == FALSE) # Tree Represents All
 
 # Small Branches
 sum(tree$edge.length < 0.0000001)
 
 # Import Unifrac Matrix
 str(UniFrac.raw)
+dim(UniFrac.raw)
 
-row.names(unifrac.raw) <- gsub("    ", "", row.names(unifrac.raw))
-
-unifrac <- unifrac.raw[which(row.names(unifrac.raw) %in%
+UniFrac <- UniFrac.raw[which(row.names(UniFrac.raw) %in%
                                    row.names(otu_final)),
-                             which(row.names(unifrac.raw) %in%
+                             which(colnames(UniFrac.raw) %in%
                                    row.names(otu_final))]
 
-rownames(unifrac) <- gsub("     ", "", row.names(unifrac))
-colnames(unifrac) <- rownames(unifrac)
-dim(unifrac)
-
-odd.sites <- c("CSI033","CSI101")
+dim(UniFrac)
 
 # Make into Distance Matrix
-unifrac.dist <- as.dist(unifrac, upper = T, diag = T)
+unifrac.dist <- as.dist(UniFrac, upper = T, diag = T)
 
 # Calculate Phylo Diversity
 phylo.d <- pd(otu_final, tree, include.root = F)
@@ -464,6 +457,7 @@ dim(design.ns.final)
 csi.phylo.ns <- cbind(design.ns.final,phylo_final.ns)
 ```
 
+# Phylogenetic Linear Models
 ```{r (Phylogenetic Diversity - plot), echo=TRUE}
 # run full parametric statistical model
 PD.lm <- lm(PD ~ Dispersal*Salinity*Date, data = csi.phylo.ns)
@@ -499,6 +493,29 @@ p1 + theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor = e
 
 ggsave("../figures/Cmin_PD.pdf", plot=last_plot(), device=NULL, path=NULL, scale=1, width=NA, height=NA, dpi=300, limitsize=TRUE)
 ```
+
+# Phylogenetic Regression
+```{r}
+# Principal Coordinates Analysis - NO SOURCE
+CSI_pcoa_phylo <- cmdscale(unifrac.dist, k=3, eig=TRUE, add=FALSE)
+  # Classical (Metric) Multidimensional Scaling; returns PCoA coordinates
+  # eig=TRUE returns eigenvalues; k = # of dimensions to calculate
+
+explainvar1 <- round(CSI_pcoa_phylo$eig[1] / sum(CSI_pcoa_phylo$eig), 3) * 100
+explainvar2 <- round(CSI_pcoa_phylo$eig[2] / sum(CSI_pcoa_phylo$eig), 3) * 100
+sum.eig <- sum(explainvar1, explainvar2)
+
+explainvar1 
+explainvar2
+
+
+
+
+
+
+```
+
+
 
 # Indicator Species Analysis
 ```{r}
