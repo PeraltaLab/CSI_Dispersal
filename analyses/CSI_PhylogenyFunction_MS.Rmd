@@ -163,7 +163,7 @@ levels(treatments2) <- c("2","3")
 #date_1 <- as.factor(desighn.ns.final$Date2)
 ```
 
-# Calculating Diversity Metrics
+# Calculating OTU Diversity Metrics [included in Werba et al. (In review) manuscript]
 ```{r (Diversity Metrics), echo=TRUE}
 # Rarefy Abundances (min abundance is 13,240. We are sampling to 13,000) for uchime mothur run
 # Rarefy Abundances (min abundance is 13,229. We are sampling to 13,000) for vsearch mothur run
@@ -493,7 +493,7 @@ p1 + theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor = e
 
 ggsave("../figures/Cmin_PD.pdf", plot=last_plot(), device=NULL, path=NULL, scale=1, width=NA, height=NA, dpi=300, limitsize=TRUE)
 ```
-
+# Ordination - based on unifrac
 # Phylogenetic Regression
 ```{r}
 # Principal Coordinates Analysis - NO SOURCE
@@ -514,10 +514,7 @@ explainvar2
 
 
 ```
-
-
-
-# Indicator Species Analysis
+# Indicator Species Analysis [included in Werba et al. (In review) manuscript]
 ```{r}
 library("labdsv")
 #http://rfunctions.blogspot.com/2013/02/multivariate-analysis-indicator-value.html
@@ -707,16 +704,15 @@ p1 + theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor = e
 ggsave("../figures/Cmin_PD.pdf", plot=last_plot(), device=NULL, path=NULL, scale=1, width=NA, height=NA, dpi=300, limitsize=TRUE)
 ```
 
-```{r (PCoA based on phylogenetic distance), echo=FALSE}
+# Ordination - based on taxonomy [included in Werba et al. (In review) manuscript]
+```{r (PCoA based on OTU), echo=FALSE}
 require("stats")
-require("labdsv") #not loading in R 3.6.0
+require("labdsv")
 require("mgcv")
 require("cluster")
 require("vegan")
 require("reshape2")
 require("reshape")
-
-#unifrac.dist <- as.dist(unifrac, upper = T, diag = T) - need to update according to unifrac distance but need to remove source tanks
 
 all.equal(rownames(design.ns.final), rownames(csi_relabun.ns))
 sampleREL.dist1 <- vegdist(csi_relabun.ns, method="bray")
@@ -739,10 +735,10 @@ explainvar1a <- round(CSI_pcoa1$eig[1] / sum(CSI_pcoa1$eig), 3) * 100
 explainvar2a <- round(CSI_pcoa1$eig[2] / sum(CSI_pcoa1$eig), 3) * 100
 sum.eiga <- sum(explainvar1a, explainvar2a)
 
-explainvar1a #17.3
+explainvar1a #17.3 now 18.2 (?)
 explainvar2a #7.3
 ```
-# PCoA Plot Design without Source
+# PCoA Plot - based on taxonomy [included in Werba et al. (In review) manuscript]
 ```{r (PCoA), include=FALSE}
 pcoa.groups <- paste(design.ns.final$Date, design.ns.final$Salinity, sep = "_")
 
@@ -758,7 +754,6 @@ pcoa.centroids.sd <- acast(pcoa.L.centroids, variable ~ group, sd)
 pcoa.cent.dataframe <- cbind(t(pcoa.centroids), t(pcoa.centroids.se))
 colnames(pcoa.cent.dataframe) <- c("V1", "V2", "V1e", "V2e")
 pcoa.cent.treats <- rownames(pcoa.cent.dataframe)
-pcoa.cent.dataframe.trts
 salinity.p <- c("0","13","5","9","0","13","5","9","0","13","5","9")
 date.p <- c("Day 0","Day 0","Day 0","Day 0","Day18","Day18","Day18","Day18","Day 45","Day 45","Day 45","Day 45")
 pcoa.cent.dataframe.trts <- as.data.frame(pcoa.cent.dataframe)
@@ -766,7 +761,6 @@ pcoa.cent.dataframe.trts$salinity <- as.factor(salinity.p)
 pcoa.cent.dataframe.trts$date <- as.factor(date.p)
 pcoa.cent.dataframe.trts$salinity = factor(pcoa.cent.dataframe.trts$salinity, levels=c("0","5","9","13"))
 ```
-
 # Plot (ggplot)
 ```{r (Plot PCoA no source), echo=FALSE}
 df1a <- as.data.frame(pcoa.cent.dataframe.trts)
