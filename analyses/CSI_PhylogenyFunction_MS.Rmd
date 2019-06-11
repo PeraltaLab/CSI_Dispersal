@@ -493,8 +493,9 @@ p1 + theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor = e
 
 ggsave("../figures/Cmin_PD.pdf", plot=last_plot(), device=NULL, path=NULL, scale=1, width=NA, height=NA, dpi=300, limitsize=TRUE)
 ```
+
+
 # Ordination - based on unifrac
-# Phylogenetic Regression
 ```{r}
 # Principal Coordinates Analysis - NO SOURCE
 CSI_pcoa_phylo <- cmdscale(unifrac.dist, k=3, eig=TRUE, add=FALSE)
@@ -509,7 +510,55 @@ explainvar1
 explainvar2
 
 
+all.equal(rownames(design_final), labels(unifrac.dist))
 
+pcoa.groups <- paste(design_final$Date, design_final$Salinity, sep = "_")
+
+pcoa.points <- data.frame(CSI_pcoa_phylo$points, group = pcoa.groups)
+
+# Calculate Centroids (mean and SE)
+pcoa.L.centroids <- melt(pcoa.points, id="group", measure.vars = c("X1", "X2"))
+pcoa.centroids <- acast(pcoa.L.centroids, variable ~ group, mean)
+pcoa.centroids.se <- acast(pcoa.L.centroids, variable ~ group, se)
+pcoa.centroids.sd <- acast(pcoa.L.centroids, variable ~ group, sd)
+
+# Combine
+pcoa.cent.dataframe <- cbind(t(pcoa.centroids), t(pcoa.centroids.se))
+colnames(pcoa.cent.dataframe) <- c("V1", "V2", "V1e", "V2e")
+pcoa.cent.treats <- rownames(pcoa.cent.dataframe)
+
+pcoa.col <- as.factor(sapply(strsplit(pcoa.cent.treats, "_"), `[`, 2)) # Salinity
+pcoa.shape <- as.factor(sapply(strsplit(pcoa.cent.treats, "_"), `[`, 1))  # Date
+
+df1a <- as.data.frame(pcoa.cent.dataframe)
+plot1a <- ggplot(df1a, aes(x=V1, y=V2, colour=pcoa.col, shape = pcoa.shape,
+                 group = interaction(pcoa.col, pcoa.shape))) + theme_bw() 
+plot1a + theme(panel.grid.major = element_blank(), 
+               panel.grid.minor = element_blank(), 
+               axis.line = element_line(colour = "black")) + 
+theme(panel.background = element_blank()) + 
+  geom_point(aes(fill=pcoa.col), colour = "black", size=6, stroke = 1) + 
+  geom_errorbarh(aes(xmax=V1+V1e, xmin=V1-V1e, height=0.01), colour="black") +    
+  geom_errorbar(aes(ymax=V2+V2e, ymin=V2-V2e, width=0.01), colour="black") + 
+  scale_colour_manual(values = c("#FFFFFF", "#00FFFF", "#33CCCC", "#0066CC")) + 
+  #scale_fill_manual(labels = c("0","5","9","13"), 
+                    #values = c("#FFFFFF", "#00FFFF", "#33CCCC", "#0066CC")) + 
+  scale_shape_manual(labels = c("0","18","45"),
+                     values = c(22, 21, 24)) +
+  coord_cartesian(xlim = c(-0.25, 0.25), ylim = c(-0.2, 0.2)) + 
+  theme(axis.title = element_text(size=20), axis.text=element_text(size=18), 
+          axis.text.x = element_text(size=18), 
+          panel.border = element_rect(colour = "black", size=1.25)) + 
+  theme(axis.ticks.length=unit(0.3,"cm")) + 
+  xlab("PCoA 1 (17.3%)") + ylab("PCoA 2 (7.3%)") + 
+  labs(fill = "Salinity", shape = "Date") +
+  guides(fill = guide_legend(override.aes = list(pch=21, size = 5, colour="black")),
+         shape = guide_legend(override.aes = list(size = 5, fill="black")))
+
+ggsave("../figures/Phylo_Ordination.pdf", plot=last_plot(), device=NULL, path=NULL, scale=1, width=NA, height=NA, dpi=900, limitsize=TRUE)
+```
+
+# Phylogenetic Regression
 
 
 

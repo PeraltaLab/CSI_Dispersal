@@ -2,7 +2,7 @@
 # Current Shared File: CSI.trim.contigs.good.unique.good.filter.unique.precluster.pick.pick.opti_mcc.shared
 
 # The following we run in mothur
-get.oturep(list=CSI.trim.contigs.good.unique.good.filter.unique.precluster.pick.pick.opti_mcc.list, fasta=CSI.trim.contigs.good.unique.good.filter.unique.precluster.pick.pick.fasta, count=CSI.trim.contigs.good.unique.good.filter.unique.precluster.denovo.vsearch.pick.pick.count_table, method=abundance, label=0.03)
+get.oturep(list=CSI.trim.contigs.good.unique.good.filter.unique.precluster.pick.pick.opti_mcc.list, fasta=CSI.trim.contigs.good.unique.good.filter.unique.precluster.pick.pick.fasta, count=CSI.trim.contigs.good.unique.good.filter.unique.precluster.pick.pick.count_table, method=abundance, label=0.03)
 system(cp ./CSI.trim.contigs.good.unique.good.filter.unique.precluster.pick.pick.opti_mcc.0.03.rep.fasta ./CSI.final.0.03.rep.fasta)
 
 # Fast Tree
@@ -12,6 +12,6 @@ FastTree -gtr -nt -gamma CSI.bac.final.rep.rename.fasta > CSI.bac.rename.tree
 FastTree -gtr -nt -gamma CSI.bac.final.rep.fasta > CSI.bac.tree
 
 # Make PhyloDist in mothur
-unifrac.weighted(tree=CSI.bac.tree, count=CSI.trim.contigs.good.unique.good.filter.unique.precluster.pick.pick.opti_mcc.0.03.rep.count_table, distance=square, processors=12)
+unifrac.weighted(tree=CSI.bac.tree, count=CSI.trim.contigs.good.unique.good.filter.unique.precluster.pick.pick.opti_mcc.0.03.rep.count_table, distance=square, processors=6)
 
 output: CSI.bac.tree1.weighted.phylip.dist
