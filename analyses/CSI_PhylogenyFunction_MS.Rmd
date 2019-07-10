@@ -26,6 +26,7 @@ library("dplyr"); library("reshape2"); library("labdsv")
 library("nlme"); library("MASS"); library("ade4")
 library("png"); library("grid"); library("ggplot2")
 library("ape"); library("picante"); library("ggtree")
+library("phylofactor")
 
 # Set Std Err Functions
 se <- function(x, ...) {
@@ -163,7 +164,7 @@ levels(treatments2) <- c("2","3")
 #date_1 <- as.factor(desighn.ns.final$Date2)
 ```
 
-# Calculating OTU Diversity Metrics [included in Werba et al. (In review) manuscript]
+# OTU Diversity Metrics [included in Werba et al. (In review) manuscript]
 ```{r (Diversity Metrics), echo=TRUE}
 # Rarefy Abundances (min abundance is 13,240. We are sampling to 13,000) for uchime mothur run
 # Rarefy Abundances (min abundance is 13,229. We are sampling to 13,000) for vsearch mothur run
@@ -202,65 +203,142 @@ csi_otu.div.source <- cbind(design_final, shannon.source,
                             richness.source,J.source)
 ```
 
-# Graph Cmin/Shannon day 45 only (Supp)
-```{r (Cmin/Shannon day 45 only), echo=FALSE}
-csi_otu.div.day45 <- subset(csi_otu.div, Date2 == "45")
+# Phylogenetic Diversity
+```{r (Phylogenetic Diversity), include=FALSE}
+str(tree)
+dim(otu_final)
+dim(csi_otu)
 
-p <- ggplot(csi_otu.div.day45, aes(x=shannon, y=Cmin, 
-                                   color = as.factor(Dispersal))) +
-  scale_color_manual(name="Dispersal Treatment", 
-                     values=c("black","gray"), 
-                     labels = c("fresh+salt (2)", "salt only (3)")) # +
-  # stat_summary(fun.data = "mean_cl_boot", size=1) 
-p1 = p + geom_smooth(method="lm", se=FALSE) + geom_point(size=4) 
-p1 + theme_bw() + theme(panel.grid.major = element_blank(), 
-                        panel.grid.minor = element_blank(), 
-                        axis.line = element_line(colour = "black")) + 
-  theme(axis.title=element_text(vjust=1,size=16,face="bold"), 
-        axis.text = element_text(size=16), 
-        axis.text.x = element_text(vjust=0.65, hjust=0.5, size=16), 
-        panel.border = element_rect(colour = "black",size=1)) + 
-  theme(axis.ticks.length=unit(0.3,"cm")) + 
-  labs(x = "Shannon Diversity Index (H')", 
-       y = (expression(paste("C Mineralization (ng CO"[2],
-                             " mL"^-{1},"day"^-{1},")")))) + 
-  theme(strip.text.x = element_text(size=16, face="bold"), 
-        strip.text.y = element_text(size=16, face="bold"), 
-        strip.background = element_rect(colour="black", 
-                                        fill="white", size=1))
+sum(tree$tip.label %in% colnames(csi_otu) == FALSE) # Tree Represents All
 
-ggsave("../figures/Cmin_shannon.png", plot=last_plot(), device=NULL, 
-       path=NULL, scale=1, width=NA, height=NA, dpi=300, limitsize=TRUE)
+# Small Branches
+sum(tree$edge.length < 0.0000001)
 
-#graph Cmin/richness day 45 only
+# Import Unifrac Matrix
+str(UniFrac.raw)
+dim(UniFrac.raw)
 
-p <- ggplot(csi_otu.div.day45, 
-            aes(x=richness, y=Cmin, color=as.factor(Dispersal))) + 
-  scale_color_manual(name="Dispersal Treatment", 
-                     values=c("black","gray"), 
-                     labels = c("fresh+salt (2)", "salt only (3)")) 
-# +  stat_summary(fun.data="mean_cl_boot",size=1) 
-p1 = p + geom_smooth(method="lm", se=FALSE) + geom_point(size=4)
-p1 + theme_bw() + theme(panel.grid.major = element_blank(), 
-                        panel.grid.minor = element_blank(), 
-                        axis.line = element_line(colour = "black")) + 
-  theme(axis.title = element_text(vjust=1,size=16,face="bold"), 
-        axis.text = element_text(size=16), 
-        axis.text.x = element_text(vjust=0.65, hjust=0.5, size=16), 
-        panel.border = element_rect(colour = "black",size=1)) + 
-  theme(axis.ticks.length=unit(0.3,"cm")) + 
-  labs(x = "Species Richness", 
-       y = (expression(paste("C Mineralization (ng CO"[2],
-                             " mL"^-{1}," day"^-{1},")")))) + 
-  theme(strip.text.x = element_text(size=16, face="bold"), 
-        strip.text.y = element_text(size=16, face="bold"), 
-        strip.background = element_rect(colour="black", 
-                                        fill="white", size=1))
+UniFrac <- UniFrac.raw[which(row.names(UniFrac.raw) %in%
+                                   row.names(otu_final)),
+                             which(colnames(UniFrac.raw) %in%
+                                   row.names(otu_final))]
 
-ggsave("../figures/Cmin_richness.png", plot=last_plot(), device=NULL, path=NULL, scale=1, width=NA, height=NA, dpi=300, limitsize=TRUE)
+dim(UniFrac)
 
+# Make into Distance Matrix
+unifrac.dist <- as.dist(UniFrac, upper = T, diag = T)
+
+# Calculate Phylo Diversity
+phylo.d <- pd(otu_final, tree, include.root = F)
+phylo_final <- phylo.d[setdiff(rownames(phylo.d), odd.sites), ]
+#design_final <- design.full[setdiff(rownames(design.full), odd.sites), ]
+#design.ns <- design.ns[setdiff(rownames(design.ns), odd.sites), ]
+all.equal(rownames(design_final), rownames(phylo_final))
+
+# REMOVE source tanks from otu file
+# REMOVE source tanks Number 1,2,3 from otu_final and use design.ns (manually removed source tanks)
+temp <- rownames(design_final[which(design_final$Number %in% c(1,2,3)), ])
+phylo_final.ns <- phylo_final[-(which(rownames(phylo_final) %in% temp)), ]
+dim(phylo_final.ns)
+dim(design.ns.final)
+
+csi.phylo.ns <- cbind(design.ns.final,phylo_final.ns)
 ```
 
+
+# Fig 1A: PCoA (UniFrac)
+```{r}
+# Principal Coordinates Analysis - NO SOURCE
+CSI_pcoa_phylo <- cmdscale(unifrac.dist, k=3, eig=TRUE, add=FALSE)
+  # Classical (Metric) Multidimensional Scaling; returns PCoA coordinates
+  # eig=TRUE returns eigenvalues; k = # of dimensions to calculate
+
+explainvar1 <- round(CSI_pcoa_phylo$eig[1] / sum(CSI_pcoa_phylo$eig), 3) * 100
+explainvar2 <- round(CSI_pcoa_phylo$eig[2] / sum(CSI_pcoa_phylo$eig), 3) * 100
+sum.eig <- sum(explainvar1, explainvar2)
+
+explainvar1 
+explainvar2
+
+
+all.equal(rownames(design_final), labels(unifrac.dist))
+
+pcoa.groups <- paste(design_final$Date, design_final$Salinity, sep = "_")
+
+pcoa.points <- data.frame(CSI_pcoa_phylo$points, group = pcoa.groups)
+
+# Calculate Centroids (mean and SE)
+pcoa.L.centroids <- melt(pcoa.points, id="group", measure.vars = c("X1", "X2"))
+pcoa.centroids <- acast(pcoa.L.centroids, variable ~ group, mean)
+pcoa.centroids.se <- acast(pcoa.L.centroids, variable ~ group, se)
+pcoa.centroids.sd <- acast(pcoa.L.centroids, variable ~ group, sd)
+
+# Combine
+pcoa.cent.dataframe <- cbind(t(pcoa.centroids), t(pcoa.centroids.se))
+colnames(pcoa.cent.dataframe) <- c("V1", "V2", "V1e", "V2e")
+pcoa.cent.treats <- rownames(pcoa.cent.dataframe)
+
+pcoa.col <- as.factor(sapply(strsplit(pcoa.cent.treats, "_"), `[`, 2)) # Salinity
+pcoa.shape <- as.factor(sapply(strsplit(pcoa.cent.treats, "_"), `[`, 1))  # Date
+
+df1a <- as.data.frame(pcoa.cent.dataframe)
+plot1a <- ggplot(df1a, aes(x=V1, y=V2, colour=pcoa.col, shape = pcoa.shape,
+                 group = interaction(pcoa.col, pcoa.shape))) + theme_bw() 
+plot1a + theme(panel.grid.major = element_blank(), 
+               panel.grid.minor = element_blank(), 
+               axis.line = element_line(colour = "black")) + 
+theme(panel.background = element_blank()) + 
+  geom_point(aes(fill=pcoa.col), colour = "black", size=6, stroke = 1) + 
+  geom_errorbarh(aes(xmax=V1+V1e, xmin=V1-V1e, height=0.01), colour="black") +    
+  geom_errorbar(aes(ymax=V2+V2e, ymin=V2-V2e, width=0.01), colour="black") + 
+  scale_colour_manual(values = c("#FFFFFF", "#00FFFF", "#33CCCC", "#0066CC")) + 
+  #scale_fill_manual(labels = c("0","5","9","13"), 
+                    #values = c("#FFFFFF", "#00FFFF", "#33CCCC", "#0066CC")) + 
+  scale_shape_manual(labels = c("0","18","45"),
+                     values = c(22, 21, 24)) +
+  coord_cartesian(xlim = c(-0.25, 0.25), ylim = c(-0.2, 0.2)) + 
+  theme(axis.title = element_text(size=20), axis.text=element_text(size=18), 
+          axis.text.x = element_text(size=18), 
+          panel.border = element_rect(colour = "black", size=1.25)) + 
+  theme(axis.ticks.length=unit(0.3,"cm")) + 
+  xlab("PCoA 1 (17.3%)") + ylab("PCoA 2 (7.3%)") + 
+  labs(fill = "Salinity", shape = "Date") +
+  guides(fill = guide_legend(override.aes = list(pch=21, size = 5, colour="black")),
+         shape = guide_legend(override.aes = list(size = 5, fill="black")))
+
+ggsave("../figures/Phylo_Ordination.png", plot=last_plot(), device=NULL, path=NULL, scale=1, width=NA, height=NA, dpi=900, limitsize=TRUE)
+```
+
+# Fig 1B: PD Rain Clouds
+```{r rain clouds, include=FALSE}
+#Rainclouds for repeated measures
+source("../bin/R_rainclouds.R")
+source("../bin/summarySE.R")
+library(ggpubr)
+library(car)
+#change Date2 in original df to 1,2,3 instead of 0,18,45
+time.Date2 <- as.numeric(csi.phylo.ns$Date2)
+csi.phylo.ns.t <- cbind(csi.phylo.ns,time.Date2)
+csi.phylo.ns.t$time.Date2 <- recode(csi.phylo.ns.t$time.Date2,"0=1;45=3;18=2")
+csi.phylo.ns.t
+
+group <- as.factor(csi.phylo.ns$Salinity)
+time <- csi.phylo.ns.t$time.Date2
+
+#Rainclouds for repeated measures - denitrification
+p1 <- ggplot(csi.phylo.ns, aes(x = as.factor(time), y = PD, fill = group), size=16) +
+  geom_flat_violin(aes(fill = group),position = position_nudge(x = .1, y = 0), adjust = 1.5, trim = FALSE, alpha = .5, colour = NA)+
+  geom_point(aes(x = as.numeric(time)-.15, y = PD, colour = group),position = position_jitter(width = .05), size = 1.5, shape = 20)+
+  geom_boxplot(aes(x = as.factor(time), y = PD, fill = group),outlier.shape = NA, alpha = .5, width = .1, colour = "black") + labs(x = "Sampling Date", y = "Phylogenetic Diversity") + scale_x_discrete(labels=c("1" = "Day 0", "2" = "Day 18", "3" = "Day 45"))
+  #+ scale_fill_manual(name="Site", values=c("darkgreen","cyan"))+ scale_colour_manual(name="Site", values=c("darkgreen","cyan"))
+p1
+
+ggsave("../figures/Figure_PD_rainclouds.png", plot=last_plot(), device=NULL, path=NULL, scale=1,  width=6, height=6, dpi=300, limitsize=TRUE)
+```
+
+
+
+# Fig 2A: PhyloTree with Indicator Taxa
 # Phylogenetic Indicator Figure Analysis (Fig 2A)
 ```{r}
 str(tree)
@@ -415,49 +493,184 @@ ggsave("../figures/indicator.tree.png", width = 10, height = 8, units = "in")
 
 ```
 
-# Phylogenetic Diversity (Fig 1B)
-```{r (Phylogenetic Diversity), include=FALSE}
-str(tree)
-dim(otu_final)
-dim(csi_otu)
 
-sum(tree$tip.label %in% colnames(csi_otu) == FALSE) # Tree Represents All
 
-# Small Branches
-sum(tree$edge.length < 0.0000001)
+# Fig 2B: PhyloTree with PhyloFactor
+# PhyloFactor (Fig 2B)
+```{r}
+# Organize Data
 
-# Import Unifrac Matrix
-str(UniFrac.raw)
-dim(UniFrac.raw)
+# OTU Table w/ Only "Common Taxa"
+OTUtable <- t(otu_final.ns)
+OTUtable[1:5, 1:5]
+OTUtable <- OTUtable[which(rowSums(OTUtable) > 10), ]
+for (i in 1:dim(OTUtable)[2]) {
+  OTUtable[, i] <- OTUtable[, i]/sum(OTUtable[, i])
+}
+OTUtable[which(OTUtable ==0)] <- 0.0000001
 
-UniFrac <- UniFrac.raw[which(row.names(UniFrac.raw) %in%
-                                   row.names(otu_final)),
-                             which(colnames(UniFrac.raw) %in%
-                                   row.names(otu_final))]
+# Independent Variables: Salinity
+all.equal(colnames(OTUtable), rownames(csi.full.ns))
+trt <- as.factor(csi.full.ns$Salinity)
+levels(trt) <- c("0","5","9","13")
 
-dim(UniFrac)
+# Phylogenetic Tree
+tree <- ape::drop.tip(tree.2,setdiff(tree.2$tip.label,rownames(OTUtable)))
+OTUtable <- OTUtable[tree$tip.label, ]
 
-# Make into Distance Matrix
-unifrac.dist <- as.dist(UniFrac, upper = T, diag = T)
+# Taxonomy
+csi.tax.common <- csi.tax[which(csi.tax$OTU %in% rownames(OTUtable)), ]
+taxonomy <- tax.merge(csi.tax.common)
 
-# Calculate Phylo Diversity
-phylo.d <- pd(otu_final, tree, include.root = F)
-phylo_final <- phylo.d[setdiff(rownames(phylo.d), odd.sites), ]
-#design_final <- design.full[setdiff(rownames(design.full), odd.sites), ]
-#design.ns <- design.ns[setdiff(rownames(design.ns), odd.sites), ]
-all.equal(rownames(design_final), rownames(phylo_final))
 
-# REMOVE source tanks from otu file
-# REMOVE source tanks Number 1,2,3 from otu_final and use design.ns (manually removed source tanks)
-temp <- rownames(design_final[which(design_final$Number %in% c(1,2,3)), ])
-phylo_final.ns <- phylo_final[-(which(rownames(phylo_final) %in% temp)), ]
-dim(phylo_final.ns)
-dim(design.ns.final)
+# PhyloFactorization
+PF <- PhyloFactor(OTUtable, tree, trt, stop.fcn = "KS", stop.early = T)
+class(PF)
 
-csi.phylo.ns <- cbind(design.ns.final,phylo_final.ns)
+
+
+# Phylofactoraization with Saline vs Non-Saline
+trt2 <- trt
+PF <- PhyloFactor(OTUtable, tree, trt, nfactors=10)
+class(PF)
+
+# Summary
+# A tidier summary tool
+s <- pf.summary(PF,taxonomy,factor=1) 
+td <- pf.tidy(s)                                 
+td$`group1, Monophyletic`                          
+# Simplified group IDs - the unique shortest unique prefixes separating the groups
+td$`group2, Monophyletic`
+
+## Plotting with summary tools ##
+par(mfrow=c(1,1),mar=mar)
+plot(as.numeric(trt),td$`Observed Ratio of group1/group2 geometric means`,
+       ylab='Average ratio of Group1/Group2',pch=18,cex=2)
+lines(td$`Predicted ratio of group1/group2`,lwd=2)
+legend(1,12,legend=c('Observed','Predicted'),pch=c(18,NA),lwd=c(NA,2),
+       lty=c(NA,1),cex=2)
+
+
+# A tidier summary tool
+s <- pf.summary(PF,taxonomy,factor=2) 
+td <- pf.tidy(s)                                 
+td$`group1, Monophyletic`                          
+# Simplified group IDs - the unique shortest unique prefixes separating the groups
+td$`group2, Paraphyletic`
+
 ```
 
-# Phylogenetic Linear Models (Supp)
+
+
+# Fig 3: Phylo Function
+```{r}
+#Cmin General
+
+#Mass Loss for Each
+
+
+
+# Goal: Two panel plot with phylo indicators and phylofactor indicators vs mass loss or cmin. 
+
+
+
+
+```
+
+
+---------
+# AP Please Check Everything Below Here!
+
+# Supplemental Figures
+## Graph Cmin/Shannon day 45 only (Supp)
+```{r (Cmin/Shannon day 45 only), echo=FALSE}
+csi_otu.div.day45 <- subset(csi_otu.div, Date2 == "45")
+
+p <- ggplot(csi_otu.div.day45, aes(x=shannon, y=Cmin, 
+                                   color = as.factor(Dispersal))) +
+  scale_color_manual(name="Dispersal Treatment", 
+                     values=c("black","gray"), 
+                     labels = c("fresh+salt (2)", "salt only (3)")) # +
+  # stat_summary(fun.data = "mean_cl_boot", size=1) 
+p1 = p + geom_smooth(method="lm", se=FALSE) + geom_point(size=4) 
+p1 + theme_bw() + theme(panel.grid.major = element_blank(), 
+                        panel.grid.minor = element_blank(), 
+                        axis.line = element_line(colour = "black")) + 
+  theme(axis.title=element_text(vjust=1,size=16,face="bold"), 
+        axis.text = element_text(size=16), 
+        axis.text.x = element_text(vjust=0.65, hjust=0.5, size=16), 
+        panel.border = element_rect(colour = "black",size=1)) + 
+  theme(axis.ticks.length=unit(0.3,"cm")) + 
+  labs(x = "Shannon Diversity Index (H')", 
+       y = (expression(paste("C Mineralization (ng CO"[2],
+                             " mL"^-{1},"day"^-{1},")")))) + 
+  theme(strip.text.x = element_text(size=16, face="bold"), 
+        strip.text.y = element_text(size=16, face="bold"), 
+        strip.background = element_rect(colour="black", 
+                                        fill="white", size=1))
+
+ggsave("../figures/Cmin_shannon.png", plot=last_plot(), device=NULL, 
+       path=NULL, scale=1, width=NA, height=NA, dpi=300, limitsize=TRUE)
+
+#graph Cmin/richness day 45 only
+
+p <- ggplot(csi_otu.div.day45, 
+            aes(x=richness, y=Cmin, color=as.factor(Dispersal))) + 
+  scale_color_manual(name="Dispersal Treatment", 
+                     values=c("black","gray"), 
+                     labels = c("fresh+salt (2)", "salt only (3)")) 
+# +  stat_summary(fun.data="mean_cl_boot",size=1) 
+p1 = p + geom_smooth(method="lm", se=FALSE) + geom_point(size=4)
+p1 + theme_bw() + theme(panel.grid.major = element_blank(), 
+                        panel.grid.minor = element_blank(), 
+                        axis.line = element_line(colour = "black")) + 
+  theme(axis.title = element_text(vjust=1,size=16,face="bold"), 
+        axis.text = element_text(size=16), 
+        axis.text.x = element_text(vjust=0.65, hjust=0.5, size=16), 
+        panel.border = element_rect(colour = "black",size=1)) + 
+  theme(axis.ticks.length=unit(0.3,"cm")) + 
+  labs(x = "Species Richness", 
+       y = (expression(paste("C Mineralization (ng CO"[2],
+                             " mL"^-{1}," day"^-{1},")")))) + 
+  theme(strip.text.x = element_text(size=16, face="bold"), 
+        strip.text.y = element_text(size=16, face="bold"), 
+        strip.background = element_rect(colour="black", 
+                                        fill="white", size=1))
+
+ggsave("../figures/Cmin_richness.png", plot=last_plot(), device=NULL, path=NULL, scale=1, width=NA, height=NA, dpi=300, limitsize=TRUE)
+
+```
+
+## PD Scatter Plot Graphs
+```{r rain clouds, include=FALSE}
+# Phylogenetic Diversity - Treatment Salinity
+p <- ggplot(csi.phylo.ns, aes(x=Salinity, y=PD, color=as.factor(Dispersal)))+ scale_color_manual(name="Dispersal Treatment", values=c("black","gray"), labels = c("fresh+salt (2)", "salt only (3)")) + stat_summary(fun.data=mean_cl_boot,size=1,position=position_dodge(width=2)) 
+p1=p+geom_smooth(method="lm", se=FALSE)+facet_wrap(~Date2)+facet_grid(. ~ Date2)
+p1 + theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.line = element_line(colour = "black")) +theme(axis.title=element_text(vjust=1,size=16,face="bold"), axis.text=element_text(size=16), axis.text.x = element_text(vjust=0.65, hjust=0.5, size=16), panel.border = element_rect(colour = "black",size=1)) + theme(axis.ticks.length=unit(0.3,"cm")) + labs(x = "Salinity", y = "Phylogenetic Diversity (PD)") + theme(strip.text.x = element_text(size=16, face="bold"), strip.text.y = element_text(size=16, face="bold"), strip.background = element_rect(colour="black", fill="white", size=1))
+
+ggsave("../figures/phylogenetic_div.png", plot=last_plot(), device=NULL, path=NULL, scale=1, width=NA, height=NA, dpi=300, limitsize=TRUE)
+
+csi.phylo.ns.day45 <- subset(csi.phylo.ns, Date2 == "45")
+
+PD.lm.45 <- lm(PD ~ Dispersal*Salinity, data = csi.phylo.ns.day45)
+anova(PD.lm.45)
+
+# Phylogenetic Diversity - Treatment Salinity
+p <- ggplot(csi.phylo.ns.day45, aes(x=Salinity, y=PD, color=as.factor(Dispersal)))+ scale_color_manual(name="Dispersal Treatment", values=c("black","gray"), labels = c("fresh+salt (2)", "salt only (3)")) + stat_summary(fun.data=mean_cl_boot,size=1,position=position_dodge(width=2)) 
+p1=p+geom_smooth(method="lm", se=FALSE)
+p1 + theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.line = element_line(colour = "black")) +theme(axis.title=element_text(vjust=1,size=16,face="bold"), axis.text=element_text(size=16), axis.text.x = element_text(vjust=0.65, hjust=0.5, size=16), panel.border = element_rect(colour = "black",size=1)) + theme(axis.ticks.length=unit(0.3,"cm")) + labs(x = "Salinity", y = "Phylogenetic Diversity (PD)") + theme(strip.text.x = element_text(size=16, face="bold"), strip.text.y = element_text(size=16, face="bold"), strip.background = element_rect(colour="black", fill="white", size=1))
+
+ggsave("../figures/phylogenetic_div.45.png", plot=last_plot(), device=NULL, path=NULL, scale=1, width=NA, height=NA, dpi=300, limitsize=TRUE)
+
+p <- ggplot(csi.phylo.ns.day45, aes(x=PD, y=Cmin, color=as.factor(Dispersal)))+ scale_color_manual(name="Dispersal Treatment", values=c("black","gray"), labels = c("fresh+salt (2)", "salt only (3)")) + stat_summary(fun.data=mean_cl_boot,size=1,position=position_dodge(width=2)) 
+p1=p+geom_smooth(method="lm", se=FALSE)+geom_point(size=4)
+p1 + theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.line = element_line(colour = "black")) +theme(axis.title=element_text(vjust=1,size=16,face="bold"), axis.text=element_text(size=16), axis.text.x = element_text(vjust=0.65, hjust=0.5, size=16), panel.border = element_rect(colour = "black",size=1)) + theme(axis.ticks.length=unit(0.3,"cm")) + labs(x = "Phylogenetic Diversity", y = (expression(paste("C Mineralization (ng CO"[2]," mL"^-{1}," day"^-{1},")")))) + theme(strip.text.x = element_text(size=16, face="bold"), strip.text.y = element_text(size=16, face="bold"), strip.background = element_rect(colour="black", fill="white", size=1))
+
+ggsave("../figures/Cmin_PD.png", plot=last_plot(), device=NULL, path=NULL, scale=1, width=NA, height=NA, dpi=300, limitsize=TRUE)
+```
+
+
+## Phylogenetic Linear Models (Supp)
 ```{r (Phylogenetic Diversity - plot), echo=TRUE}
 # run full parametric statistical model
 PD.lm <- lm(PD ~ Dispersal*Salinity*Date, data = csi.phylo.ns)
@@ -495,70 +708,8 @@ ggsave("../figures/Cmin_PD.png", plot=last_plot(), device=NULL, path=NULL, scale
 ```
 
 
-# Ordination - Unifrac (Fig 1A)
-```{r}
-# Principal Coordinates Analysis - NO SOURCE
-CSI_pcoa_phylo <- cmdscale(unifrac.dist, k=3, eig=TRUE, add=FALSE)
-  # Classical (Metric) Multidimensional Scaling; returns PCoA coordinates
-  # eig=TRUE returns eigenvalues; k = # of dimensions to calculate
 
-explainvar1 <- round(CSI_pcoa_phylo$eig[1] / sum(CSI_pcoa_phylo$eig), 3) * 100
-explainvar2 <- round(CSI_pcoa_phylo$eig[2] / sum(CSI_pcoa_phylo$eig), 3) * 100
-sum.eig <- sum(explainvar1, explainvar2)
-
-explainvar1 
-explainvar2
-
-
-all.equal(rownames(design_final), labels(unifrac.dist))
-
-pcoa.groups <- paste(design_final$Date, design_final$Salinity, sep = "_")
-
-pcoa.points <- data.frame(CSI_pcoa_phylo$points, group = pcoa.groups)
-
-# Calculate Centroids (mean and SE)
-pcoa.L.centroids <- melt(pcoa.points, id="group", measure.vars = c("X1", "X2"))
-pcoa.centroids <- acast(pcoa.L.centroids, variable ~ group, mean)
-pcoa.centroids.se <- acast(pcoa.L.centroids, variable ~ group, se)
-pcoa.centroids.sd <- acast(pcoa.L.centroids, variable ~ group, sd)
-
-# Combine
-pcoa.cent.dataframe <- cbind(t(pcoa.centroids), t(pcoa.centroids.se))
-colnames(pcoa.cent.dataframe) <- c("V1", "V2", "V1e", "V2e")
-pcoa.cent.treats <- rownames(pcoa.cent.dataframe)
-
-pcoa.col <- as.factor(sapply(strsplit(pcoa.cent.treats, "_"), `[`, 2)) # Salinity
-pcoa.shape <- as.factor(sapply(strsplit(pcoa.cent.treats, "_"), `[`, 1))  # Date
-
-df1a <- as.data.frame(pcoa.cent.dataframe)
-plot1a <- ggplot(df1a, aes(x=V1, y=V2, colour=pcoa.col, shape = pcoa.shape,
-                 group = interaction(pcoa.col, pcoa.shape))) + theme_bw() 
-plot1a + theme(panel.grid.major = element_blank(), 
-               panel.grid.minor = element_blank(), 
-               axis.line = element_line(colour = "black")) + 
-theme(panel.background = element_blank()) + 
-  geom_point(aes(fill=pcoa.col), colour = "black", size=6, stroke = 1) + 
-  geom_errorbarh(aes(xmax=V1+V1e, xmin=V1-V1e, height=0.01), colour="black") +    
-  geom_errorbar(aes(ymax=V2+V2e, ymin=V2-V2e, width=0.01), colour="black") + 
-  scale_colour_manual(values = c("#FFFFFF", "#00FFFF", "#33CCCC", "#0066CC")) + 
-  #scale_fill_manual(labels = c("0","5","9","13"), 
-                    #values = c("#FFFFFF", "#00FFFF", "#33CCCC", "#0066CC")) + 
-  scale_shape_manual(labels = c("0","18","45"),
-                     values = c(22, 21, 24)) +
-  coord_cartesian(xlim = c(-0.25, 0.25), ylim = c(-0.2, 0.2)) + 
-  theme(axis.title = element_text(size=20), axis.text=element_text(size=18), 
-          axis.text.x = element_text(size=18), 
-          panel.border = element_rect(colour = "black", size=1.25)) + 
-  theme(axis.ticks.length=unit(0.3,"cm")) + 
-  xlab("PCoA 1 (17.3%)") + ylab("PCoA 2 (7.3%)") + 
-  labs(fill = "Salinity", shape = "Date") +
-  guides(fill = guide_legend(override.aes = list(pch=21, size = 5, colour="black")),
-         shape = guide_legend(override.aes = list(size = 5, fill="black")))
-
-ggsave("../figures/Phylo_Ordination.png", plot=last_plot(), device=NULL, path=NULL, scale=1, width=NA, height=NA, dpi=900, limitsize=TRUE)
-```
-
-# Ordination - Bray Curtis (Supp)
+## OTU PCoA - Bray Curtis (Supp)
 ```{r}
 # Bray Curtis Distance
 sampleREL.dist <- vegdist(csi_relabun.ns, method="bray")
@@ -624,10 +775,36 @@ theme(panel.background = element_blank()) +
 ggsave("../figures/BrayCurtis_Ordination.png", plot=last_plot(), device=NULL, path=NULL, scale=1, width=NA, height=NA, dpi=900, limitsize=TRUE)
 ```
 
+## Another OTU Ordination
+```{r (Plot PCoA no source), echo=FALSE}
+df1a <- as.data.frame(pcoa.cent.dataframe.trts)
+plot1a <- ggplot(df1a, aes(x=V1, y=V2, colour=salinity, shape = date,
+                 group = interaction(salinity,date))) + theme_bw() 
+plot1a + theme(panel.grid.major = element_blank(), 
+               panel.grid.minor = element_blank(), 
+               axis.line = element_line(colour = "black")) + 
+theme(panel.background = element_blank()) + 
+  geom_point(aes(fill=salinity), colour = "black", size=6, stroke = 1) + 
+  geom_errorbarh(aes(xmax=V1+V1e, xmin=V1-V1e, height=0.01), colour="black") +    
+  geom_errorbar(aes(ymax=V2+V2e, ymin=V2-V2e, width=0.01), colour="black") + 
+  scale_colour_manual(values = c("#FFFFFF", "#00FFFF", "#33CCCC", "#0066CC")) + 
+  scale_shape_manual(labels = c("0","18","45"),
+                     values = c(22, 21, 24)) + 
+  theme(axis.title = element_text(size=20), axis.text=element_text(size=18), 
+          axis.text.x = element_text(size=18), 
+          panel.border = element_rect(colour = "black", size=1.25)) + 
+  theme(axis.ticks.length=unit(0.3,"cm")) + 
+  xlab("PCoA 1 (17.3%)") + ylab("PCoA 2 (7.3%)") + 
+  labs(fill = "Salinity", shape = "Date") +
+  guides(fill = guide_legend(override.aes = list(pch=21, size = 5, colour="black")),
+         shape = guide_legend(override.aes = list(size = 5, fill="black")))
+
+ggsave("../figures/PCoA_SalinityDispersal_NoSource.png", plot=last_plot(), device=NULL, path=NULL, scale=1, width=6, height=6, dpi=300, limitsize=TRUE)
+```
 
 
-
-# Indicator Species Analysis [included in Werba et al. (In review) manuscript]
+# Other Code: Do we need?
+## Indicator Species Analysis [included in Werba et al. (In review) manuscript]
 ```{r}
 library("labdsv")
 #http://rfunctions.blogspot.com/2013/02/multivariate-analysis-indicator-value.html
@@ -736,8 +913,10 @@ split(indicator.bac$Class, indicator.bac$Cluster)
 
 plot(as.factor(indicator.bac$Cluster), as.factor(indicator.bac$Phylum))
 ```
-## AP updates here - cleaned up PCoA ggplots code
-# Mixed Effects Models- Phylogenetic Diversity
+
+
+# AP updates here - cleaned up PCoA ggplots code
+## Mixed Effects Models- Phylogenetic Diversity
 ```{r mixed effects, include=FALSE}
 library("lmerTest")
 library("pbkrtest")
@@ -748,6 +927,7 @@ summary(PD.lm.45, ddf="Kenward-Roger")
 confint(PD.lm.45)
 ```
 
+## PD
 ```{r (Phylogenetic Diversity - plot), echo=TRUE}
 # run full parametric statistical model
 PD.lm <- lm(PD ~ Dispersal*Salinity*Date, data = csi.phylo.ns)
@@ -765,61 +945,9 @@ summary(PD.reg)
 ```
 
 
-#Rain Clouds Graphs (Fig 1B)
-```{r rain clouds, include=FALSE}
-#Rainclouds for repeated measures
-source("../bin/R_rainclouds.R")
-source("../bin/summarySE.R")
-library(ggpubr)
-library(car)
-#change Date2 in original df to 1,2,3 instead of 0,18,45
-time.Date2 <- as.numeric(csi.phylo.ns$Date2)
-csi.phylo.ns.t <- cbind(csi.phylo.ns,time.Date2)
-csi.phylo.ns.t$time.Date2 <- recode(csi.phylo.ns.t$time.Date2,"0=1;45=3;18=2")
-csi.phylo.ns.t
 
-group <- as.factor(csi.phylo.ns$Salinity)
-time <- csi.phylo.ns.t$time.Date2
 
-#Rainclouds for repeated measures - denitrification
-p1 <- ggplot(csi.phylo.ns, aes(x = as.factor(time), y = PD, fill = group), size=16) +
-  geom_flat_violin(aes(fill = group),position = position_nudge(x = .1, y = 0), adjust = 1.5, trim = FALSE, alpha = .5, colour = NA)+
-  geom_point(aes(x = as.numeric(time)-.15, y = PD, colour = group),position = position_jitter(width = .05), size = 1.5, shape = 20)+
-  geom_boxplot(aes(x = as.factor(time), y = PD, fill = group),outlier.shape = NA, alpha = .5, width = .1, colour = "black") + labs(x = "Sampling Date", y = "Phylogenetic Diversity") + scale_x_discrete(labels=c("1" = "Day 0", "2" = "Day 18", "3" = "Day 45"))
-  #+ scale_fill_manual(name="Site", values=c("darkgreen","cyan"))+ scale_colour_manual(name="Site", values=c("darkgreen","cyan"))
-p1
-
-ggsave("../figures/Figure_PD_rainclouds.png", plot=last_plot(), device=NULL, path=NULL, scale=1,  width=6, height=6, dpi=300, limitsize=TRUE)
-```
-#Scatter Plot Graphs
-```{r rain clouds, include=FALSE}
-# Phylogenetic Diversity - Treatment Salinity
-p <- ggplot(csi.phylo.ns, aes(x=Salinity, y=PD, color=as.factor(Dispersal)))+ scale_color_manual(name="Dispersal Treatment", values=c("black","gray"), labels = c("fresh+salt (2)", "salt only (3)")) + stat_summary(fun.data=mean_cl_boot,size=1,position=position_dodge(width=2)) 
-p1=p+geom_smooth(method="lm", se=FALSE)+facet_wrap(~Date2)+facet_grid(. ~ Date2)
-p1 + theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.line = element_line(colour = "black")) +theme(axis.title=element_text(vjust=1,size=16,face="bold"), axis.text=element_text(size=16), axis.text.x = element_text(vjust=0.65, hjust=0.5, size=16), panel.border = element_rect(colour = "black",size=1)) + theme(axis.ticks.length=unit(0.3,"cm")) + labs(x = "Salinity", y = "Phylogenetic Diversity (PD)") + theme(strip.text.x = element_text(size=16, face="bold"), strip.text.y = element_text(size=16, face="bold"), strip.background = element_rect(colour="black", fill="white", size=1))
-
-ggsave("../figures/phylogenetic_div.png", plot=last_plot(), device=NULL, path=NULL, scale=1, width=NA, height=NA, dpi=300, limitsize=TRUE)
-
-csi.phylo.ns.day45 <- subset(csi.phylo.ns, Date2 == "45")
-
-PD.lm.45 <- lm(PD ~ Dispersal*Salinity, data = csi.phylo.ns.day45)
-anova(PD.lm.45)
-
-# Phylogenetic Diversity - Treatment Salinity
-p <- ggplot(csi.phylo.ns.day45, aes(x=Salinity, y=PD, color=as.factor(Dispersal)))+ scale_color_manual(name="Dispersal Treatment", values=c("black","gray"), labels = c("fresh+salt (2)", "salt only (3)")) + stat_summary(fun.data=mean_cl_boot,size=1,position=position_dodge(width=2)) 
-p1=p+geom_smooth(method="lm", se=FALSE)
-p1 + theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.line = element_line(colour = "black")) +theme(axis.title=element_text(vjust=1,size=16,face="bold"), axis.text=element_text(size=16), axis.text.x = element_text(vjust=0.65, hjust=0.5, size=16), panel.border = element_rect(colour = "black",size=1)) + theme(axis.ticks.length=unit(0.3,"cm")) + labs(x = "Salinity", y = "Phylogenetic Diversity (PD)") + theme(strip.text.x = element_text(size=16, face="bold"), strip.text.y = element_text(size=16, face="bold"), strip.background = element_rect(colour="black", fill="white", size=1))
-
-ggsave("../figures/phylogenetic_div.45.png", plot=last_plot(), device=NULL, path=NULL, scale=1, width=NA, height=NA, dpi=300, limitsize=TRUE)
-
-p <- ggplot(csi.phylo.ns.day45, aes(x=PD, y=Cmin, color=as.factor(Dispersal)))+ scale_color_manual(name="Dispersal Treatment", values=c("black","gray"), labels = c("fresh+salt (2)", "salt only (3)")) + stat_summary(fun.data=mean_cl_boot,size=1,position=position_dodge(width=2)) 
-p1=p+geom_smooth(method="lm", se=FALSE)+geom_point(size=4)
-p1 + theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.line = element_line(colour = "black")) +theme(axis.title=element_text(vjust=1,size=16,face="bold"), axis.text=element_text(size=16), axis.text.x = element_text(vjust=0.65, hjust=0.5, size=16), panel.border = element_rect(colour = "black",size=1)) + theme(axis.ticks.length=unit(0.3,"cm")) + labs(x = "Phylogenetic Diversity", y = (expression(paste("C Mineralization (ng CO"[2]," mL"^-{1}," day"^-{1},")")))) + theme(strip.text.x = element_text(size=16, face="bold"), strip.text.y = element_text(size=16, face="bold"), strip.background = element_rect(colour="black", fill="white", size=1))
-
-ggsave("../figures/Cmin_PD.png", plot=last_plot(), device=NULL, path=NULL, scale=1, width=NA, height=NA, dpi=300, limitsize=TRUE)
-```
-
-# Ordination - based on taxonomy [included in Werba et al. (In review) manuscript]
+## Ordination - based on taxonomy [included in Werba et al. (In review) manuscript]
 ```{r (PCoA based on OTU), echo=FALSE}
 require("stats")
 require("labdsv")
@@ -853,7 +981,8 @@ sum.eiga <- sum(explainvar1a, explainvar2a)
 explainvar1a #17.3 now 18.2 (?)
 explainvar2a #7.3
 ```
-# PCoA Plot - based on taxonomy [included in Werba et al. (In review) manuscript]
+
+## PCoA Plot - based on taxonomy [included in Werba et al. (In review) manuscript]
 ```{r (PCoA), include=FALSE}
 pcoa.groups <- paste(design.ns.final$Date, design.ns.final$Salinity, sep = "_")
 
@@ -876,110 +1005,10 @@ pcoa.cent.dataframe.trts$salinity <- as.factor(salinity.p)
 pcoa.cent.dataframe.trts$date <- as.factor(date.p)
 pcoa.cent.dataframe.trts$salinity = factor(pcoa.cent.dataframe.trts$salinity, levels=c("0","5","9","13"))
 ```
-# Plot (ggplot)
-```{r (Plot PCoA no source), echo=FALSE}
-df1a <- as.data.frame(pcoa.cent.dataframe.trts)
-plot1a <- ggplot(df1a, aes(x=V1, y=V2, colour=salinity, shape = date,
-                 group = interaction(salinity,date))) + theme_bw() 
-plot1a + theme(panel.grid.major = element_blank(), 
-               panel.grid.minor = element_blank(), 
-               axis.line = element_line(colour = "black")) + 
-theme(panel.background = element_blank()) + 
-  geom_point(aes(fill=salinity), colour = "black", size=6, stroke = 1) + 
-  geom_errorbarh(aes(xmax=V1+V1e, xmin=V1-V1e, height=0.01), colour="black") +    
-  geom_errorbar(aes(ymax=V2+V2e, ymin=V2-V2e, width=0.01), colour="black") + 
-  scale_colour_manual(values = c("#FFFFFF", "#00FFFF", "#33CCCC", "#0066CC")) + 
-  scale_shape_manual(labels = c("0","18","45"),
-                     values = c(22, 21, 24)) + 
-  theme(axis.title = element_text(size=20), axis.text=element_text(size=18), 
-          axis.text.x = element_text(size=18), 
-          panel.border = element_rect(colour = "black", size=1.25)) + 
-  theme(axis.ticks.length=unit(0.3,"cm")) + 
-  xlab("PCoA 1 (17.3%)") + ylab("PCoA 2 (7.3%)") + 
-  labs(fill = "Salinity", shape = "Date") +
-  guides(fill = guide_legend(override.aes = list(pch=21, size = 5, colour="black")),
-         shape = guide_legend(override.aes = list(size = 5, fill="black")))
-
-ggsave("../figures/PCoA_SalinityDispersal_NoSource.png", plot=last_plot(), device=NULL, path=NULL, scale=1, width=6, height=6, dpi=300, limitsize=TRUE)
-```
-
-# PhyloFactor (Fig 2B)
-```{r}
-# Organize Data
-
-# OTU Table w/ Only "Common Taxa"
-OTUtable <- t(otu_final.ns)
-OTUtable[1:5, 1:5]
-OTUtable <- OTUtable[which(rowSums(OTUtable) > 10), ]
-for (i in 1:dim(OTUtable)[2]) {
-  OTUtable[, i] <- OTUtable[, i]/sum(OTUtable[, i])
-}
-OTUtable[which(OTUtable ==0)] <- 0.0000001
-
-# Independent Variables: Salinity
-all.equal(colnames(OTUtable), rownames(csi.full.ns))
-trt <- as.factor(csi.full.ns$Salinity)
-levels(trt) <- c("0","5","9","13")
-
-# Phylogenetic Tree
-tree <- ape::drop.tip(tree.2,setdiff(tree.2$tip.label,rownames(OTUtable)))
-OTUtable <- OTUtable[tree$tip.label, ]
-
-# Taxonomy
-csi.tax.common <- csi.tax[which(csi.tax$OTU %in% rownames(OTUtable)), ]
-taxonomy <- tax.merge(csi.tax.common)
-
-
-# PhyloFactorization
-PF <- PhyloFactor(OTUtable, tree, trt, stop.fcn = "KS", stop.early = T)
-class(PF)
-
-
-
-# Phylofactoraization with Saline vs Non-Saline
-trt2 <- trt
-PF <- PhyloFactor(OTUtable, tree, trt, nfactors=10)
-class(PF)
-
-# Summary
-# A tidier summary tool
-s <- pf.summary(PF,taxonomy,factor=1) 
-td <- pf.tidy(s)                                 
-td$`group1, Monophyletic`                          
-# Simplified group IDs - the unique shortest unique prefixes separating the groups
-td$`group2, Monophyletic`
-
-## Plotting with summary tools ##
-par(mfrow=c(1,1),mar=mar)
-plot(as.numeric(trt),td$`Observed Ratio of group1/group2 geometric means`,
-       ylab='Average ratio of Group1/Group2',pch=18,cex=2)
-lines(td$`Predicted ratio of group1/group2`,lwd=2)
-legend(1,12,legend=c('Observed','Predicted'),pch=c(18,NA),lwd=c(NA,2),
-       lty=c(NA,1),cex=2)
-
-
-# A tidier summary tool
-s <- pf.summary(PF,taxonomy,factor=2) 
-td <- pf.tidy(s)                                 
-td$`group1, Monophyletic`                          
-# Simplified group IDs - the unique shortest unique prefixes separating the groups
-td$`group2, Paraphyletic`
-
-```
-
-# Figure 3: Phylo Function
-```{r}
-#Cmin General
-
-#Mass Loss for Each
-
-
-
-# Goal: Two panel plot with phylo indicators and phylofactor indicators vs mass loss or cmin. 
 
 
 
 
-```
+
 
 
