@@ -524,7 +524,7 @@ taxonomy <- tax.merge(csi.tax.common)
 
 
 # PhyloFactorization
-PF <- PhyloFactor(OTUtable, tree, trt, stop.fcn = "KS", stop.early = T)
+PF <- PhyloFactor(OTUtable, tree, trt, stop.fcn = "KS", stop.early = T, nfactors = 5)
 class(PF)
 
 
