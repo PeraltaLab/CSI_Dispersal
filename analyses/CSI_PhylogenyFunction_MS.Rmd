@@ -20,12 +20,24 @@ rm(list = ls())
 source("../bin/DiversityFunctions.R")
 source("../bin/MothurTools.R")
 
+#Can't figure out how to load phylofactor
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+BiocManager::install()
+
+source("https://bioconductor.org/biocLite.R")
+biocLite("ggtree")
+biocLite("Biostrings")
+install.packages('devtools')
+devtools::install_github('reptalex/phylofactor')
+
 # Load Req'd Packages
 library("vegan"); library("ecodist"); library("Hmisc")
 library("dplyr"); library("reshape2"); library("labdsv")
 library("nlme"); library("MASS"); library("ade4")
 library("png"); library("grid"); library("ggplot2")
-library("ape"); library("picante"); library("ggtree")
+library("ape"); library("picante"); library("ggtree"); 
+library("cowplot"); library("ggpubr"); library("devtools")
 library("phylofactor")
 
 # Set Std Err Functions
@@ -184,10 +196,9 @@ J <- shannon/log(specnumber(otu.rarefy[,-c(1:1)]))
 # Combined design,shannon,richness,evenness - no source tanks
 csi_otu.div <- cbind(design.ns.final,shannon,richness,J)
 
-# Rarefy Abundances (min abundance is 13,240. We are sampling to 13,000) for uchime mothur run
-# Rarefy Abundances (min abundance is 13,229. We are sampling to 13,000) for vsearch mothur run
+# Rarefy Abundances (min abundance is 19846. We are sampling to 19,000) for vsearch mothur run
 min(rowSums(otu_final))
-otu.rarefy <- rrarefy(otu_final, 17000)
+otu.rarefy <- rrarefy(otu_final, 19000)
 
 # Calculate Shannon H' (called shannon) using full data set (WITH source tanks)
 shannon.source <- diversity(otu.rarefy, "shannon")
@@ -257,8 +268,8 @@ explainvar1 <- round(CSI_pcoa_phylo$eig[1] / sum(CSI_pcoa_phylo$eig), 3) * 100
 explainvar2 <- round(CSI_pcoa_phylo$eig[2] / sum(CSI_pcoa_phylo$eig), 3) * 100
 sum.eig <- sum(explainvar1, explainvar2)
 
-explainvar1 
-explainvar2
+explainvar1 #24.0
+explainvar2 #11.8%
 
 
 all.equal(rownames(design_final), labels(unifrac.dist))
@@ -301,7 +312,7 @@ theme(panel.background = element_blank()) +
           axis.text.x = element_text(size=18), 
           panel.border = element_rect(colour = "black", size=1.25)) + 
   theme(axis.ticks.length=unit(0.3,"cm")) + 
-  xlab("PCoA 1 (17.3%)") + ylab("PCoA 2 (7.3%)") + 
+  xlab("PCoA 1 (24.0%)") + ylab("PCoA 2 (11.8%)") + 
   labs(fill = "Salinity", shape = "Date") +
   guides(fill = guide_legend(override.aes = list(pch=21, size = 5, colour="black")),
          shape = guide_legend(override.aes = list(size = 5, fill="black")))
@@ -315,7 +326,7 @@ ggsave("../figures/Phylo_Ordination.png", plot=last_plot(), device=NULL, path=NU
 source("../bin/R_rainclouds.R")
 source("../bin/summarySE.R")
 library(ggpubr)
-library(car)
+library(cowplot)
 #change Date2 in original df to 1,2,3 instead of 0,18,45
 time.Date2 <- as.numeric(csi.phylo.ns$Date2)
 csi.phylo.ns.t <- cbind(csi.phylo.ns,time.Date2)
@@ -707,6 +718,33 @@ p1 + theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor = e
 ggsave("../figures/Cmin_PD.png", plot=last_plot(), device=NULL, path=NULL, scale=1, width=NA, height=NA, dpi=300, limitsize=TRUE)
 ```
 
+## Mixed Effects Models- Phylogenetic Diversity
+```{r mixed effects, include=FALSE}
+library("lmerTest")
+library("pbkrtest")
+csi.phylo.ns.45 <- subset(csi.phylo.ns, Date2=="45")
+PD.lm.45 <- lmer(PD ~ Salinity*Dispersal + (1|Replicate), data = csi.phylo.ns.45)
+plot(PD.lm.45)
+summary(PD.lm.45, ddf="Kenward-Roger")
+confint(PD.lm.45)
+```
+
+## PD
+```{r (Phylogenetic Diversity - plot), echo=TRUE}
+# run full parametric statistical model
+PD.lm <- lm(PD ~ Dispersal*Salinity*Date, data = csi.phylo.ns)
+plot(PD.lm)
+anova(PD.lm)
+summary(PD.lm)
+
+PD.lm.45 <- lm(PD ~ Dispersal*Salinity, data = csi.phylo.ns.45)
+anova(PD.lm.45)
+summary(PD.lm.45)
+
+# run linear regression measured salinity used instead of 'factor' salinity Day 45
+PD.reg <- lm(PD~Salinity_real, data = csi.phylo.ns.45)
+summary(PD.reg)
+```
 
 
 ## OTU PCoA - Bray Curtis (Supp)
@@ -723,8 +761,8 @@ explainvar1 <- round(CSI_PCoA_BC$eig[1] / sum(CSI_PCoA_BC$eig), 3) * 100
 explainvar2 <- round(CSI_PCoA_BC$eig[2] / sum(CSI_PCoA_BC$eig), 3) * 100
 sum.eig <- sum(explainvar1, explainvar2)
 
-explainvar1 
-explainvar2
+explainvar1 #17.5
+explainvar2 #7.4
 
 
 all.equal(rownames(design.ns.final), labels(sampleREL.dist))
@@ -767,248 +805,10 @@ theme(panel.background = element_blank()) +
           axis.text.x = element_text(size=18), 
           panel.border = element_rect(colour = "black", size=1.25)) + 
   theme(axis.ticks.length=unit(0.3,"cm")) + 
-  xlab("PCoA 1 (17.3%)") + ylab("PCoA 2 (7.3%)") + 
+  xlab("PCoA 1 (17.5%)") + ylab("PCoA 2 (7.4%)") + 
   labs(fill = "Salinity", shape = "Date") +
   guides(fill = guide_legend(override.aes = list(pch=21, size = 5, colour="black")),
          shape = guide_legend(override.aes = list(size = 5, fill="black")))
 
 ggsave("../figures/BrayCurtis_Ordination.png", plot=last_plot(), device=NULL, path=NULL, scale=1, width=NA, height=NA, dpi=900, limitsize=TRUE)
 ```
-
-## Another OTU Ordination
-```{r (Plot PCoA no source), echo=FALSE}
-df1a <- as.data.frame(pcoa.cent.dataframe.trts)
-plot1a <- ggplot(df1a, aes(x=V1, y=V2, colour=salinity, shape = date,
-                 group = interaction(salinity,date))) + theme_bw() 
-plot1a + theme(panel.grid.major = element_blank(), 
-               panel.grid.minor = element_blank(), 
-               axis.line = element_line(colour = "black")) + 
-theme(panel.background = element_blank()) + 
-  geom_point(aes(fill=salinity), colour = "black", size=6, stroke = 1) + 
-  geom_errorbarh(aes(xmax=V1+V1e, xmin=V1-V1e, height=0.01), colour="black") +    
-  geom_errorbar(aes(ymax=V2+V2e, ymin=V2-V2e, width=0.01), colour="black") + 
-  scale_colour_manual(values = c("#FFFFFF", "#00FFFF", "#33CCCC", "#0066CC")) + 
-  scale_shape_manual(labels = c("0","18","45"),
-                     values = c(22, 21, 24)) + 
-  theme(axis.title = element_text(size=20), axis.text=element_text(size=18), 
-          axis.text.x = element_text(size=18), 
-          panel.border = element_rect(colour = "black", size=1.25)) + 
-  theme(axis.ticks.length=unit(0.3,"cm")) + 
-  xlab("PCoA 1 (17.3%)") + ylab("PCoA 2 (7.3%)") + 
-  labs(fill = "Salinity", shape = "Date") +
-  guides(fill = guide_legend(override.aes = list(pch=21, size = 5, colour="black")),
-         shape = guide_legend(override.aes = list(size = 5, fill="black")))
-
-ggsave("../figures/PCoA_SalinityDispersal_NoSource.png", plot=last_plot(), device=NULL, path=NULL, scale=1, width=6, height=6, dpi=300, limitsize=TRUE)
-```
-
-
-# Other Code: Do we need?
-## Indicator Species Analysis [included in Werba et al. (In review) manuscript]
-```{r}
-library("labdsv")
-#http://rfunctions.blogspot.com/2013/02/multivariate-analysis-indicator-value.html
-
-# bind design and bact files NO Source
-csi.full.ns <- cbind(design.ns.final,csi_relabun.ns)
-
-csi.ns <- cbind(design.ns.final,otu_final.ns)
-
-# Set treatments
-treatments1 <- as.factor(csi.full.ns$Salinity)
-levels(treatments1) <- c("0","5","9","13")
-
-indval.default <- function(x,clustering,numitr=1000, ...)
-{
-    if (!is.data.frame(x)) x <- data.frame(x)
-
-    clustering <- clustify(clustering)
-    levels <- levels(clustering)
-    clustering <- as.integer(clustering)
-
-    if (any(apply(x>0,2,sum)==0)) stop('All species must occur in at least one plot')
-    numplt <- nrow(x)
-    numspc <- ncol(x)
-    numcls <- as.integer(length(table(clustering)))
-    maxcls <- rep(0,numspc)
-    relfrq <- matrix(0,nrow=numspc,ncol=numcls)
-    relabu <- matrix(0,nrow=numspc,ncol=numcls)
-    indval <- matrix(0,nrow=numspc,ncol=numcls)
-    indcls <- rep(0,numspc)
-    pval <- rep(0,numspc)
-    tmpfrq <- rep(0.0,numcls)
-    tmpabu <- rep(0.0,numcls)
-    pclass <- rep(0,numplt)
-    tclass <- rep(0,numplt)
-    errcod <- 0
-    tmp <- .Fortran("duleg",
-        as.double(as.matrix(x)),
-        as.integer(numplt),
-        as.integer(numspc),
-        as.integer(factor(clustering)),
-        as.integer(table(clustering)),
-        as.integer(numcls),
-        as.integer(numitr),
-        relfrq = relfrq,
-        relabu = relabu,
-        indval = indval,
-        pval = pval,
-        indcls = indcls,
-        maxcls = as.integer(maxcls),
-        as.double(tmpfrq),
-        as.double(tmpabu),
-        as.integer(pclass),
-        as.integer(tclass),
-        errcod = as.integer(errcod),
-        PACKAGE='labdsv')
-    out <- list(relfrq=data.frame(tmp$relfrq),relabu=data.frame(tmp$relabu),
-              indval=data.frame(tmp$indval),maxcls=tmp$maxcls,indcls=tmp$indcls,
-              pval=tmp$pval,error=tmp$errcod)
-    row.names(out$relfrq) <- names(x)
-    row.names(out$relabu) <- names(x)
-    row.names(out$indval) <- names(x)
-    names(out$maxcls) <- names(x)
-    names(out$indcls) <- names(x)
-    names(out$pval) <- names(x)
-    names(out$relfrq) <- levels
-    names(out$relabu) <- levels
-    names(out$indval) <- levels
-    class(out) <- 'indval'
-    if (out$error == 1) cat('WARNING: one or more species not assigned to any cluster\n')
-    out
-}
-
-csi_relabun.ns <- csi_relabun.ns[, colSums(csi_relabun.ns) > 0.05]
-bac.ind <- indval(csi_relabun.ns, treatments1)
-levels(treatments1)
-summary(bac.ind)
-
-inds <- which(bac.ind$pval <= 0.05)
-bac.indicators <- as.data.frame(matrix(NA, nrow = length(inds), ncol = 4))
-colnames(bac.indicators) <- c("OTU", "Cluster", "IndVal", "Prob")
-
-bac.indicators$OTU <- names(inds)
-bac.indicators$Cluster <- bac.ind$maxcls[inds]
-bac.indicators$IndVal <- bac.ind$indcls[inds]
-bac.indicators$Prob <- bac.ind$pval[inds]
-
-ind.tax <- csi.tax[which(as.character(csi.tax$OTU) %in% bac.indicators$OTU), ]
-ind.tax <- ind.tax[match(ind.tax$OTU, bac.indicators$OTU), ]
-
-indicator.bac <- cbind(bac.indicators, ind.tax[, -c(1)])
-
-indicator.bac <- indicator.bac[order(as.numeric(indicator.bac$Cluster)), ]
-
-table(indicator.bac$Cluster)
-table(indicator.bac$Phylum)
-table(indicator.bac$Cluster)
-levels(treatments1)
-
-# Export Bacteria Indicator Table
-write.table(indicator.bac, "../data/BacterialIndicators.txt",
-            sep="\t", row.names = F, quote = F)
-
-split(indicator.bac$Phylum, indicator.bac$Cluster)
-split(indicator.bac$Class, indicator.bac$Cluster)
-
-plot(as.factor(indicator.bac$Cluster), as.factor(indicator.bac$Phylum))
-```
-
-
-# AP updates here - cleaned up PCoA ggplots code
-## Mixed Effects Models- Phylogenetic Diversity
-```{r mixed effects, include=FALSE}
-library("lmerTest")
-library("pbkrtest")
-csi.phylo.ns.45 <- subset(csi.phylo.ns, Date2=="45")
-PD.lm.45 <- lmer(PD ~ Salinity*Dispersal + (1|Replicate), data = csi.phylo.ns.45)
-plot(PD.lm.45)
-summary(PD.lm.45, ddf="Kenward-Roger")
-confint(PD.lm.45)
-```
-
-## PD
-```{r (Phylogenetic Diversity - plot), echo=TRUE}
-# run full parametric statistical model
-PD.lm <- lm(PD ~ Dispersal*Salinity*Date, data = csi.phylo.ns)
-plot(PD.lm)
-anova(PD.lm)
-summary(PD.lm)
-
-PD.lm.45 <- lm(PD ~ Dispersal*Salinity, data = csi.phylo.ns.45)
-anova(PD.lm.45)
-summary(PD.lm.45)
-
-# run linear regression measured salinity used instead of 'factor' salinity Day 45
-PD.reg <- lm(PD~Salinity_real, data = csi.phylo.ns.45)
-summary(PD.reg)
-```
-
-
-
-
-## Ordination - based on taxonomy [included in Werba et al. (In review) manuscript]
-```{r (PCoA based on OTU), echo=FALSE}
-require("stats")
-require("labdsv")
-require("mgcv")
-require("cluster")
-require("vegan")
-require("reshape2")
-require("reshape")
-
-all.equal(rownames(design.ns.final), rownames(csi_relabun.ns))
-sampleREL.dist1 <- vegdist(csi_relabun.ns, method="bray")
-csi.full.ns <- cbind(design.ns.final,csi_relabun.ns)
-
-# Set order of salinity
-csi.full.ns$Salinity = factor(csi.full.ns$Salinity, levels=c("0","5","9","13"))
-design.ns.final$Salinity = factor(design.ns.final$Salinity, levels=c("0","5","9","13"))
-
-# PERMANOVA
-adonis = adonis(csi.full.ns[,-c(1:16)] ~ Date2*Dispersal*Salinity, method = "bray", data = csi.full.ns, perm=1000)
-adonis
-
-# Principal Coordinates Analysis - NO SOURCE
-CSI_pcoa1 <- cmdscale(sampleREL.dist1, k=3, eig=TRUE, add=FALSE)
-  # Classical (Metric) Multidimensional Scaling; returns PCoA coordinates
-  # eig=TRUE returns eigenvalues; k = # of dimensions to calculate
-
-explainvar1a <- round(CSI_pcoa1$eig[1] / sum(CSI_pcoa1$eig), 3) * 100
-explainvar2a <- round(CSI_pcoa1$eig[2] / sum(CSI_pcoa1$eig), 3) * 100
-sum.eiga <- sum(explainvar1a, explainvar2a)
-
-explainvar1a #17.3 now 18.2 (?)
-explainvar2a #7.3
-```
-
-## PCoA Plot - based on taxonomy [included in Werba et al. (In review) manuscript]
-```{r (PCoA), include=FALSE}
-pcoa.groups <- paste(design.ns.final$Date, design.ns.final$Salinity, sep = "_")
-
-pcoa.points <- data.frame(CSI_pcoa1$points, group = pcoa.groups)
-
-# Calculate Centroids (mean and SE)
-pcoa.L.centroids <- melt(pcoa.points, id="group", measure.vars = c("X1", "X2"))
-pcoa.centroids <- acast(pcoa.L.centroids, variable ~ group, mean)
-pcoa.centroids.se <- acast(pcoa.L.centroids, variable ~ group, se)
-pcoa.centroids.sd <- acast(pcoa.L.centroids, variable ~ group, sd)
-
-# Combine
-pcoa.cent.dataframe <- cbind(t(pcoa.centroids), t(pcoa.centroids.se))
-colnames(pcoa.cent.dataframe) <- c("V1", "V2", "V1e", "V2e")
-pcoa.cent.treats <- rownames(pcoa.cent.dataframe)
-salinity.p <- c("0","13","5","9","0","13","5","9","0","13","5","9")
-date.p <- c("Day 0","Day 0","Day 0","Day 0","Day18","Day18","Day18","Day18","Day 45","Day 45","Day 45","Day 45")
-pcoa.cent.dataframe.trts <- as.data.frame(pcoa.cent.dataframe)
-pcoa.cent.dataframe.trts$salinity <- as.factor(salinity.p)
-pcoa.cent.dataframe.trts$date <- as.factor(date.p)
-pcoa.cent.dataframe.trts$salinity = factor(pcoa.cent.dataframe.trts$salinity, levels=c("0","5","9","13"))
-```
-
-
-
-
-
-
-
