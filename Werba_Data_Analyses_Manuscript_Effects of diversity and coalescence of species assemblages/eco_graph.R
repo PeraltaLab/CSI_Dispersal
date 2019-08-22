@@ -58,12 +58,6 @@ g2 <- g1 +  #geom_ribbon(data = newdat,aes(ymin=lower, ymax=upper,
                        breaks = c(2,3),labels = c("Mixed Salt and Fresh","Salt Only")   ))
     
 
-#########################
-### Morgans Graph
-#########################
 
-
-ggplot(data = dat_gather_decomp3, aes(m_rich,Cmin)) + 
-  geom_point(aes(color = as.factor(Salinity), shape = as.factor(Dispersal)), size = 3) +
   
 

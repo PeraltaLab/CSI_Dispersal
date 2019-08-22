@@ -1,5 +1,5 @@
 ## ecosystem functions
-## linear model with richness, salinity and dispersal?? how is alpha div related to ecosystem function
+## linear model with richness, salinity and dispersal how is alpha div related to ecosystem function
 library(plyr)
 source("alpha_family.R")  #alpha dataframe includes all dates, tanks, zooplankton, richness
 #first read in ecosystem function data
