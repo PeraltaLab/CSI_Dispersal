@@ -4,7 +4,7 @@
 library(lme4)
 library(vegan)
 library(tidyverse)
-
+library(nlme)
 
 full_data <-read.csv("family_data.csv")
 
@@ -42,6 +42,13 @@ Rich_no_source<-glmer.nb(richness~
                            (1+Day|Rep),
                          data = no_source_all,family = quasipoisson(link = "log"))
 
+
+new_corr <- glmer.nb(richness~ 
+           Salinity_Measured*as.factor(Dispersal)+
+           Salinity_Measured*Day+
+           (1+Day|Rep),
+           data = no_source_all,family = quasipoisson(link = "log"),
+            correlation=corCAR1(form=~Day|Rep))
 
 Rich_no_source2<-glmer(richness~as.factor(Dispersal)*Day+
                          Salinity_Measured*Day+ as.factor(Dispersal)+
