@@ -32,3 +32,8 @@ source_dist <- vegdist(comm_source, method = "bray")
 source_pcoa <- cmdscale(source_dist, k=3, eig = TRUE, add = FALSE)
 (expvar1_s <- round(source_pcoa$eig[1] / sum(source_pcoa$eig), 3) * 100)  # 29.3
 (expvar2_s<- round(source_pcoa$eig[2] / sum(source_pcoa$eig), 3) * 100)  #9.7
+
+
+## run pcoa with all tanks together for supplement
+all <- 
+

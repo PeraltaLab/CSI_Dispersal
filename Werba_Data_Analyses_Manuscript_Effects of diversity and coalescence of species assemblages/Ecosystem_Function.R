@@ -1,5 +1,5 @@
 ## ecosystem functions
-## linear model with richness, salinity and dispersal?? how is alpha div related to ecosystem function
+## linear model with richness, salinity and dispersal how is alpha div related to ecosystem function
 library(plyr)
 source("alpha_family.R")  #alpha dataframe includes all dates, tanks, zooplankton, richness
 #first read in ecosystem function data
@@ -104,4 +104,21 @@ cmin_lm <-lm(log(Cmin)~(z_rich)+(m_rich)+Salinity_Measured +
 plot(resid(cmin_lm))
 qqnorm(resid(cmin_lm))
 qqline(resid(cmin_lm))
+
+
+## alternative post-hoc model
+cmin_2 <-lm(log(Cmin)~(z_rich)+(m_rich)+poly(Salinity_Measured,2) +
+               as.factor(Dispersal), 
+             data = dat_gather_decomp3)
+
+
+extractAIC(cmin_lm)
+
+extractAIC(cmin_2)
+
+
+plot(resid(cmin_2))
+qqnorm(resid(cmin_2))
+qqline(resid(cmin_2))
+
 

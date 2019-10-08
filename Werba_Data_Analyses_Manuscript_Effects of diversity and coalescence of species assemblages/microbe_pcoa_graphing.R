@@ -62,3 +62,8 @@ g2 <- g1 + geom_errorbar(aes(ymax= Axis2+sd2, ymin= Axis2-sd2)) +
                        labels = c("0", "13") ) + labs(shape = "Day") +
     xlab("PCoA 1 (29.3%)") + ylab("PCoA 2 (9.7%)")+ ylim(-0.5,0.5)+ xlim(-0.5,0.5))
 
+
+### all tanks together for supplement
+
+
+

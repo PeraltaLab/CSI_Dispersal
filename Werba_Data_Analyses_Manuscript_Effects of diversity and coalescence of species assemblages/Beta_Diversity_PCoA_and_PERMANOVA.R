@@ -50,6 +50,16 @@ no_zero <- dat[rowSums(dat[,-c(1:6)]) != 0, ]
 #run PERMANOVA
 adonis = adonis(no_zero[,-c(1:6)] ~ Day*Dispersal*Salinity_Measured, method = "bray",data=no_zero, perm=1000)
 
+## make pcoa with both source and non-sources
 
+#make community matrix
+all_comm <- all_3dates[,-c(1:6)]
 
+#make distance matrix
+all_dist <- vegdist(all_comm, method = "bray")
+
+#run PCoA
+all_pcoa <- cmdscale(all_dist, k=3, eig = TRUE, add = FALSE)
+(expvar1_all <- round(all_pcoa$eig[1] / sum(all_pcoa$eig), 3) * 100)  #36.1
+(expvar2_all <- round(all_pcoa$eig[2] / sum(all_pcoa$eig), 3) * 100)  #14.5
 

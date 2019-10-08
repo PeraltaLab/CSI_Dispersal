@@ -3,10 +3,6 @@ source("Graphing_Set_Up.R")
 
 
 
-
-
-
-
 ### Carbon min graph
 newdat <- expand.grid(
   Cmin = 0,
@@ -56,14 +52,32 @@ g2 <- g1 +  #geom_ribbon(data = newdat,aes(ymin=lower, ymax=upper,
     breaks = c(2,3),labels = c("Mixed Salt and Fresh","Salt Only")) +
     scale_shape_manual(name = "Dispersal", values = c(16,17), 
                        breaks = c(2,3),labels = c("Mixed Salt and Fresh","Salt Only")   ))
-    
-
-#########################
-### Morgans Graph
-#########################
-
-
-ggplot(data = dat_gather_decomp3, aes(m_rich,Cmin)) + 
-  geom_point(aes(color = as.factor(Salinity), shape = as.factor(Dispersal)), size = 3) +
   
+
+## make second graph for exploratory analysis
+newdat1 <- expand.grid(
+  Cmin = 0,
+  Dispersal = unique(dat_gather_decomp3$Dispersal),
+  Salinity_Measured = seq(0,15,0.05),
+  z_rich = mean(dat_gather_decomp3$z_rich),
+  m_rich = mean(dat_gather_decomp3$m_rich)
+ 
+)
+
+
+newdat1$Cmin<- exp(predict(cmin_2,newdata = newdat1))
+
+gg <- ggplot(data = dat_gather_decomp3, aes(Salinity_Measured ,Cmin)) + 
+geom_point(aes(color = as.factor(Salinity), shape = as.factor(Dispersal)), size = 3) +
+  geom_line(data = newdat1, aes(Salinity_Measured, Cmin, linetype= as.factor(Dispersal)))
+
+(gh <- gg+ ylim(0,250)+ xlab("Salinity (psu)") + ylab("Carbon Mineralization")+
+    scale_color_brewer(name = "Salinity Treatment", type = "seq", palette = "Dark2")+
+    scale_fill_brewer(name = "Dispersal", 
+                      type = "seq",
+                      palette = 'Dark2')+ 
+    scale_linetype_manual(name = "Dispersal",values = c(1,2),
+                          breaks = c(2,3),labels = c("Mixed Salt and Fresh","Salt Only")) +
+    scale_shape_manual(name = "Dispersal", values = c(16,17), 
+                       breaks = c(2,3),labels = c("Mixed Salt and Fresh","Salt Only")   ))
 

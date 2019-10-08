@@ -28,10 +28,21 @@ newdat$upper <- boot.CI[,2]
 
 #no_source_all <- no_source_all[no_source_all$Salinity_Treat == "5" , ]
 
-rich_g1 <- ggplot(data=no_source_all, aes(Salinity_Measured,richness)) + 
-  geom_jitter(aes(color=as.factor(Salinity_Treat), shape=as.factor(Dispersal)),size=3)
+write.csv(newdat, file = "zoo_rich_predict.csv")
 
-rich_g2 <- rich_g1 + geom_line(data = newdat, aes(Salinity_Measured, richness, 
+nn <- no_source_all %>% group_by(Day,Salinity_Treat,Dispersal) %>% 
+  summarize(mean_rich = mean(richness), sd_rich = sd(richness) )
+nn <- left_join(nn, no_source_all)
+
+newdat$mean_rich <- newdat$richness
+newdat$Salinity_Treat <- newdat$Salinity_Measured
+
+
+rich_g1 <- ggplot(data=nn, aes(Salinity_Treat,mean_rich))  +
+geom_point(aes(color=as.factor(Salinity_Treat), shape=as.factor(Dispersal)),size=3) + facet_wrap(~Day) + 
+  geom_errorbar(aes(ymin=mean_rich-sd_rich, ymax= mean_rich+sd_rich, width = 0.2))
+
+rich_g2 <- rich_g1 + geom_line(data = newdat, aes(Salinity_Measured, mean_rich, 
                                                   linetype=as.factor(Dispersal)),size=1) +
   geom_ribbon( data = newdat, aes(ymin=lower,ymax=upper, 
                                   fill = as.factor(Dispersal)), alpha = 0.5) 

@@ -39,4 +39,4 @@ Alexandra Stucy: MS Student, Department of Biology, East Carolina University
 
 [Dr. Mike McCoy](http://mikemccoylab.weebly.com/): Associate Professor, Department of Biology, East Carolina University. Principal Investigator of the [Mike McCoy Lab](http://mikemccoylab.weebly.com/)
 
-[Dr. Mario Muscarella](http://mmuscarella.github.io/): Postdoc in the [O'Dwyer Lab](https://publish.illinois.edu/odwyerlab/) at the University of Illinois at Urbana-Champaign
+[Dr. Mario Muscarella](http://mmuscarella.github.io/): Postdoc in the [del Giorgio Lab](http://www.gril.uqam.ca/del_Giorgio.html) at Université du Quebéc à Montréal

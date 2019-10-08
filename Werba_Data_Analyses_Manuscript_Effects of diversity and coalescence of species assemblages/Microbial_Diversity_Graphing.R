@@ -24,16 +24,27 @@ boot.CI <- t(apply(new_bb$t,2,quantile,c(0.025,0.975),na.rm=TRUE))
 newdat$lower <- boot.CI[,1]
 newdat$upper <- boot.CI[,2]
 
-rich_g1 <- ggplot(data=div, aes(Salinity_real,richness)) + 
-  geom_jitter(aes(color=as.factor(Salinity), shape=as.factor(Dispersal)),size=3)
 
-rich_g2 <- rich_g1 + geom_line(data = newdat, aes(Salinity_real, richness,
+div1 <- div %>% group_by(Date2,Salinity,Dispersal) %>% 
+  summarize(mean_rich = mean(richness), sd_rich = sd(richness) )
+div1 <- left_join(div1, div)
+
+newdat$mean_rich <- newdat$richness
+newdat$Salinity <- newdat$Salinity_real
+write.csv(newdat, file = "bacterial_rich_predict.csv")
+
+rich_g1 <- ggplot(data=div1, aes(Salinity,mean_rich)) + 
+  geom_point(aes(color=as.factor(Salinity), shape=as.factor(Dispersal)),size=3) + 
+  geom_errorbar(aes(ymin=mean_rich-sd_rich, ymax = mean_rich+sd_rich))+
+  facet_wrap(~(as.factor(Date2)),ncol=2,nrow = 3)
+
+rich_g2 <- rich_g1 + geom_line(data = newdat, aes(Salinity, richness,
                                                   linetype=as.factor(Dispersal)),size=1)+ 
   geom_ribbon(data = newdat, aes(ymin=lower,ymax=upper, 
                                   fill = as.factor(Dispersal)), alpha = 0.5) 
 
 
-rich_g3 <- rich_g2 + facet_wrap(~(as.factor(Date2)),ncol=2,nrow = 3) + 
+rich_g3 <- rich_g2  + 
   scale_color_brewer(type = "seq",palette = "Dark2")+
     ylab("Observed Microbial Richness") + xlab("Salinity (psu)") +
     scale_shape_manual(name = "Dispersal",values = c(16,17), 
