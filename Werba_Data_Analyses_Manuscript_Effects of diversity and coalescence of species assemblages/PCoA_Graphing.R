@@ -58,7 +58,7 @@ g2 <- g1 + geom_errorbar(aes(ymax= Axis2+sd2, ymin= Axis2-sd2)) +
 
 g3 <- g2 + facet_wrap(~date2, ncol = 1) 
 
-(g4 <- g3 +  scale_shape_manual(name = "Dispersal", values = c(16,17),breaks = c(2,3),labels = c("Mixed Salt and Fresh","Salt Only")) + 
+(g4 <- g3 +  scale_shape_manual(name = "Mixing Treatment", values = c(16,17),breaks = c(2,3),labels = c("Mixed Salt and Fresh","Salt Only")) + 
     scale_color_brewer(type = "seq",palette = "Dark2" ) +
     xlab("PCoA 1 (34.3%)") + ylab("PCoA 2 (16.8%)") + ylim(-0.7,0.7)+xlim(-0.7,0.7))
 
@@ -87,7 +87,7 @@ g1 <- ggplot(data= cent1.gs, aes(Axis1, Axis2)) +
 
 g2 <- g1 + geom_errorbar(aes(ymax= Axis2+sd2, ymin= Axis2-sd2)) + 
   geom_errorbarh(aes(xmax=Axis1+sd1, xmin=Axis1-sd1))+ scale_color_brewer(type = "seq",palette = "Dark2")+
-  labs(shape="Dispersal") + ylim(-0.6,0.6)+ xlim(-0.6,0.6)+
+  labs(shape="Mixing treatment") + ylim(-0.6,0.6)+ xlim(-0.6,0.6)+
   scale_shape_manual(values=c(17, 15, 18,19), labels = c("Source","Control","Mixed Salt and Fresh","Salt Only"))
 g3 <- g2 + facet_wrap(~date2, ncol = 1) 
 

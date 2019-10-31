@@ -1,4 +1,4 @@
-source("Ecosystem_Function.R")
+source("Ecosystem_Function.R")  
 source("Graphing_Set_Up.R")
 
 
@@ -45,12 +45,12 @@ g2 <- g1 +  #geom_ribbon(data = newdat,aes(ymin=lower, ymax=upper,
 
 (g4 <- g2 + xlab("Observed Microbial Richness") + ylab("Carbon Mineralization") +
     scale_color_brewer(name = "Salinity Treatment", type = "seq", palette = "Dark2")+
-    scale_fill_brewer(name = "Dispersal", 
+    scale_fill_brewer(name = "Mixing Treatment", 
                       type = "seq",
                       palette = 'Dark2')+ 
-    scale_linetype_manual(name = "Dispersal",values = c(1,2),
+    scale_linetype_manual(name = "Mixing Treatment",values = c(1,2),
     breaks = c(2,3),labels = c("Mixed Salt and Fresh","Salt Only")) +
-    scale_shape_manual(name = "Dispersal", values = c(16,17), 
+    scale_shape_manual(name = "Mixing Treatment", values = c(16,17), 
                        breaks = c(2,3),labels = c("Mixed Salt and Fresh","Salt Only")   ))
   
 
@@ -73,11 +73,11 @@ geom_point(aes(color = as.factor(Salinity), shape = as.factor(Dispersal)), size 
 
 (gh <- gg+ ylim(0,250)+ xlab("Salinity (psu)") + ylab("Carbon Mineralization")+
     scale_color_brewer(name = "Salinity Treatment", type = "seq", palette = "Dark2")+
-    scale_fill_brewer(name = "Dispersal", 
+    scale_fill_brewer(name = "Mixing Treatment", 
                       type = "seq",
                       palette = 'Dark2')+ 
-    scale_linetype_manual(name = "Dispersal",values = c(1,2),
+    scale_linetype_manual(name = "Mixing Treatment",values = c(1,2),
                           breaks = c(2,3),labels = c("Mixed Salt and Fresh","Salt Only")) +
-    scale_shape_manual(name = "Dispersal", values = c(16,17), 
+    scale_shape_manual(name = "Mixing Treatment", values = c(16,17), 
                        breaks = c(2,3),labels = c("Mixed Salt and Fresh","Salt Only")   ))
 

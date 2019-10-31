@@ -31,7 +31,8 @@ div1 <- left_join(div1, div)
 
 newdat$mean_rich <- newdat$richness
 newdat$Salinity <- newdat$Salinity_real
-write.csv(newdat, file = "bacterial_rich_predict.csv")
+#write.csv(newdat, file = "bacterial_rich_predict.csv")
+newdat <- read.csv("bacterial_rich_predict.csv")
 
 rich_g1 <- ggplot(data=div1, aes(Salinity,mean_rich)) + 
   geom_point(aes(color=as.factor(Salinity), shape=as.factor(Dispersal)),size=3) + 
@@ -47,12 +48,12 @@ rich_g2 <- rich_g1 + geom_line(data = newdat, aes(Salinity, richness,
 rich_g3 <- rich_g2  + 
   scale_color_brewer(type = "seq",palette = "Dark2")+
     ylab("Observed Microbial Richness") + xlab("Salinity (psu)") +
-    scale_shape_manual(name = "Dispersal",values = c(16,17), 
+    scale_shape_manual(name = "Mixing Treatment",values = c(16,17), 
                        breaks = c(2,3),labels = c("Mixed Salt and Fresh","Salt Only"))+
     labs(color = "Salinity Treatment") +
-    scale_linetype_manual(name = "Dispersal Prediction Lines",values = c(1,2), 
+    scale_linetype_manual(name = "Mixing Treatment Prediction Lines",values = c(1,2), 
                           breaks = c(2,3),labels = c("Mixed Salt and Fresh","Salt Only")) +
-  scale_fill_manual(name = "Dispersal Prediction Lines",
+  scale_fill_manual(name = "Mixing Treatment Prediction Lines",
                     values = c("lightsteelblue4","lightsteelblue1"), 
                     breaks = c(2,3),labels = c("Mixed Salt and Fresh","Salt Only"))
 
@@ -77,9 +78,9 @@ shan_g2 <- shan_g1 + geom_line(data = newdat, aes(Salinity_real, shannon, linety
 
 shan_g3 <- shan_g2 + facet_wrap(~(as.factor(Date2)),ncol=2,nrow = 3) +scale_color_brewer(type = "seq",palette = "Dark2")+
     ylab("Shannon Diversity (H')") + xlab("Salinity") +
-    scale_shape_manual(name = "Dispersal",values = c(16,17), breaks = c(2,3),labels = c("Mixed Salt and Fresh","Salt Only"))+
+    scale_shape_manual(name = "Mixing Treatment",values = c(16,17), breaks = c(2,3),labels = c("Mixed Salt and Fresh","Salt Only"))+
     labs(color = "Salinity Treatment") +
-    scale_linetype_manual(name = "Dispersal Prediction Lines",values = c(1,2), breaks = c(2,3),labels = c("Mixed Salt and Fresh","Salt Only"))
+    scale_linetype_manual(name = "Mixing Treatment Prediction Lines",values = c(1,2), breaks = c(2,3),labels = c("Mixed Salt and Fresh","Salt Only"))
 
 shan_g3 + theme(legend.position = c(0.75,0.2), 
                 legend.direction = "vertical", legend.box = "vertical", legend.background = element_blank())
@@ -101,9 +102,9 @@ even_g2 <- even_g1 + geom_line(data = newdat, aes(Salinity_real, J, linetype=as.
 
 even_g3 <- even_g2 + facet_wrap(~(as.factor(Date2)),ncol=2,nrow = 3) +scale_color_brewer(type = "seq",palette = "Dark2")+
     ylab("Pielou's Evenness") + xlab("Salinity") +
-    scale_shape_manual(name = "Dispersal",values = c(16,17), breaks = c(2,3),labels = c("Mixed Salt and Fresh","Salt Only"))+
+    scale_shape_manual(name = "Mixing Treatment",values = c(16,17), breaks = c(2,3),labels = c("Mixed Salt and Fresh","Salt Only"))+
     labs(color = "Salinity Treatment") +
-    scale_linetype_manual(name = "Dispersal Prediction Lines",values = c(1,2),
+    scale_linetype_manual(name = "Mixing Treatment Prediction Lines",values = c(1,2),
                           breaks = c(2,3),labels = c("Mixed Salt and Fresh","Salt Only"))
 
 (even_g3 + theme(legend.position = c(0.75,0.2), legend.direction = "vertical", 
