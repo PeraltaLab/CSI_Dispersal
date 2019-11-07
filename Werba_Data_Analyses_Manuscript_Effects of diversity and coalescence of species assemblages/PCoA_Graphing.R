@@ -19,6 +19,10 @@ cent1.gs <- data.frame(cent1.gs)
 cent1.gs$Salinity <- factor(as.character(cent1.gs$Salinity),levels= c("0","13"))
 cent1.gs$date2 <- rep(c(0,18,45), each =2)
 
+cent1.gs <- data.frame(cent1.gs)
+
+
+
 #now to graph
 
 g1 <- ggplot(data= cent1.gs, aes(Axis1, Axis2)) +
@@ -48,6 +52,19 @@ cent1.gs <- data.frame(cent1.gs)
 cent1.gs$Salinity <- factor(as.character(cent1.gs$Salinity),levels= c("0","5","9","13"))
 cent1.gs$date2 <- rep(c(0,18,45), each =4)
 
+cent1.gs$date_lab <- "NA"
+for (i in 1:nrow(cent1.gs)){
+  if (cent1.gs$date2[i] == 0) {
+    cent1.gs$date_lab[i] <- "a. 0"
+  } else if 
+  (cent1.gs$date2[i]==18) {
+    cent1.gs$date_lab[i] <- "b. 18"
+  } else if
+  (cent1.gs$date2[i] == 45) {
+    cent1.gs$date_lab[i] <- "c. 45"
+  }
+}
+
 #now to graph
 
 g1 <- ggplot(data= cent1.gs, aes(Axis1, Axis2)) +
@@ -56,7 +73,7 @@ g1 <- ggplot(data= cent1.gs, aes(Axis1, Axis2)) +
 g2 <- g1 + geom_errorbar(aes(ymax= Axis2+sd2, ymin= Axis2-sd2)) + 
   geom_errorbarh(aes(xmax=Axis1+sd1, xmin=Axis1-sd1))
 
-g3 <- g2 + facet_wrap(~date2, ncol = 1) 
+g3 <- g2 + facet_wrap(~date_lab, ncol = 1) 
 
 (g4 <- g3 +  scale_shape_manual(name = "Mixing Treatment", values = c(16,17),breaks = c(2,3),labels = c("Mixed Salt and Fresh","Salt Only")) + 
     scale_color_brewer(type = "seq",palette = "Dark2" ) +

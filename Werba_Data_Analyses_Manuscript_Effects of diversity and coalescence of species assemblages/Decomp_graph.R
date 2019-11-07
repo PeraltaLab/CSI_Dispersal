@@ -55,7 +55,7 @@ easyPredCI <- function(model,newdata,alpha=0.05) {
 #ggplot(newdat_check, aes(m_rich, mean_change)) + geom_point(aes(colour = Leaf_Type))
   
 
-leaf_type_names <- c("diff_maple" ="Maple", "diff_phrag" = "Phragmites","diff_spar" = "Spartina")
+leaf_type_names <- c("diff_maple" ="a. Maple", "diff_phrag" = "b. Phragmites","diff_spar" = "c. Spartina")
 
 
 ## change name of salinity in newdat for legend

@@ -29,15 +29,49 @@ div1 <- div %>% group_by(Date2,Salinity,Dispersal) %>%
   summarize(mean_rich = mean(richness), sd_rich = sd(richness) )
 div1 <- left_join(div1, div)
 
-newdat$mean_rich <- newdat$richness
-newdat$Salinity <- newdat$Salinity_real
+div1$date_lab <- "NA"
+
+
+
+
 #write.csv(newdat, file = "bacterial_rich_predict.csv")
 newdat <- read.csv("bacterial_rich_predict.csv")
+newdat$mean_rich <- newdat$richness
+newdat$Salinity <- newdat$Salinity_real
+
+
+for (i in 1:nrow(div1)){
+  if (div1$Date2[i] == 0) {
+    div1$date_lab[i] <- "a. 0"
+  } else if 
+  (div1$Date2[i]==18) {
+    div1$date_lab[i] <- "b. 18"
+  } else if
+  (div1$Date2[i] == 45) {
+    div1$date_lab[i] <- "c. 45"
+  }
+}
+
+newdat$date_lab <- "NA"
+for (i in 1:nrow(newdat)){
+  if (newdat$Date2[i] == 0) {
+    newdat$date_lab[i] <- "a. 0"
+  } else if 
+  (newdat$Date2[i]==18) {
+    newdat$date_lab[i] <- "b. 18"
+  } else if
+  (newdat$Date2[i] == 45) {
+    newdat$date_lab[i] <- "c. 45"
+  }
+}
+
+
+
 
 rich_g1 <- ggplot(data=div1, aes(Salinity,mean_rich)) + 
   geom_point(aes(color=as.factor(Salinity), shape=as.factor(Dispersal)),size=3) + 
   geom_errorbar(aes(ymin=mean_rich-sd_rich, ymax = mean_rich+sd_rich))+
-  facet_wrap(~(as.factor(Date2)),ncol=2,nrow = 3)
+  facet_wrap(~(date_lab),ncol=2,nrow = 3)
 
 rich_g2 <- rich_g1 + geom_line(data = newdat, aes(Salinity, richness,
                                                   linetype=as.factor(Dispersal)),size=1)+ 
