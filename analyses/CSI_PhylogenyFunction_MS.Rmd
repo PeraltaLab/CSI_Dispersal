@@ -23,13 +23,12 @@ source("../bin/MothurTools.R")
 #Can't figure out how to load phylofactor
 if (!requireNamespace("BiocManager", quietly = TRUE))
     install.packages("BiocManager")
-BiocManager::install()
+#BiocManager::install()
 
-source("https://bioconductor.org/biocLite.R")
-biocLite("ggtree")
-biocLite("Biostrings")
-install.packages('devtools')
-devtools::install_github('reptalex/phylofactor')
+#BiocManager::install("ggtree")
+#BiocManager::install("Biostrings")
+#install.packages('devtools')
+#devtools::install_github('reptalex/phylofactor')
 
 # Load Req'd Packages
 library("vegan"); library("ecodist"); library("Hmisc")
@@ -39,6 +38,11 @@ library("png"); library("grid"); library("ggplot2")
 library("ape"); library("picante"); library("ggtree"); 
 library("cowplot"); library("ggpubr"); library("devtools")
 library("phylofactor")
+
+source("../bin/R_rainclouds.R")
+source("../bin/summarySE.R")
+library(ggpubr)
+library(cowplot)
 
 # Set Std Err Functions
 se <- function(x, ...) {
@@ -323,14 +327,13 @@ ggsave("../figures/Phylo_Ordination.png", plot=last_plot(), device=NULL, path=NU
 # Fig 1B: PD Rain Clouds
 ```{r rain clouds, include=FALSE}
 #Rainclouds for repeated measures
-source("../bin/R_rainclouds.R")
-source("../bin/summarySE.R")
-library(ggpubr)
-library(cowplot)
+
 #change Date2 in original df to 1,2,3 instead of 0,18,45
 time.Date2 <- as.numeric(csi.phylo.ns$Date2)
 csi.phylo.ns.t <- cbind(csi.phylo.ns,time.Date2)
-csi.phylo.ns.t$time.Date2 <- recode(csi.phylo.ns.t$time.Date2,"0=1;45=3;18=2")
+csi.phylo.ns.t$time.Date2 <- recode_factor(csi.phylo.ns.t$time.Date2,
+                                           '0'="1", '18'="2", '45'="3")
+levels(csi.phylo.ns.t$time.Date2)
 csi.phylo.ns.t
 
 group <- as.factor(csi.phylo.ns$Salinity)
@@ -350,11 +353,8 @@ ggsave("../figures/Figure_PD_rainclouds.png", plot=last_plot(), device=NULL, pat
 
 
 # Fig 2A: PhyloTree with Indicator Taxa
-# Phylogenetic Indicator Figure Analysis (Fig 2A)
 ```{r}
 str(tree)
-
-# tree <- midpoint.root(tree)
 
 # otu_final, design_final
 design.45 <- design_final[which(design_final$Date2 == "45"), ]
@@ -372,7 +372,6 @@ otus.45 <- otus.45[, -c(which(colnames(otus.45) %in%
 otus.45 <- otus.45[, -c(which(colnames(otus.45) %in%
                                 csi.tax$OTU[csi.tax$Class %in%
                                 c(low.cla)]))]
-
 
 otus.45 <- otus.45[, -c(which(colnames(otus.45) %in% 
                                 csi.tax$OTU[csi.tax$Phylum %in%
@@ -427,7 +426,7 @@ table(phylum2)
 
 groupInfo <- split(tree.2$tip.label, phylum2)
 Phy.tree <- groupOTU(tree.2, groupInfo, group_name = "phylum2")
-levels(attributes(Phy.tree)$phylum2) <- c("Root", names(groupInfo))
+levels(attributes(Phy.tree)$phylum2) <- c(names(groupInfo))
 
 p <- ggtree(Phy.tree, layout="rectangular") + theme(legend.position="top", 
         legend.key = element_rect(colour = NA)) + 
@@ -505,20 +504,24 @@ ggsave("../figures/indicator.tree.png", width = 10, height = 8, units = "in")
 ```
 
 
-
 # Fig 2B: PhyloTree with PhyloFactor
-# PhyloFactor (Fig 2B)
 ```{r}
 # Organize Data
 
 # OTU Table w/ Only "Common Taxa"
 OTUtable <- t(otu_final.ns)
 OTUtable[1:5, 1:5]
-OTUtable <- OTUtable[which(rowSums(OTUtable) > 10), ]
 for (i in 1:dim(OTUtable)[2]) {
   OTUtable[, i] <- OTUtable[, i]/sum(OTUtable[, i])
 }
-OTUtable[which(OTUtable ==0)] <- 0.0000001
+dim(OTUtable)
+colSums(OTUtable)
+OTUtable <- OTUtable[which(colSums(otu_final.ns) > 200), ]
+dim(OTUtable)
+colSums(OTUtable)
+OTUtable[which(OTUtable == 0)] <- 0.0000001
+dim(OTUtable)
+colSums(OTUtable)
 
 # Independent Variables: Salinity
 all.equal(colnames(OTUtable), rownames(csi.full.ns))
@@ -528,33 +531,41 @@ levels(trt) <- c("0","5","9","13")
 # Phylogenetic Tree
 tree <- ape::drop.tip(tree.2,setdiff(tree.2$tip.label,rownames(OTUtable)))
 OTUtable <- OTUtable[tree$tip.label, ]
+dim(OTUtable)
+colSums(OTUtable)
+
 
 # Taxonomy
 csi.tax.common <- csi.tax[which(csi.tax$OTU %in% rownames(OTUtable)), ]
 taxonomy <- tax.merge(csi.tax.common)
 
 
-# PhyloFactorization
-PF <- PhyloFactor(OTUtable, tree, trt, stop.fcn = "KS", stop.early = T, nfactors = 5)
-class(PF)
-
+# PhyloFactorization 4 Varaibles
+PF <- PhyloFactor(OTUtable, tree, trt, stop.fcn = "KS", 
+                  stop.early = T, nfactors = 10)
+PF$factors
 
 
 # Phylofactoraization with Saline vs Non-Saline
-trt2 <- trt
-PF <- PhyloFactor(OTUtable, tree, trt, nfactors=10)
-class(PF)
+trt2 <- as.factor(csi.full.ns$Salinity)
+levels(trt2) <- c("0","1","1","1")
+PF <- PhyloFactor(OTUtable, tree, trt2, nfactors=2)
+s <- pf.summary(PF,taxonomy,factor=1) 
+s$model
+td <- pf.tidy(s) 
+
 
 # Summary
 # A tidier summary tool
 s <- pf.summary(PF,taxonomy,factor=1) 
+s$model
 td <- pf.tidy(s)                                 
 td$`group1, Monophyletic`                          
 # Simplified group IDs - the unique shortest unique prefixes separating the groups
 td$`group2, Monophyletic`
 
 ## Plotting with summary tools ##
-par(mfrow=c(1,1),mar=mar)
+par(mfrow=c(1,1))
 plot(as.numeric(trt),td$`Observed Ratio of group1/group2 geometric means`,
        ylab='Average ratio of Group1/Group2',pch=18,cex=2)
 lines(td$`Predicted ratio of group1/group2`,lwd=2)
@@ -575,6 +586,10 @@ td$`group2, Paraphyletic`
 
 # Fig 3: Phylo Function
 ```{r}
+
+### Mario Work Here####
+
+
 #Cmin General
 
 #Mass Loss for Each
@@ -582,9 +597,63 @@ td$`group2, Paraphyletic`
 
 
 # Goal: Two panel plot with phylo indicators and phylofactor indicators vs mass loss or cmin. 
+# OTU Table
+min(rowSums(otu_final.ns))
+otu.rarefy <- rrarefy(otu_final.ns, 20000)
+dim(otu.rarefy)
+OTUtable <- t(otu.rarefy)
+OTUtable[1:5, 1:5]
+OTUtable.rel <- OTUtable
+for (i in 1:dim(OTUtable.rel)[2]) {
+  OTUtable.rel[, i] <- OTUtable.rel[, i]/sum(OTUtable.rel[, i])
+}
+dim(OTUtable.rel)
+colSums(OTUtable.rel)
 
+# Indicators
+ind1 <- sal.indicators$OTU[which(sal.indicators$Cluster == 2)]
+ind2 <- row.names(sal.dat)[which(sal.dat$`>0` == 10)]
+setdiff(ind1, ind2)
 
+ind2.tab <- OTUtable[which(row.names(OTUtable) %in% ind2), ]
+ind2.rel <- OTUtable.rel[which(row.names(OTUtable.rel) %in% ind2), ]
+Indicator.rel <- colSums(ind2.rel)
+Indicator.S <- colSums((ind2.tab >= 1))
+Indicator.H <- diversity(t(ind2.tab), "shannon")
 
+all.equal(names(Indicator.rel), row.names(csi_otu.div))
+
+csi_otu.div$I_rel <- Indicator.rel
+csi_otu.div$I_S <- Indicator.S
+csi_otu.div$I_H <- Indicator.H
+
+csi_otu.div.day45 <- subset(csi_otu.div, Date2 == "45")
+
+p <- ggplot(csi_otu.div.day45, aes(x=I_H, y=Cmin, 
+                                   color = as.factor(Dispersal))) +
+  scale_color_manual(name="Dispersal Treatment", 
+                     values=c("black","gray"), 
+                     labels = c("fresh+salt (2)", "salt only (3)")) # +
+  # stat_summary(fun.data = "mean_cl_boot", size=1) 
+p1 = p + geom_smooth(method="lm", se=FALSE) + geom_point(size=4) 
+p1 + theme_bw() + theme(panel.grid.major = element_blank(), 
+                        panel.grid.minor = element_blank(), 
+                        axis.line = element_line(colour = "black")) + 
+  theme(axis.title=element_text(vjust=1,size=16,face="bold"), 
+        axis.text = element_text(size=16), 
+        axis.text.x = element_text(vjust=0.65, hjust=0.5, size=16), 
+        panel.border = element_rect(colour = "black",size=1)) + 
+  theme(axis.ticks.length=unit(0.3,"cm")) + 
+  labs(x = "Shannon Diversity Index (H')", 
+       y = (expression(paste("C Mineralization (ng CO"[2],
+                             " mL"^-{1},"day"^-{1},")")))) + 
+  theme(strip.text.x = element_text(size=16, face="bold"), 
+        strip.text.y = element_text(size=16, face="bold"), 
+        strip.background = element_rect(colour="black", 
+                                        fill="white", size=1))
+
+ggsave("../figures/Cmin_shannon.png", plot=last_plot(), device=NULL, 
+       path=NULL, scale=1, width=NA, height=NA, dpi=300, limitsize=TRUE)
 
 ```
 
