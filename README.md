@@ -8,7 +8,7 @@ Project (1) Werba, J.A., A. Stucy, A.L. Peralta, and M.W. McCoy (2020) Effects o
 
 Project (2) Stucy, A., M.E. Muscarella, J.A. Werba, A.L. Peralta, and M.W. McCoy (In preparation) Bacterial phylogeny-function relationships in historically freshwater ecosystems are particularly vulnerable to salinity transitions
 
-Raw sequences can be found at NCBI SRA BioProject ID PRJNA615001.
+Raw sequence files can be found at NCBI SRA BioProject ID PRJNA615001.
 
 ## We address the following questions
 
