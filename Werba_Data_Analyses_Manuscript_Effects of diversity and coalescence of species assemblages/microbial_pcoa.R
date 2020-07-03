@@ -33,7 +33,35 @@ source_pcoa <- cmdscale(source_dist, k=3, eig = TRUE, add = FALSE)
 (expvar1_s <- round(source_pcoa$eig[1] / sum(source_pcoa$eig), 3) * 100)  # 29.3
 (expvar2_s<- round(source_pcoa$eig[2] / sum(source_pcoa$eig), 3) * 100)  #9.7
 
+## make dataframe with both source and non-source and run pcoa
+names(csi.relabun.full2)[names(csi.relabun.full2) == 'Number'] <- 'Treatment'
+csi.relabun.full2$Dispersal <- as.numeric(csi.relabun.full2$Dispersal)  #source 0 is 1 source13 is 2
 
-## run pcoa with all tanks together for supplement
-all <- 
+for(i in 1:nrow(csi.relabun.full2)){
+  if (csi.relabun.full2$Dispersal[i] == 1) {
+    csi.relabun.full2$Dispersal[i] <- 0
+  } else
+    if (csi.relabun.full2$Dispersal[i] == 2) {
+      csi.relabun.full2$Dispersal[i] <- 1
+    }
+}  
+  
+dat <- full_join(csi.full.ns,csi.relabun.full2)
+
+
+comm_all <- dat %>% dplyr::select(contains("Otu"))
+
+all_dist <- vegdist(comm_all, method = "bray")
+all_pcoa <- cmdscale(all_dist, k=3, eig = TRUE, add = FALSE)
+(expvar1_s <- round(all_pcoa$eig[1] / sum(all_pcoa$eig), 3) * 100)  # 19.3
+(expvar2_s<- round(all_pcoa$eig[2] / sum(all_pcoa$eig), 3) * 100)  #6.9
+
+
+## CCA
+
+con <- cca(formula = csi_comm_no_source ~Salinity_real+Maple_dmass + Spartina_dmass +Phrag_dmass + Cmin, data =csi.full.ns )
+
+plot(con)
+
+
 

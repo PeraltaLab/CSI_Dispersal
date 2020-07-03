@@ -55,7 +55,7 @@ easyPredCI <- function(model,newdata,alpha=0.05) {
 #ggplot(newdat_check, aes(m_rich, mean_change)) + geom_point(aes(colour = Leaf_Type))
   
 
-leaf_type_names <- c("diff_maple" ="Maple", "diff_phrag" = "Phragmites","diff_spar" = "Spartina")
+leaf_type_names <- c("diff_maple" ="a. Maple", "diff_phrag" = "b. Phragmites","diff_spar" = "c. Spartina")
 
 
 ## change name of salinity in newdat for legend
@@ -74,9 +74,9 @@ dec_g1 <- dec_g +
 (dec_g3 <- dec_g1 + facet_grid(Leaf_Type ~ ., labeller = as_labeller(leaf_type_names)) + 
     scale_color_brewer(type = "seq",palette = "Dark2") +
     ylab("Proportion Remaining in Dry Weight (g)") + xlab("Observed Microbial Richness") + labs(color = "Salinity")+
-    scale_linetype_manual(name = "Dispersal",values = c(1,2),
+    scale_linetype_manual(name = "Mixing Treatment",values = c(1,2),
                           breaks = c(2,3),labels = c("Mixed Salt and Fresh","Salt Only")) +
-    scale_shape_manual(name = "Dispersal",values = c(16,17), 
+    scale_shape_manual(name = "Mixing Treatment",values = c(16,17), 
                        breaks = c(2,3),labels = c("Mixed Salt and Fresh","Salt Only"))+
     labs(color = "Salinity Treatment")
   
