@@ -33,11 +33,11 @@ if (!requireNamespace("BiocManager", quietly = TRUE))
 # Load Req'd Packages
 library("vegan"); library("ecodist"); library("Hmisc")
 library("dplyr"); library("reshape2"); library("labdsv")
-library("nlme"); library("MASS"); library("ade4")
+library("nlme"); library("MASS"); library("ade4"); library("phytools")
 library("png"); library("grid"); library("ggplot2")
 library("ape"); library("picante"); library("ggtree"); 
 library("cowplot"); library("ggpubr"); library("devtools")
-library("phylofactor")
+#library("phylofactor")
 
 source("../bin/R_rainclouds.R")
 source("../bin/summarySE.R")
@@ -51,6 +51,17 @@ sd(x, na.rm = TRUE)/sqrt(length(na.omit(x)))
 
 ci <- function(x, ...) {
 1.96 * sd(x, na.rm = TRUE)
+}
+
+ind.tab <- function(ind = "", pval = 0.05){
+  inds <- which(ind$pval <= 0.05)
+  indicators <- as.data.frame(matrix(NA, nrow = length(inds), ncol = 4))
+  colnames(indicators) <- c("OTU", "Cluster", "IndVal", "Prob")
+  indicators$OTU <- names(inds)
+  indicators$Cluster <- ind$maxcls[inds]
+  indicators$IndVal <- ind$indcls[inds]
+  indicators$Prob <- ind$pval[inds]
+  return(indicators)
 }
 ```
 
@@ -94,37 +105,39 @@ csi.tax$Phylum[which(csi.tax$Phylum == "Cyanobacteria/Chloroplast")] <- "Cyanoba
 tree <- read.tree("../mothur/CSI.bac.rename.tree")
 
 # Import UniFrac Distnce Matrix
-UniFrac.raw <- read.delim("../mothur/CSI.bac.tree1.weighted.phylip.dist", skip = 1, header = F, row.names = 1)
+UniFrac.raw <- read.delim("../mothur/CSI.bac.tree1.weighted.phylip.dist", 
+                          skip = 1, header = F, row.names = 1)
 row.names(UniFrac.raw) <- gsub("    ", "", row.names(UniFrac.raw))
 colnames(UniFrac.raw) <- rownames(UniFrac.raw)
 ```
 
-# Manipulate data files for statistical analyses and graphing
+## Manipulate data files for statistical analyses and graphing
 ```{r Bacterial Community Composition, include=FALSE}
 # remove extra site (no mock community)
 
-# design only with source tanks
+# design only with source tanks ( "CSI041" - not in OTU table )
 missing <- setdiff(rownames(design.full), rownames(csi_otu))
 design.full <- design.full[-(which(rownames(design.full) == missing)), ]
+design.ns <- design.ns[-(which(rownames(design.ns) == missing)), ]
+design.env.full <- design.env.full[-(which(rownames(design.env.full) == missing)), ]
 dim(design.full)
 
 # OTU table - remove otu's w/ < 2 occurrences across all sites
-otu_removal <- csi_otu[, which(colSums(csi_otu) >= 2)]
+otu_removal <- csi_otu[, -c(which(colSums(csi_otu) < 2))]
 dim(otu_removal)
 
+# Identify low read sites (will remove)
 aa <- (rowSums(otu_removal))
-aa # CSI033-7180 reads CSI101=75 reads - removed
+aa[which(aa <= 13000)] # CSI033-7180 reads CSI101=85 reads - removed
 
-# OTU table - removed low abundance samples
-csi_low_remov <- otu_removal[which(rowSums(otu_removal) >= 13000), ]
-dim(csi_low_remov)
-
-# OTU table - odd sites in bacterial composition data and remove in design file
+# Odd sites 
 odd.sites <- c("CSI033","CSI101", "CSI130") #IUbarcode #CSI130 is mock community
 
-otu_final <- csi_low_remov[setdiff(rownames(csi_low_remov), odd.sites), ]
+# Remove odd sitse from OTU table and design files
+otu_final <- otu_removal[setdiff(rownames(otu_removal), odd.sites), ]
 design_final <- design.full[setdiff(rownames(design.full), odd.sites), ]
-design.ns <- design.ns[setdiff(rownames(design.ns), odd.sites), ]
+design.ns_final <- design.ns[setdiff(rownames(design.ns), odd.sites), ]
+design.env.full_final <- design.env.full[setdiff(rownames(design.env.full), odd.sites), ]
 
 all.equal(rownames(design_final), rownames(otu_final))
 
@@ -135,49 +148,57 @@ csi_relabun <- otu_final
 for (i in 1:dim(otu_final)[1]) {
   csi_relabun[i, ] <- otu_final[i, ]/sum(otu_final[i,])
 }
+```
 
+## Remove Source Tanks
+```{r}
 # REMOVE source tanks from otu file
 # REMOVE source tanks Number 1,2,3 from otu_final and use design.ns (manually removed source tanks)
-temp <- rownames(design_final[which(design_final$Number %in% c(1,2,3)), ])
-otu_final.ns <- otu_final[-(which(rownames(otu_final) %in% temp)), ]
-otu_final.ns <- otu_final.ns[, which(colSums(otu_final.ns) > 0)]
+tanks.src <- rownames(design_final[which(design_final$Number %in% c(1,2,3)), ])
+otu_final.ns <- otu_final[-(which(rownames(otu_final) %in% tanks.src)), ]
+otu_final.ns <- otu_final.ns[, -c(which(colSums(otu_final.ns) <= 0))]
 dim(otu_final.ns)
-dim(design.ns)
-
+dim(design.ns_final)
+ 
 #drop missing data
-missing <- setdiff(rownames(design.ns), rownames(otu_final.ns))
-design.ns2 <- design.ns[-(which(rownames(design.ns) == missing)), ]
-dim(design.ns2)
+missing <- setdiff(rownames(design.ns_final), rownames(otu_final.ns))
+all.equal(row.names(design.ns_final), rownames(otu_final.ns))
 
 # Drop levels of factors that are no longer in data set 
-design.ns.final <- droplevels(design.ns2)
-
-all.equal(rownames(design.ns2), rownames(otu_final.ns))
+design.ns.final <- droplevels(design.ns_final)
+all.equal(rownames(design.ns.final), rownames(otu_final.ns))
 
 # create presence/absence and relative abundance matrices
 csi_pres_abs.ns <- (otu_final.ns > 0) * 1
+
 csi_relabun.ns <- otu_final.ns
 for (i in 1:dim(otu_final.ns)[1]) {
   csi_relabun.ns[i, ] <- otu_final.ns[i, ]/sum(otu_final.ns[i, ])
 }
-# bind design and bact files NO Source
-csi.full.ns <- cbind(design.ns.final,csi_relabun.ns)
+```
 
-csi.ns <- cbind(design.ns.final,otu_final.ns)
+## Organize Data 
+```{r}
+# bind design and bact files NO Source
+csi.rel.ns <- cbind(design.ns.final,csi_relabun.ns) # rel abundance
+csi.pa.ns <- cbind(design.ns.final, csi_pres_abs.ns)
+csi.ns <- cbind(design.ns.final,otu_final.ns) # obs abundance
+dim(csi.rel.ns)
+dim(csi.ns)
 
 # bind design and bact files WITH SOURCE
 csi.relabun.full <- cbind(design_final,csi_relabun)
-dim(csi.relabun.full)
-
 csi.PA.full <- cbind(design_final,csi_pres_abs)
+csi.full <- cbind(design_final, otu_final)
+dim(csi.relabun.full)
 dim(csi.PA.full)
+
 # Set treatments
 treatments1 <- as.factor(design.ns.final$Salinity)
 levels(treatments1) <- c("0","5","9","13")
 treatments2 <- as.factor(design.ns.final$Dispersal)
 levels(treatments2) <- c("2","3")
 
-#date_1 <- as.factor(desighn.ns.final$Date2)
 ```
 
 # OTU Diversity Metrics [included in Werba et al. (In review) manuscript]
@@ -195,7 +216,9 @@ shannon <- diversity(otu.rarefy, "shannon")
 richness <- rowSums((otu.rarefy >= 1))
 
 # Pielou’s evenness
-J <- shannon/log(specnumber(otu.rarefy[,-c(1:1)]))
+#J <- shannon/log(specnumber(otu.rarefy[,-c(1:1)])) # something odd here
+J <- shannon/log(specnumber(otu.rarefy))
+
 
 # Combined design,shannon,richness,evenness - no source tanks
 csi_otu.div <- cbind(design.ns.final,shannon,richness,J)
@@ -211,7 +234,9 @@ shannon.source <- diversity(otu.rarefy, "shannon")
 richness.source <- rowSums((otu.rarefy >= 1))
 
 # Pielou’s evenness
-J.source <- shannon.source/log(specnumber(otu.rarefy[,-c(1:1)]))
+# J.source <- shannon.source/log(specnumber(otu.rarefy[,-c(1:1)]))
+J.source <- shannon.source/log(specnumber(otu.rarefy))
+
 
 # Combined design,shannon,richness,evenness - no source tanks
 csi_otu.div.source <- cbind(design_final, shannon.source, 
@@ -221,18 +246,18 @@ csi_otu.div.source <- cbind(design_final, shannon.source,
 # Phylogenetic Diversity
 ```{r (Phylogenetic Diversity), include=FALSE}
 str(tree)
-dim(otu_final)
-dim(csi_otu)
+dim(otu_final) # Includes source 
+dim(csi_otu) # Includes source and odd sites
 
 sum(tree$tip.label %in% colnames(csi_otu) == FALSE) # Tree Represents All
 
 # Small Branches
-sum(tree$edge.length < 0.0000001)
+sum(tree$edge.length < 0.000001) # lots of small branches 
 
-# Import Unifrac Matrix
-str(UniFrac.raw)
+# Unifrac Matrix
 dim(UniFrac.raw)
 
+# Subset to remove odd sites
 UniFrac <- UniFrac.raw[which(row.names(UniFrac.raw) %in%
                                    row.names(otu_final)),
                              which(colnames(UniFrac.raw) %in%
@@ -243,23 +268,16 @@ dim(UniFrac)
 # Make into Distance Matrix
 unifrac.dist <- as.dist(UniFrac, upper = T, diag = T)
 
-# Calculate Phylo Diversity
-phylo.d <- pd(otu_final, tree, include.root = F)
-phylo_final <- phylo.d[setdiff(rownames(phylo.d), odd.sites), ]
-#design_final <- design.full[setdiff(rownames(design.full), odd.sites), ]
-#design.ns <- design.ns[setdiff(rownames(design.ns), odd.sites), ]
+# Calculate Phylo Diversity (w/ source)
+phylo_final <- pd(otu_final, tree, include.root = F)
 all.equal(rownames(design_final), rownames(phylo_final))
 
-# REMOVE source tanks from otu file
-# REMOVE source tanks Number 1,2,3 from otu_final and use design.ns (manually removed source tanks)
-temp <- rownames(design_final[which(design_final$Number %in% c(1,2,3)), ])
-phylo_final.ns <- phylo_final[-(which(rownames(phylo_final) %in% temp)), ]
-dim(phylo_final.ns)
-dim(design.ns.final)
+# Calculate Phylo Diversity (w/o source)
+phylo_final.ns <- pd(otu_final.ns, tree, include.root = F)
+all.equal(rownames(design.ns.final), rownames(phylo_final.ns))
 
 csi.phylo.ns <- cbind(design.ns.final,phylo_final.ns)
 ```
-
 
 # Fig 1A: PCoA (UniFrac)
 ```{r}
@@ -350,8 +368,6 @@ p1
 ggsave("../figures/Figure_PD_rainclouds.png", plot=last_plot(), device=NULL, path=NULL, scale=1,  width=6, height=6, dpi=300, limitsize=TRUE)
 ```
 
-
-
 # Fig 2A: PhyloTree with Indicator Taxa
 ```{r}
 str(tree)
@@ -416,7 +432,6 @@ for(i in 1:length(phylum2)){
     phylum2[i] <- tree.tax.2$Class[i]
   }
 }
-
 #   if (phylum2[i] == "Bacteroidetes"){
 #     phylum2[i] <- tree.tax.2$Class[i]
 #   }
@@ -436,73 +451,194 @@ p <- ggtree(Phy.tree, layout="rectangular") + theme(legend.position="top",
 # Set treatments
 treatments1 <- as.factor(design.45$Salinity) 
 levels(treatments1) <- c("0","5","9","13")
+treatments2 <- as.factor(design.45$Salinity) 
+levels(treatments2) <- c("0","1","1","1")
+treatments3 <- droplevels(as.factor(design.45$Dispersal))
+levels(treatments3) <- c("2", "3")
 
+# Main Indicators
 sal.ind <- indval(otus.45, treatments1)
 levels(treatments1)
 summary(sal.ind)
-sal.inds <- which(sal.ind$pval <= 0.05)
-sal.indicators <- as.data.frame(matrix(NA, nrow = length(sal.inds), ncol = 4))
-colnames(sal.indicators) <- c("OTU", "Cluster", "IndVal", "Prob")
-sal.indicators$OTU <- names(sal.inds)
-sal.indicators$Cluster <- sal.ind$maxcls[sal.inds]
-sal.indicators$IndVal <- sal.ind$indcls[sal.inds]
-sal.indicators$Prob <- sal.ind$pval[sal.inds]
 
+# Fresh v Salty Indicators
+sal.ind2 <- indval(otus.45, treatments2)
+levels(treatments2)
+summary(sal.ind2)
+
+# Dispersal Indicators
+dis.ind <- indval(otus.45, treatments3)
+levels(treatments3)
+summary(dis.ind)
+
+# Organize Indicator Tables
+sal.inds  <- ind.tab(ind = sal.ind, pval = 0.05)
+sal.inds2 <- ind.tab(ind = sal.ind2, pval = 0.05) 
+dis.inds <- ind.tab(ind = dis.ind, pval = 0.05)  
+
+# Combine for plot
 sal.dat <- as.data.frame(matrix(NA, ncol = 5, nrow = length(tree.2$tip.label)))
 rownames(sal.dat) <- tree.2$tip.label
 colnames(sal.dat) <- c(levels(treatments1), ">0")
 
-for(i in 1:dim(sal.indicators)[1]){
-  temp <- sal.indicators[i, ]
+for(i in 1:dim(sal.inds)[1]){
+  temp <- sal.inds[i, ]
   sal.dat[which(row.names(sal.dat) == temp$OTU), temp$Cluster] <- 10
 }
 
-
-treatments1 <- as.factor(design.45$Salinity) 
-levels(treatments1) <- c("0","1","1","1")
-sal.ind <- indval(otus.45, treatments1)
-levels(treatments1)
-summary(sal.ind)
-sal.inds <- which(sal.ind$pval <= 0.05)
-sal.indicators <- as.data.frame(matrix(NA, nrow = length(sal.inds), ncol = 4))
-colnames(sal.indicators) <- c("OTU", "Cluster", "IndVal", "Prob")
-sal.indicators$OTU <- names(sal.inds)
-sal.indicators$Cluster <- sal.ind$maxcls[sal.inds]
-sal.indicators$IndVal <- sal.ind$indcls[sal.inds]
-sal.indicators$Prob <- sal.ind$pval[sal.inds]
-
-for(i in 1:dim(sal.indicators)[1]){
-  temp <- sal.indicators[i, ]
+for(i in 1:dim(sal.inds2)[1]){
+  temp <- sal.inds2[i, ]
   if(temp$Cluster == 2){
     sal.dat[which(row.names(sal.dat) == temp$OTU), 5] <- 10
   }
 }
 
+#csi.tax[which(csi.tax$OTU %in% dis.inds$OTU), ]
+#csi.tax[which(csi.tax$OTU %in% sal.inds$OTU), ]
+#csi.tax[which(csi.tax$OTU %in% sal.inds2$OTU), ]
 
-treatments2 <- droplevels(as.factor(design.45$Dispersal))
-levels(treatments2) <- c("2", "3")
-
-dis.ind <- indval(otus.45, treatments2)
-levels(treatments2)
-summary(dis.ind)
-dis.inds <- which(dis.ind$pval <= 0.05)
-dis.indicators <- as.data.frame(matrix(NA, nrow = length(dis.inds), ncol = 4))
-colnames(dis.indicators) <- c("OTU", "Cluster", "IndVal", "Prob")
-dis.indicators$OTU <- names(dis.inds)
-dis.indicators$Cluster <- dis.ind$maxcls[dis.inds]
-dis.indicators$IndVal <- dis.ind$indcls[dis.inds]
-dis.indicators$Prob <- dis.ind$pval[dis.inds]
-
-csi.tax[which(csi.tax$OTU %in% dis.indicators$OTU), ]
-csi.tax[which(csi.tax$OTU %in% sal.indicators$OTU), ]
-
+# Add heatmap to plot
 gheatmap(p, sal.dat, width = 0.5, colnames_angle=90, hjust=1, 
-         low = "black", high = "black")+ theme(legend.position = "right") + guides(fill = FALSE)   
+         low = "black", high = "black") + 
+  theme(legend.position = "right") + 
+  guides(fill = FALSE)   
 
 ggsave("../figures/indicator.tree.png", width = 10, height = 8, units = "in")
 
 ```
 
+# Indicator Euler Plot
+```{r}
+# Indicator Lists
+setdiff(sal.inds$OTU[which(sal.inds$Cluster == 1)], 
+        sal.inds2$OTU[which(sal.inds2$Cluster == 1)])
+
+setdiff(sal.inds2$OTU[which(sal.inds2$Cluster == 1)], 
+        sal.inds$OTU[which(sal.inds$Cluster == 1)])
+
+inds <- list("0 PSU" = sal.inds$OTU[which(sal.inds$Cluster == 1)],
+             "5 PSU" = sal.inds$OTU[which(sal.inds$Cluster == 2)],
+             "9 PSU" = sal.inds$OTU[which(sal.inds$Cluster == 3)],
+             "13 PSU" = sal.inds$OTU[which(sal.inds$Cluster == 4)],
+             "0* PSU" = sal.inds2$OTU[which(sal.inds2$Cluster == 1)],
+             ">0 PSU" = sal.inds2$OTU[which(sal.inds2$Cluster == 2)])
+
+library(eulerr)
+
+set.seed(7)
+plot(euler(inds, shape = "ellipse"), quantities = TRUE, adjust_labels = T)
+
+# Save Indicators For Supplemental Table
+
+
+
+
+```
+
+
+# ConsenTrait Analysis 
+```{r}
+source("../bin/consenTRAIT.R")
+# Base Tree
+str(tree)
+
+# OTUs (abund > 200 obs)
+otus.45 <- otu_final[which(rownames(otu_final) %in% rownames(design.45)), ]
+otus.45 <- otus.45[, which(colSums(otus.45) > 200)]
+
+# Prune Tree based on max abundance
+tree.45 <- drop.tip(tree, setdiff(tree$tip.label, colnames(otus.45)),
+                    trim.internal = T)
+
+sum(tree.45$edge.length < 0.000001) # lots of small branches 
+tree.45$edge.length[which(tree.45$edge.length < 0.0001)] <- 0.0001 + 
+  tree.45$edge.length[which(tree.45$edge.length < 0.0001)] 
+
+# Root tree
+tree.45.mid <- midpoint.root(tree.45)
+tree.45.mid$node.label <- makeNodeLabel(tree.45.mid)$node.label
+
+# Renumber nodes
+# n.start <- length(tree.45.mid$tip.label) + 1
+# n.end <- n.start + tree.45.mid$Nnode
+# tree.45.mid$node.label <- seq(n.start, n.end)
+# tree.45.mid$node.label[1:5]
+# tree.45.mid <- ape::root(tree.45.mid, resolve.root)
+
+is.rooted(tree.45.mid)
+
+# Tip Data: 50% occupancy
+str(otus.45)
+design.45$Salinity
+
+dim(otus.45); length(design.45$Salinity)
+unique(design.45$Salinity)
+
+sal.trt <- list("0_PSU" = c(0), "5_PSU" = c(5), "9_PSU" = c(9), 
+                "13_PSU" = c(13), ">0PSU" = c(5, 9, 13))
+
+occupy.45 <- as.data.frame(matrix(NA, nrow = dim(otus.45)[2], 
+                                  ncol = length(sal.trt)))
+colnames(occupy.45) <- names(sal.trt)
+rownames(occupy.45) <- colnames(otus.45)
+
+for(i in 1:length(sal.trt)){
+  sites.tmp <- rownames(design.45)[which(design.45$Salinity %in% sal.trt[[i]])]
+  otu.tmp <- otus.45[which(rownames(otus.45) %in% sites.tmp), ]
+  otu.tmp.pa <- (otu.tmp > 0) * 1
+  occupy.tmp <- colMeans(otu.tmp.pa)
+  occupy.45[, i] <- (occupy.tmp >= 0.1) * 1
+}
+
+
+str(inds); length(inds)
+taxa <- tree.45.mid$tip.label
+tip.data <- as.data.frame(matrix(0, nrow = length(taxa), ncol = length(inds)))
+colnames(tip.data) <- names(inds)
+rownames(tip.data) <- taxa
+for(i in 1:length(inds)){
+  tmp.data <- inds[[i]]
+  for(j in 1:length(tmp.data)){
+    tip.data[which(row.names(tip.data) == tmp.data[j]), i] <- 1
+  }
+}
+
+csi.ct <- consenTRAIT(data = occupy.45, phy = tree.45.mid, cutoff = 0.80)
+
+```
+
+## ConcenTrait Plot
+```{r}
+
+par(mar = c(5, 7, 1, 1))
+
+plot(x = csi.ct$Distance.L, y = c(1:5),
+     xlim = c(-3, 1), ylim = c(0.5, 5.5), cex = 0.1, 
+     axes = F, xlab = "", ylab = "")
+
+arrows(x0 = csi.ct$Distance.L, x1 = csi.ct$Distance.L + csi.ct$CI_95.L,
+       y0 = 1:5, y1 = 1:5, angle = 90, length = 0.01)
+
+arrows(x0 = csi.ct$Distance.L, x1 = csi.ct$Distance.L - csi.ct$CI_95.L,
+       y0 = 1:5, y1 = 1:5, angle = 90, length = 0.01)
+
+points(x = csi.ct$Distance.L, y = c(1:5),
+     xlim = c(-2.5, 1), ylim = c(0.5, 5.5),
+     pch = 22, bg = "gray", cex = 2)
+
+axis(side = 1, at = c(-3, -2, -1, 0, 1),
+     labels = c(0.001, 0.01, 0.1, 1, 10))
+
+axis(side = 2, at = c(1:5),
+     labels = csi.ct$Trait, las = 1)
+
+mtext("Avg Cluster Depth", side = 1, line = 3, cex = 1.25)
+mtext("Grouping", side = 2, line = 5, cex = 1.25)
+
+box(lwd = 1.5)
+
+
+```
 
 # Fig 2B: PhyloTree with PhyloFactor
 ```{r}
@@ -516,21 +652,22 @@ for (i in 1:dim(OTUtable)[2]) {
 }
 dim(OTUtable)
 colSums(OTUtable)
-OTUtable <- OTUtable[which(colSums(otu_final.ns) > 200), ]
+OTUtable <- OTUtable[which(colSums(otu_final.ns) > 500), ]
+OTUtable <- OTUtable[, which(rowSums(OTUtable) > 0)]
 dim(OTUtable)
-colSums(OTUtable)
+colSums(OTUtable) # removed about 10%
 OTUtable[which(OTUtable == 0)] <- 0.0000001
 dim(OTUtable)
 colSums(OTUtable)
 
 # Independent Variables: Salinity
-all.equal(colnames(OTUtable), rownames(csi.full.ns))
-trt <- as.factor(csi.full.ns$Salinity)
+all.equal(colnames(OTUtable), rownames(csi.ns))
+trt <- as.factor(csi.ns$Salinity)
 levels(trt) <- c("0","5","9","13")
 
 # Phylogenetic Tree
-tree <- ape::drop.tip(tree.2,setdiff(tree.2$tip.label,rownames(OTUtable)))
-OTUtable <- OTUtable[tree$tip.label, ]
+tree.phy <- ape::drop.tip(tree,setdiff(tree$tip.label,rownames(OTUtable)))
+OTUtable <- OTUtable[tree.phy$tip.label, ]
 dim(OTUtable)
 colSums(OTUtable)
 
@@ -538,19 +675,26 @@ colSums(OTUtable)
 # Taxonomy
 csi.tax.common <- csi.tax[which(csi.tax$OTU %in% rownames(OTUtable)), ]
 taxonomy <- tax.merge(csi.tax.common)
+```
+
+```{r}
+
+test <- ses.mntd(OTUtable, )
 
 
 # PhyloFactorization 4 Varaibles
-PF <- PhyloFactor(OTUtable, tree, trt, stop.fcn = "KS", 
-                  stop.early = T, nfactors = 10)
+PF <- PhyloFactor(OTUtable, tree.phy, trt, nfactors = 10) # > 500 factors
 PF$factors
-
+dim(OTUtable)
 
 # Phylofactoraization with Saline vs Non-Saline
-trt2 <- as.factor(csi.full.ns$Salinity)
+trt2 <- as.factor(csi.ns$Salinity)
 levels(trt2) <- c("0","1","1","1")
-PF <- PhyloFactor(OTUtable, tree, trt2, nfactors=2)
-s <- pf.summary(PF,taxonomy,factor=1) 
+PF2 <- PhyloFactor(OTUtable, tree.phy, trt2, nfactors = 10)
+PF2$factors
+
+dim(OTUtable)
+s <- pf.summary(PF2,taxonomy,factor=1) 
 s$model
 td <- pf.tidy(s) 
 
@@ -586,8 +730,17 @@ td$`group2, Paraphyletic`
 
 # Fig 3: Phylo Function
 ```{r}
+length(inds)
 
-### Mario Work Here####
+odd.two <- intersect(inds[[2]], inds[[5]])
+sal.inds <- setdiff(union(inds[[2]], union(inds[[3]], 
+                     union(inds[[4]], inds[[6]]))), odd.two)
+
+OTUs45.rel <- otu_final[which(rownames(otu_final) %in% rownames(design.45)), ]
+for (i in 1:dim(OTUs45.rel)[1]) {
+  OTUs45.rel[i, ] <- OTUs45.rel[i, ]/sum(OTUs45.rel[i, ] )
+}
+
 
 
 #Cmin General
@@ -599,36 +752,42 @@ td$`group2, Paraphyletic`
 # Goal: Two panel plot with phylo indicators and phylofactor indicators vs mass loss or cmin. 
 # OTU Table
 min(rowSums(otu_final.ns))
-otu.rarefy <- rrarefy(otu_final.ns, 20000)
-dim(otu.rarefy)
-OTUtable <- t(otu.rarefy)
+OTUtable.rare <- rrarefy(otu_final.ns, 20000)
+dim(OTUtable.rare)
+OTUtable.rare[1:5, 1:5]
+OTUtable <- otu_final.ns # t(otu.rarefy)
 OTUtable[1:5, 1:5]
 OTUtable.rel <- OTUtable
-for (i in 1:dim(OTUtable.rel)[2]) {
-  OTUtable.rel[, i] <- OTUtable.rel[, i]/sum(OTUtable.rel[, i])
+for (i in 1:dim(OTUtable.rel)[1]) {
+  OTUtable.rel[i, ] <- OTUtable.rel[i, ]/sum(OTUtable.rel[i, ])
 }
 dim(OTUtable.rel)
-colSums(OTUtable.rel)
+rowSums(OTUtable.rel)
 
-# Indicators
-ind1 <- sal.indicators$OTU[which(sal.indicators$Cluster == 2)]
-ind2 <- row.names(sal.dat)[which(sal.dat$`>0` == 10)]
-setdiff(ind1, ind2)
+# Indicator Tables
+Ind.OTU <- OTUtable[, which(colnames(OTUtable) %in% sal.inds)]
+Ind.OTU.rare <- OTUtable.rare[, which(colnames(OTUtable.rare) %in% sal.inds)]
+Ind.OTU.rel <- OTUtable.rel[, which(colnames(OTUtable.rel) %in% sal.inds)]
+Ind.TREE <- ape::drop.tip(tree.2,setdiff(tree.2$tip.label,colnames(OTUtable.rel)))
 
-ind2.tab <- OTUtable[which(row.names(OTUtable) %in% ind2), ]
-ind2.rel <- OTUtable.rel[which(row.names(OTUtable.rel) %in% ind2), ]
-Indicator.rel <- colSums(ind2.rel)
-Indicator.S <- colSums((ind2.tab >= 1))
-Indicator.H <- diversity(t(ind2.tab), "shannon")
+Indicator.rel <- rowSums(Ind.OTU.rel)
+Indicator.S <- rowSums((Ind.OTU.rare >= 1))
+Indicator.H <- diversity(Ind.OTU.rel, "shannon")
+Indicator.PD <- pd(Ind.OTU, Ind.TREE, include.root = F)
 
 all.equal(names(Indicator.rel), row.names(csi_otu.div))
+all.equal(names(Indicator.S), row.names(csi_otu.div))
+all.equal(names(Indicator.H), row.names(csi_otu.div))
 
 csi_otu.div$I_rel <- Indicator.rel
 csi_otu.div$I_S <- Indicator.S
 csi_otu.div$I_H <- Indicator.H
+csi_otu.div$I_PD <- Indicator.PD[, 1]
 
+# Subset only day 45
 csi_otu.div.day45 <- subset(csi_otu.div, Date2 == "45")
 
+# Shannon
 p <- ggplot(csi_otu.div.day45, aes(x=I_H, y=Cmin, 
                                    color = as.factor(Dispersal))) +
   scale_color_manual(name="Dispersal Treatment", 
@@ -655,9 +814,89 @@ p1 + theme_bw() + theme(panel.grid.major = element_blank(),
 ggsave("../figures/Cmin_shannon.png", plot=last_plot(), device=NULL, 
        path=NULL, scale=1, width=NA, height=NA, dpi=300, limitsize=TRUE)
 
+# Phylo
+p <- ggplot(csi_otu.div.day45, aes(x=I_PD, y=Cmin, 
+                                   color = as.factor(Dispersal))) +
+  scale_color_manual(name="Dispersal Treatment", 
+                     values=c("black","gray"), 
+                     labels = c("fresh+salt (2)", "salt only (3)")) # +
+  # stat_summary(fun.data = "mean_cl_boot", size=1) 
+p1 = p + geom_smooth(method="lm", se=FALSE) + geom_point(size=4) 
+p1 + theme_bw() + theme(panel.grid.major = element_blank(), 
+                        panel.grid.minor = element_blank(), 
+                        axis.line = element_line(colour = "black")) + 
+  theme(axis.title=element_text(vjust=1,size=16,face="bold"), 
+        axis.text = element_text(size=16), 
+        axis.text.x = element_text(vjust=0.65, hjust=0.5, size=16), 
+        panel.border = element_rect(colour = "black",size=1)) + 
+  theme(axis.ticks.length=unit(0.3,"cm")) + 
+  labs(x = "Phylogenetic Diversity", 
+       y = (expression(paste("C Mineralization (ng CO"[2],
+                             " mL"^-{1},"day"^-{1},")")))) + 
+  theme(strip.text.x = element_text(size=16, face="bold"), 
+        strip.text.y = element_text(size=16, face="bold"), 
+        strip.background = element_rect(colour="black", 
+                                        fill="white", size=1))
+
+ggsave("../figures/Cmin_PD.png", plot=last_plot(), device=NULL, 
+       path=NULL, scale=1, width=NA, height=NA, dpi=300, limitsize=TRUE)
+
+# Relative Abundance
+p <- ggplot(csi_otu.div.day45, aes(x=I_rel, y=Cmin, 
+                                   color = as.factor(Dispersal))) +
+  scale_color_manual(name="Dispersal Treatment", 
+                     values=c("black","gray"), 
+                     labels = c("fresh+salt (2)", "salt only (3)")) # +
+  # stat_summary(fun.data = "mean_cl_boot", size=1) 
+p1 = p + geom_smooth(method="lm", se=FALSE) + geom_point(size=4) 
+p1 + theme_bw() + theme(panel.grid.major = element_blank(), 
+                        panel.grid.minor = element_blank(), 
+                        axis.line = element_line(colour = "black")) + 
+  theme(axis.title=element_text(vjust=1,size=16,face="bold"), 
+        axis.text = element_text(size=16), 
+        axis.text.x = element_text(vjust=0.65, hjust=0.5, size=16), 
+        panel.border = element_rect(colour = "black",size=1)) + 
+  theme(axis.ticks.length=unit(0.3,"cm")) + 
+  labs(x = "Relative Abundance (Indicators)", 
+       y = (expression(paste("C Mineralization (ng CO"[2],
+                             " mL"^-{1},"day"^-{1},")")))) + 
+  theme(strip.text.x = element_text(size=16, face="bold"), 
+        strip.text.y = element_text(size=16, face="bold"), 
+        strip.background = element_rect(colour="black", 
+                                        fill="white", size=1))
+
+ggsave("../figures/Cmin_RelAbund.png", plot=last_plot(), device=NULL, 
+       path=NULL, scale=1, width=NA, height=NA, dpi=300, limitsize=TRUE)
+
+# Relative Abundance
+p <- ggplot(csi_otu.div.day45, aes(x=I_S, y=Cmin, 
+                                   color = as.factor(Dispersal))) +
+  scale_color_manual(name="Dispersal Treatment", 
+                     values=c("black","gray"), 
+                     labels = c("fresh+salt (2)", "salt only (3)")) # +
+  # stat_summary(fun.data = "mean_cl_boot", size=1) 
+p1 = p + geom_smooth(method="lm", se=FALSE) + geom_point(size=4) 
+p1 + theme_bw() + theme(panel.grid.major = element_blank(), 
+                        panel.grid.minor = element_blank(), 
+                        axis.line = element_line(colour = "black")) + 
+  theme(axis.title=element_text(vjust=1,size=16,face="bold"), 
+        axis.text = element_text(size=16), 
+        axis.text.x = element_text(vjust=0.65, hjust=0.5, size=16), 
+        panel.border = element_rect(colour = "black",size=1)) + 
+  theme(axis.ticks.length=unit(0.3,"cm")) + 
+  labs(x = "Relative Abundance (Indicators)", 
+       y = (expression(paste("C Mineralization (ng CO"[2],
+                             " mL"^-{1},"day"^-{1},")")))) + 
+  theme(strip.text.x = element_text(size=16, face="bold"), 
+        strip.text.y = element_text(size=16, face="bold"), 
+        strip.background = element_rect(colour="black", 
+                                        fill="white", size=1))
+
+ggsave("../figures/Cmin_S.png", plot=last_plot(), device=NULL, 
+       path=NULL, scale=1, width=NA, height=NA, dpi=300, limitsize=TRUE)
 ```
 
-
+How do the indicators change over time - assembly!!!!! 
 ---------
 # AP Please Check Everything Below Here!
 
