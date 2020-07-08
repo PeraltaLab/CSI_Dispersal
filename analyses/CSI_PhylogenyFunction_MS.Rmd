@@ -340,7 +340,7 @@ theme(panel.background = element_blank()) +
   guides(fill = guide_legend(override.aes = list(pch=21, size = 4, colour="black")),
          shape = guide_legend(override.aes = list(size = 4, fill="black")))
 
-ggsave("../figures/Phylo_Ordination.png", plot=last_plot(), device=NULL, path=NULL, scale=1, width=7, height=5, dpi=900, limitsize=TRUE)
+ggsave("../figures/Phylo_Ordination.png", plot=last_plot(), device=NULL, path=NULL, scale=1, width=7, height=5, dpi=500, limitsize=TRUE)
 ```
 
 # Fig 1B: PD Rain Clouds - DONE
@@ -356,26 +356,22 @@ levels(csi.phylo.ns.t$time.Date2)
 csi.phylo.ns.t$Salinity <- as.factor(csi.phylo.ns.t$Salinity)
 levels(csi.phylo.ns.t$Salinity)
 
-group <- as.factor(csi.phylo.ns$Salinity)
+group <- as.factor(csi.phylo.ns.t$Salinity)
 time <- as.factor(csi.phylo.ns.t$time.Date2)
 
 # Plot 
 p1 <- ggplot(csi.phylo.ns, aes(x = time, y = PD, fill = group), size=16) + theme_bw() 
-p1 + geom_flat_violin(aes(fill = group),
-                      position = position_nudge(x = .1, y = 0), 
-                      adjust = 1.5, trim = FALSE, alpha = .5, colour = NA) +
-  geom_point(aes(x = as.numeric(time)-.15, y = PD, colour = group),
-                      position = position_jitter(width = .05), size = 1.5, shape = 20) +
-  geom_boxplot(aes(x = as.factor(time), y = PD, fill = group),
-               outlier.shape = NA, alpha = .5, width = .1, colour = "black") + 
+p2 <-p1 + geom_flat_violin(aes(fill = group),position = position_nudge(x = .1, y = 0),
+                           adjust = 1.5, trim = FALSE, alpha = .5, colour = NA) +
+  geom_point(aes(x = as.numeric(time)-.15, y = PD, colour = group), position = position_jitter(width = .05), size = 1.5, shape = 20) +
+  geom_boxplot(aes(x = as.factor(time), y = PD, fill = group), outlier.shape = NA, alpha = .5, width = .1, colour = "black") + 
   scale_fill_manual(name="group", values = c("#E69F00", "#56B4E9", "#009E73","#F0E442")) + 
   scale_color_manual(name="group", values = c("#E69F00", "#56B4E9", "#009E73","#F0E442")) + 
   labs(x = "Sampling Date", y = "Phylogenetic Diversity") + 
-  scale_x_discrete(labels=c("1" = "Day 0", "2" = "Day 18", "3" = "Day 45")) +
-  theme_cowplot()
-p1
+  scale_x_discrete(labels=c("1" = "Day 0", "2" = "Day 18", "3" = "Day 45")) + theme_cowplot()
+p2
 
-ggsave("../figures/Figure_PD_rainclouds.png", plot=last_plot(), device=NULL, path=NULL, scale=1,  width=7, height=5, dpi=900, limitsize=TRUE)
+ggsave("../figures/Figure_PD_rainclouds.png", plot=last_plot(), device=NULL, path=NULL, scale=1,  width=7, height=5, dpi=500, limitsize=TRUE)
 ```
 
 # Fig 2A: PhyloTree with Indicator Taxa
