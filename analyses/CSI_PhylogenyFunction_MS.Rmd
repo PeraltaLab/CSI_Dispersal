@@ -369,8 +369,8 @@ p2 <-p1 + geom_flat_violin(aes(fill = group),position = position_nudge(x = .1, y
                            adjust = 1.5, trim = FALSE, alpha = .5, colour = NA) +
   geom_point(aes(x = as.numeric(time)-.15, y = PD, colour = group), position = position_jitter(width = .05), size = 1.5, shape = 20) +
   geom_boxplot(aes(x = as.factor(time), y = PD, fill = group), outlier.shape = NA, alpha = .5, width = .1, colour = "black") + 
-  scale_fill_manual(name="group", values = c("#E69F00", "#56B4E9", "#009E73","#F0E442")) + 
-  scale_color_manual(name="group", values = c("#E69F00", "#56B4E9", "#009E73","#F0E442")) + 
+  scale_fill_manual(name="Salinity (psu)", values = c("#E69F00", "#56B4E9", "#009E73","#F0E442")) + 
+  scale_color_manual(name="Salinity (psu)", values = c("#E69F00", "#56B4E9", "#009E73","#F0E442")) + 
   labs(x = "Sampling Date", y = "Phylogenetic Diversity") + 
   scale_x_discrete(labels=c("1" = "Day 0", "2" = "Day 18", "3" = "Day 45")) + theme_cowplot()
 p2
