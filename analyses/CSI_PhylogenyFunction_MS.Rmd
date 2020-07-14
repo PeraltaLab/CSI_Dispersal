@@ -277,11 +277,15 @@ phylo_final.ns <- pd(otu_final.ns, tree, include.root = F)
 all.equal(rownames(design.ns.final), rownames(phylo_final.ns))
 
 csi.phylo.ns <- cbind(design.ns.final,phylo_final.ns)
+
+# PERMANOVA UniFrac ???
+# adonis = adonis(df[,-c()]~Salinity*Dispersal*Date, method = "bray", data = new.data, perm=1000)
+# adonis
 ```
 
 # Fig 1A: PCoA (UniFrac) - DONE
 ```{r PCoA UniFrac Ordination, echo=TRUE}
-# Principal Coordinates Analysis - NO SOURCE
+# Principal Coordinates Analysis - INCLUDES SOURCE but no stats
 CSI_pcoa_phylo <- cmdscale(unifrac.dist, k=3, eig=TRUE, add=FALSE)
   # Classical (Metric) Multidimensional Scaling; returns PCoA coordinates
   # eig=TRUE returns eigenvalues; k = # of dimensions to calculate
@@ -345,7 +349,7 @@ ggsave("../figures/Phylo_Ordination.png", plot=last_plot(), device=NULL, path=NU
 
 # Fig 1B: PD Rain Clouds - DONE
 ```{r PD over salinity rain clouds, echo=TRUE}
-# Rainclouds for repeated measures
+# Rainclouds DOES NOT INCLUDE SOURCE
 
 # change Date2 in original df to 1,2,3 instead of 0,18,45
 time.Date2 <- as.numeric(csi.phylo.ns$Date2)
