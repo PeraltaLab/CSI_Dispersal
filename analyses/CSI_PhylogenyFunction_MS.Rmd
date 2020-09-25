@@ -257,7 +257,7 @@ sum(tree$edge.length < 0.000001) # lots of small branches
 # Unifrac Matrix
 dim(UniFrac.raw)
 
-# Subset to remove odd sites
+# Subset to remove odd sites (remove source)
 UniFrac <- UniFrac.raw[which(row.names(UniFrac.raw) %in%
                                    row.names(otu_final)),
                              which(colnames(UniFrac.raw) %in%
@@ -278,7 +278,7 @@ all.equal(rownames(design.ns.final), rownames(phylo_final.ns))
 
 csi.phylo.ns <- cbind(design.ns.final,phylo_final.ns)
 
-# PERMANOVA UniFrac ???
+# PERMANOVA UniFrac ??? Fix this Mario 
 # adonis = adonis(df[,-c()]~Salinity*Dispersal*Date, method = "bray", data = new.data, perm=1000)
 # adonis
 ```
@@ -596,7 +596,7 @@ for(i in 1:length(sal.trt)){
   otu.tmp <- otus.45[which(rownames(otus.45) %in% sites.tmp), ]
   otu.tmp.pa <- (otu.tmp > 0) * 1
   occupy.tmp <- colMeans(otu.tmp.pa)
-  occupy.45[, i] <- (occupy.tmp >= 0.1) * 1
+  occupy.45[, i] <- (occupy.tmp >= 0.5) * 1
 }
 
 
