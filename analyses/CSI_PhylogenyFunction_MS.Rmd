@@ -257,7 +257,7 @@ sum(tree$edge.length < 0.000001) # lots of small branches
 # Unifrac Matrix
 dim(UniFrac.raw)
 
-# Subset to remove odd sites
+# Subset to remove odd sites (remove source)
 UniFrac <- UniFrac.raw[which(row.names(UniFrac.raw) %in%
                                    row.names(otu_final)),
                              which(colnames(UniFrac.raw) %in%
@@ -278,7 +278,7 @@ all.equal(rownames(design.ns.final), rownames(phylo_final.ns))
 
 csi.phylo.ns <- cbind(design.ns.final,phylo_final.ns)
 
-# PERMANOVA UniFrac ???
+# PERMANOVA UniFrac ??? Fix this Mario 
 # adonis = adonis(df[,-c()]~Salinity*Dispersal*Date, method = "bray", data = new.data, perm=1000)
 # adonis
 ```
@@ -517,7 +517,7 @@ ggsave("../figures/indicator.tree.png", width = 10, height = 8, units = "in")
 
 ```
 
-# Fig. 2B - Indicator Euler Plot
+# Fig. 2B - Euler Plot
 ```{r Euler Plot, echo=TRUE}
 # Indicator Lists
 setdiff(sal.inds$OTU[which(sal.inds$Cluster == 1)], 
@@ -534,13 +534,39 @@ inds <- list("0 psu" = sal.inds$OTU[which(sal.inds$Cluster == 1)],
              ">0 psu" = sal.inds2$OTU[which(sal.inds2$Cluster == 2)])
 
 library(eulerr)
-png("../figures/euler.png",width = 1000, height = 1000, res=200)
+#png("../figures/euler.png",width = 1000, height = 1000, res=200)
 
 set.seed(7)
-p1 <- plot(euler(inds, shape = "ellipse"), quantities = TRUE, adjust_labels = T)
+p1 <- plot(euler(inds, shape = "ellipse"), quantities = TRUE, adjust_labels = T,
+           fills = c("#E69F00", "#56B4E9", "#009E73","#F0E442", "gray", "gray"))
 p1
 
+#dev.copy2pdf(file = "../figures/ConcenTrait.pdf",
+#             width = 6, height = 4, bg = "white")
+
 dev.off()
+
+```
+
+# Ind Table
+```{r}
+str(inds)
+ind_0 <- inds[["0 psu"]]
+ind_0_tax <- unique(csi.tax$Order[which(csi.tax$OTU %in% ind_0)])
+
+ind_5 <- inds[["5 psu"]]
+ind_5_tax <- unique(csi.tax$Class[which(csi.tax$OTU %in% ind_5)])
+
+ind_9 <- inds[["9 psu"]]
+ind_9_tax <- unique(csi.tax$Class[which(csi.tax$OTU %in% ind_9)])
+
+ind_13 <- inds[["13 psu"]]
+ind_13_tax <- unique(csi.tax$Class[which(csi.tax$OTU %in% ind_13)])
+
+ind_S <- inds[[">0 psu"]]
+ind_S_tax <- unique(csi.tax$Class[which(csi.tax$OTU %in% ind_S)])
+
+
 
 ```
 
@@ -596,7 +622,7 @@ for(i in 1:length(sal.trt)){
   otu.tmp <- otus.45[which(rownames(otus.45) %in% sites.tmp), ]
   otu.tmp.pa <- (otu.tmp > 0) * 1
   occupy.tmp <- colMeans(otu.tmp.pa)
-  occupy.45[, i] <- (occupy.tmp >= 0.1) * 1
+  occupy.45[, i] <- (occupy.tmp >= 0.5) * 1
 }
 
 
@@ -619,36 +645,43 @@ csi.ct <- consenTRAIT(data = occupy.45, phy = tree.45.mid, cutoff = 0.80)
 ## Fig. 3 - ConcenTrait Plot
 ```{r ConcentTrait, echo=TRUE}
 
-png("../figures/ConcenTrait.png",width = 1000, height = 1000, res=200)
+png(filename = "../figures/ConcenTrait.png", width = 6, height = 4, units = "in", 
+    res = 900, bg = "white")
 
-par(mar = c(5, 7, 1, 1))
+par(mar = c(4.5, 5.5, 0.5, 0.5))
 
 plot(x = csi.ct$Distance.L, y = c(1:5),
      xlim = c(-3, 1), ylim = c(0.5, 5.5), cex = 0.1, 
      axes = F, xlab = "", ylab = "")
 
 arrows(x0 = csi.ct$Distance.L, x1 = csi.ct$Distance.L + csi.ct$CI_95.L,
-       y0 = 1:5, y1 = 1:5, angle = 90, length = 0.01)
+       y0 = 1:5, y1 = 1:5, angle = 90, length = 0.05)
 
 arrows(x0 = csi.ct$Distance.L, x1 = csi.ct$Distance.L - csi.ct$CI_95.L,
-       y0 = 1:5, y1 = 1:5, angle = 90, length = 0.01)
+       y0 = 1:5, y1 = 1:5, angle = 90, length = 0.05)
 
 points(x = csi.ct$Distance.L, y = c(1:5),
      xlim = c(-2.5, 1), ylim = c(0.5, 5.5),
-     pch = 22, bg = "gray", cex = 2)
+     pch = 22, bg = c("#E69F00", "#56B4E9", "#009E73","#F0E442", "gray"), cex = 2)
 
 axis(side = 1, at = c(-3, -2, -1, 0, 1),
-     labels = c(0.001, 0.01, 0.1, 1, 10))
+     labels = c(0.001, 0.01, 0.1, 1, 10), cex.lab = 0.8)
 
 axis(side = 2, at = c(1:5),
      labels = csi.ct$Trait, las = 1)
 
-mtext("Average Cluster Depth", side = 1, line = 3, cex = 1.25)
-mtext("Grouping", side = 2, line = 5, cex = 1.25)
+mtext("Average Cluster Depth", side = 1, line = 2.5, cex = 1.25)
+mtext("Salinity Treatment", side = 2, line = 4, cex = 1.25)
 
 box(lwd = 1.5)
-
 dev.off()
+
+#dev.copy2pdf(file = "../figures/ConcenTrait.pdf",
+#             width = 6, height = 4, bg = "white")
+
+
+
+
 ```
 
 # Fig 4: Phylo Function and Indic Function Relationships
