@@ -206,7 +206,7 @@ levels(treatments2) <- c("2","3")
 # Rarefy Abundances (min abundance is 13,240. We are sampling to 13,000) for uchime mothur run
 # Rarefy Abundances (min abundance is 13,229. We are sampling to 13,000) for vsearch mothur run
 
-min(rowSums(otu_final.ns))
+min(rowSums(otu_final.ns)) #min abundance is 22349
 otu.rarefy <- rrarefy(otu_final.ns, 20000)
 
 # Calculate Shannon H' (called shannon) using full data set (WITH source tanks)
@@ -277,7 +277,7 @@ phylo_final.ns <- pd(otu_final.ns, tree, include.root = F)
 all.equal(rownames(design.ns.final), rownames(phylo_final.ns))
 
 csi.phylo.ns <- cbind(design.ns.final,phylo_final.ns)
-
+csi.unifrac.ns <- cbind(design.ns.final,unifrac.dist)
 # PERMANOVA UniFrac ??? Fix this Mario 
 # adonis = adonis(df[,-c()]~Salinity*Dispersal*Date, method = "bray", data = new.data, perm=1000)
 # adonis
