@@ -278,9 +278,12 @@ all.equal(rownames(design.ns.final), rownames(phylo_final.ns))
 
 csi.phylo.ns <- cbind(design.ns.final,phylo_final.ns)
 csi.unifrac.ns <- cbind(design.ns.final,unifrac.dist)
+
 # PERMANOVA UniFrac ??? Fix this Mario 
-# adonis = adonis(df[,-c()]~Salinity*Dispersal*Date, method = "bray", data = new.data, perm=1000)
-# adonis
+str(unifrac.dist)
+adonis <- adonis(unifrac.dist~Salinity*Dispersal*Date, data = design_final, perm=1000)
+adonis
+
 ```
 
 # Fig 1A: PCoA (UniFrac) - DONE
