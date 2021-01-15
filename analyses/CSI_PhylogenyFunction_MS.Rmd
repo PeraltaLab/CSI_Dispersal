@@ -277,16 +277,16 @@ phylo_final.ns <- pd(otu_final.ns, tree, include.root = F)
 all.equal(rownames(design.ns.final), rownames(phylo_final.ns))
 
 csi.phylo.ns <- cbind(design.ns.final,phylo_final.ns)
-csi.unifrac.ns <- cbind(design.ns.final,unifrac.dist)
+#csi.unifrac.ns <- cbind(design.ns.final,unifrac.dist)- unifrac.dist is not a dataframe
 
-# PERMANOVA UniFrac ??? Fix this Mario 
+# PERMANOVA UniFrac
 str(unifrac.dist)
-adonis <- adonis(unifrac.dist~Salinity*Dispersal*Date, data = design_final, perm=1000)
+adonis <- adonis(unifrac.dist~Salinity*Dispersal*Date, data = design_final, perm=1000, set.seed=42)
 adonis
 
 ```
 
-# Fig 1A: PCoA (UniFrac) - DONE
+# Fig 2A: PCoA (UniFrac) - DONE
 ```{r PCoA UniFrac Ordination, echo=TRUE}
 # Principal Coordinates Analysis - INCLUDES SOURCE but no stats
 CSI_pcoa_phylo <- cmdscale(unifrac.dist, k=3, eig=TRUE, add=FALSE)
@@ -327,7 +327,7 @@ pcoa.cent.dataframe.trts$salinity <- factor(c("0","13","5","9"),levels=c("0","5"
 # Plot
 df1a <- as.data.frame(pcoa.cent.dataframe.trts)
 plot1a <- ggplot(df1a, aes(x=V1, y=V2, colour=salinity, fill=salinity, shape = date)) + theme_bw() 
-plot1a + theme(panel.grid.major = element_blank(), 
+UniFrac_PCoA <- plot1a + theme(panel.grid.major = element_blank(), 
                panel.grid.minor = element_blank(), 
                axis.line = element_line(colour = "black")) + 
 theme(panel.background = element_blank()) + 
@@ -346,11 +346,11 @@ theme(panel.background = element_blank()) +
   labs(fill = "Salinity (psu)", shape = "Sampling Date") +
   guides(fill = guide_legend(override.aes = list(pch=21, size = 4, colour="black")),
          shape = guide_legend(override.aes = list(size = 4, fill="black")))
-
+UniFrac_PCoA
 ggsave("../figures/Phylo_Ordination.png", plot=last_plot(), device=NULL, path=NULL, scale=1, width=7, height=5, dpi=500, limitsize=TRUE)
 ```
 
-# Fig 1B: PD Rain Clouds - DONE
+# Fig 2B: PD Rain Clouds - DONE
 ```{r PD over salinity rain clouds, echo=TRUE}
 # Rainclouds DOES NOT INCLUDE SOURCE
 
@@ -368,7 +368,7 @@ time <- as.factor(csi.phylo.ns.t$time.Date2)
 
 # Plot 
 p1 <- ggplot(csi.phylo.ns, aes(x = time, y = PD, fill = group), size=16) + theme_bw() 
-p2 <-p1 + geom_flat_violin(aes(fill = group),position = position_nudge(x = .1, y = 0),
+PD_rain <-p1 + geom_flat_violin(aes(fill = group),position = position_nudge(x = .1, y = 0),
                            adjust = 1.5, trim = FALSE, alpha = .5, colour = NA) +
   geom_point(aes(x = as.numeric(time)-.15, y = PD, colour = group), position = position_jitter(width = .05), size = 1.5, shape = 20) +
   geom_boxplot(aes(x = as.factor(time), y = PD, fill = group), outlier.shape = NA, alpha = .5, width = .1, colour = "black") + 
@@ -376,12 +376,38 @@ p2 <-p1 + geom_flat_violin(aes(fill = group),position = position_nudge(x = .1, y
   scale_color_manual(name="Salinity (psu)", values = c("#E69F00", "#56B4E9", "#009E73","#F0E442")) + 
   labs(x = "Sampling Date", y = "Phylogenetic Diversity") + 
   scale_x_discrete(labels=c("1" = "Day 0", "2" = "Day 18", "3" = "Day 45")) + theme_cowplot()
-p2
+PD_rain
 
 ggsave("../figures/Figure_PD_rainclouds.png", plot=last_plot(), device=NULL, path=NULL, scale=1,  width=7, height=5, dpi=500, limitsize=TRUE)
 ```
+#combined Figure 2 PD graphs
+```{r Loading Files, include=FALSE}
+library("cowplot") #combining plots
+#UniFrac_PCoA #OTU_PCoA #PD_rain
 
-# Fig 2A: PhyloTree with Indicator Taxa
+legend <- get_legend(
+  # create some space to the left of the legend
+  UniFrac_PCoA + theme(legend.box.margin = margin(0, 0, 12))
+)
+# remove legends and axes
+n1 <-UniFrac_PCoA + theme(legend.position="none")
+n2 <- OTU_PCoA + theme(legend.position="none")
+
+# align all plots horizontally
+plots <- align_plots(n1,n2, align = 'h', axis = 'h')
+
+# combine PCoA
+n3 <- plot_grid(plots[[1]],plots[[2]], labels = c("A","B"), label_size = 16, nrow=1, align='h')
+n3 <- plot_grid(n3, legend, rel_widths = c(8, 1.8))
+
+n4 <- PD_rain + theme(legend.position="right")
+n5 <- plot_grid(n4, labels = c("C"), label_size = 16, nrow=1, align='h')
+
+plot_grid(n3,n5, ncol = 1)
+
+ggsave("../figures/Figure_PCoA_PD_Combined.png", plot=last_plot(), device=NULL, path=NULL, scale=1,  width=9, height=7, dpi=500, limitsize=TRUE)
+```
+# Fig 3A: PhyloTree with Indicator Taxa
 ```{r Phylogenetic Tree with Indicator OTUs, echo=TRUE}
 str(tree)
 
@@ -511,16 +537,16 @@ for(i in 1:dim(sal.inds2)[1]){
 #csi.tax[which(csi.tax$OTU %in% sal.inds2$OTU), ]
 
 # Add heatmap to plot
-gheatmap(p, sal.dat, width = 0.5, colnames_angle=90, hjust=1, 
+tree <- gheatmap(p, sal.dat, width = 0.5, colnames_angle=90, hjust=1, 
          low = "black", high = "black") + 
   theme(legend.position = "right") + 
   guides(fill = FALSE)   
-
+tree
 ggsave("../figures/indicator.tree.png", width = 10, height = 8, units = "in")
 
 ```
 
-# Fig. 2B - Euler Plot
+# Fig. 3B - Euler Plot
 ```{r Euler Plot, echo=TRUE}
 # Indicator Lists
 setdiff(sal.inds$OTU[which(sal.inds$Cluster == 1)], 
@@ -540,9 +566,9 @@ library(eulerr)
 #png("../figures/euler.png",width = 1000, height = 1000, res=200)
 
 set.seed(7)
-p1 <- plot(euler(inds, shape = "ellipse"), quantities = TRUE, adjust_labels = T,
+euler <- plot(euler(inds, shape = "ellipse"), quantities = TRUE, adjust_labels = T,
            fills = c("#E69F00", "#56B4E9", "#009E73","#F0E442", "gray", "gray"))
-p1
+euler
 
 #dev.copy2pdf(file = "../figures/ConcenTrait.pdf",
 #             width = 6, height = 4, bg = "white")
@@ -573,7 +599,7 @@ ind_S_tax <- unique(csi.tax$Class[which(csi.tax$OTU %in% ind_S)])
 
 ```
 
-# ConsenTrait Analysis
+# ConcenTrait Analysis
 ```{r ConcenTrait Analysis, include=FALSE}
 source("../bin/consenTRAIT.R")
 require("phytools")
@@ -586,7 +612,7 @@ otus.45 <- otus.45[, which(colSums(otus.45) > 200)]
 
 # Prune Tree based on max abundance
 tree.45 <- drop.tip(tree, setdiff(tree$tip.label, colnames(otus.45)),
-                    trim.internal = T)
+                    trim.internal = T) #error object "phy" is not of class "phylo
 
 sum(tree.45$edge.length < 0.000001) # lots of small branches 
 tree.45$edge.length[which(tree.45$edge.length < 0.0001)] <- 0.0001 + 
@@ -645,7 +671,7 @@ csi.ct <- consenTRAIT(data = occupy.45, phy = tree.45.mid, cutoff = 0.80)
 
 ```
 
-## Fig. 3 - ConcenTrait Plot
+## Fig. 3C - ConcenTrait Plot
 ```{r ConcentTrait, echo=TRUE}
 
 png(filename = "../figures/ConcenTrait.png", width = 6, height = 4, units = "in", 
@@ -681,12 +707,34 @@ dev.off()
 
 #dev.copy2pdf(file = "../figures/ConcenTrait.pdf",
 #             width = 6, height = 4, bg = "white")
-
-
-
-
 ```
+#combined Figure 3 graphs
+```{r Loading Files, include=FALSE}
+library("cowplot") #combining plots
+#tree #
 
+legend <- get_legend(
+  # create some space to the left of the legend
+  UniFrac_PCoA + theme(legend.box.margin = margin(0, 0, 12))
+)
+# remove legends and axes
+n1 <-UniFrac_PCoA + theme(legend.position="none")
+n2 <- OTU_PCoA + theme(legend.position="none")
+
+# align all plots horizontally
+plots <- align_plots(n1,n2, align = 'h', axis = 'h')
+
+# combine PCoA
+n3 <- plot_grid(plots[[1]],plots[[2]], labels = c("A","B"), label_size = 16, nrow=1, align='h')
+n3 <- plot_grid(n3, legend, rel_widths = c(8, 1.8))
+
+n4 <- PD_rain + theme(legend.position="right")
+n5 <- plot_grid(n4, labels = c("C"), label_size = 16, nrow=1, align='h')
+
+plot_grid(n3,n5, ncol = 1)
+
+ggsave("../figures/Figure_PCoA_PD_Combined.png", plot=last_plot(), device=NULL, path=NULL, scale=1,  width=9, height=7, dpi=500, limitsize=TRUE)
+```
 # Fig 4: Phylo Function and Indic Function Relationships
 ```{r Phylogenetic Fxn and Indic Diversity Fxn, echo=TRUE}
 length(inds)
@@ -918,7 +966,7 @@ pcoa.cent.dataframe.trts2$salinity <- factor(c("0","13","5","9"),levels=c("0","5
 # Plot
 df2a <- as.data.frame(pcoa.cent.dataframe.trts2)
 plot1a <- ggplot(df2a, aes(x=V1, y=V2, fill=salinity, shape = date)) + theme_bw() 
-plot1a + theme(panel.grid.major = element_blank(), 
+OTU_PCoA <- plot1a + theme(panel.grid.major = element_blank(), 
                panel.grid.minor = element_blank(), 
                axis.line = element_line(colour = "black")) + 
 theme(panel.background = element_blank()) + 
@@ -939,6 +987,10 @@ theme(panel.background = element_blank()) +
          shape = guide_legend(override.aes = list(size = 4, fill="black")))
 
 ggsave("../figures/Supp_BrayCurtis_Ordination.png", plot=last_plot(), device=NULL, path=NULL, scale=1, width=7, height=5, dpi=500, limitsize=TRUE)
+
+# PERMANOVA OTU
+adonis <- adonis(sampleREL.dist~Salinity*Dispersal*Date, data = design.ns.final, perm=1000, set.seed=42)
+adonis
 ```
 
 # PhyloTree with PhyloFactor - not for manuscript
