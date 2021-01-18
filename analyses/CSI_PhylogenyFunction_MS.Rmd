@@ -31,18 +31,18 @@ if (!requireNamespace("BiocManager", quietly = TRUE))
 #devtools::install_github('reptalex/phylofactor')
 
 # Load Req'd Packages
-library("vegan"); library("ecodist"); library("Hmisc")
-library("dplyr"); library("reshape2"); library("labdsv")
-library("nlme"); library("MASS"); library("ade4"); library("phytools")
-library("png"); library("grid"); library("ggplot2")
-library("ape"); library("picante"); library("ggtree"); 
-library("cowplot"); library("ggpubr"); library("devtools"); library("tidyr")
-#library("phylofactor")
+require("vegan"); require("ecodist");
+require("dplyr"); require("reshape2"); require("labdsv")
+require("nlme"); require("MASS"); require("ade4"); require("phytools")
+require("png"); require("grid"); require("ggplot2")
+require("ape"); require("picante"); require("ggtree"); 
+require("cowplot"); require("ggpubr"); require("devtools"); require("tidyr")
+#require("phylofactor")
 
 source("../bin/R_rainclouds.R")
 source("../bin/summarySE.R")
-library(ggpubr)
-library(cowplot)
+require(ggpubr)
+require(cowplot)
 
 # Set Std Err Functions
 se <- function(x, ...) {
@@ -306,7 +306,7 @@ pcoa.groups <- paste(design_final$Date, design_final$Salinity, sep = "_")
 pcoa.points <- data.frame(CSI_pcoa_phylo$points, group = pcoa.groups)
 
 # Calculate Centroids (mean and SE)
-pcoa.L.centroids <- melt(pcoa.points, id="group", measure.vars = c("X1", "X2"))
+pcoa.L.centroids <- reshape2::melt(pcoa.points, id="group", measure.vars = c("X1", "X2"))
 pcoa.centroids <- acast(pcoa.L.centroids, variable ~ group, mean)
 pcoa.centroids.se <- acast(pcoa.L.centroids, variable ~ group, se)
 pcoa.centroids.sd <- acast(pcoa.L.centroids, variable ~ group, sd)
@@ -380,33 +380,7 @@ PD_rain
 
 ggsave("../figures/Figure_PD_rainclouds.png", plot=last_plot(), device=NULL, path=NULL, scale=1,  width=7, height=5, dpi=500, limitsize=TRUE)
 ```
-#combined Figure 2 PD graphs
-```{r Loading Files, include=FALSE}
-library("cowplot") #combining plots
-#UniFrac_PCoA #OTU_PCoA #PD_rain
 
-legend <- get_legend(
-  # create some space to the left of the legend
-  UniFrac_PCoA + theme(legend.box.margin = margin(0, 0, 12))
-)
-# remove legends and axes
-n1 <-UniFrac_PCoA + theme(legend.position="none")
-n2 <- OTU_PCoA + theme(legend.position="none")
-
-# align all plots horizontally
-plots <- align_plots(n1,n2, align = 'h', axis = 'h')
-
-# combine PCoA
-n3 <- plot_grid(plots[[1]],plots[[2]], labels = c("A","B"), label_size = 16, nrow=1, align='h')
-n3 <- plot_grid(n3, legend, rel_widths = c(8, 1.8))
-
-n4 <- PD_rain + theme(legend.position="right")
-n5 <- plot_grid(n4, labels = c("C"), label_size = 16, nrow=1, align='h')
-
-plot_grid(n3,n5, ncol = 1)
-
-ggsave("../figures/Figure_PCoA_PD_Combined.png", plot=last_plot(), device=NULL, path=NULL, scale=1,  width=9, height=7, dpi=500, limitsize=TRUE)
-```
 # Fig 3A: PhyloTree with Indicator Taxa
 ```{r Phylogenetic Tree with Indicator OTUs, echo=TRUE}
 str(tree)
@@ -594,9 +568,6 @@ ind_13_tax <- unique(csi.tax$Class[which(csi.tax$OTU %in% ind_13)])
 
 ind_S <- inds[[">0 psu"]]
 ind_S_tax <- unique(csi.tax$Class[which(csi.tax$OTU %in% ind_S)])
-
-
-
 ```
 
 # ConcenTrait Analysis
@@ -708,33 +679,7 @@ dev.off()
 #dev.copy2pdf(file = "../figures/ConcenTrait.pdf",
 #             width = 6, height = 4, bg = "white")
 ```
-#combined Figure 3 graphs
-```{r Loading Files, include=FALSE}
-library("cowplot") #combining plots
-#tree #
 
-legend <- get_legend(
-  # create some space to the left of the legend
-  UniFrac_PCoA + theme(legend.box.margin = margin(0, 0, 12))
-)
-# remove legends and axes
-n1 <-UniFrac_PCoA + theme(legend.position="none")
-n2 <- OTU_PCoA + theme(legend.position="none")
-
-# align all plots horizontally
-plots <- align_plots(n1,n2, align = 'h', axis = 'h')
-
-# combine PCoA
-n3 <- plot_grid(plots[[1]],plots[[2]], labels = c("A","B"), label_size = 16, nrow=1, align='h')
-n3 <- plot_grid(n3, legend, rel_widths = c(8, 1.8))
-
-n4 <- PD_rain + theme(legend.position="right")
-n5 <- plot_grid(n4, labels = c("C"), label_size = 16, nrow=1, align='h')
-
-plot_grid(n3,n5, ncol = 1)
-
-ggsave("../figures/Figure_PCoA_PD_Combined.png", plot=last_plot(), device=NULL, path=NULL, scale=1,  width=9, height=7, dpi=500, limitsize=TRUE)
-```
 # Fig 4: Phylo Function and Indic Function Relationships
 ```{r Phylogenetic Fxn and Indic Diversity Fxn, echo=TRUE}
 length(inds)
@@ -790,7 +735,59 @@ csi_otu.div$I_PD <- Indicator.PD[, 1]
 # Subset only day 45
 csi_otu.div.day45 <- subset(csi_otu.div, Date2 == "45")
 
-# Shannon Diversity x Cmin
+# Phylogenetic Diversity x Cmin
+p <- ggplot(csi_otu.div.day45, aes(x=I_PD, y=Cmin, fill = as.factor(Salinity), shape = as.factor(Dispersal))) + 
+  geom_point(size=5) + 
+  scale_fill_manual(name="Salinity (psu)", values=c("#E69F00", "#56B4E9", "#009E73","#F0E442")) +
+  scale_shape_manual(name="Dispersal Treatment", values=c(21,24), labels = c("fresh+salt (2)", "salt only (3)"))
+PD_Cmin <- p + theme_bw() + theme(panel.grid.major = element_blank(), 
+                        panel.grid.minor = element_blank(), 
+                        axis.line = element_line(colour = "black")) + 
+  theme(axis.title=element_text(vjust=1,size=16,face="bold"), 
+        axis.text = element_text(size=16), 
+        axis.text.x = element_text(vjust=0.65, hjust=0.5, size=16), 
+        panel.border = element_rect(colour = "black",size=1)) + 
+  theme(axis.ticks.length=unit(0.3,"cm")) + 
+  labs(x = "Phylogenetic Diversity", 
+       y = (expression(paste("C Mineralization (ng CO"[2],
+                             " mL"^-{1},"day"^-{1},")")))) + 
+  theme(strip.text.x = element_text(size=16, face="bold"), 
+        strip.text.y = element_text(size=16, face="bold"), 
+        strip.background = element_rect(colour="black", 
+                                        fill="white", size=1)) +
+  guides(fill = guide_legend(override.aes = list(pch=21, size = 4, colour="black")),
+         shape = guide_legend(override.aes = list(size = 4, fill="black")))
+PD_Cmin
+ggsave("../figures/Cmin_PD.png", plot=last_plot(), device=NULL, 
+       path=NULL, scale=1, width=7, height=5, dpi=300, limitsize=TRUE)
+
+# Relative Abundance x Cmin
+p <- ggplot(csi_otu.div.day45, aes(x=I_rel, y=Cmin, fill = as.factor(Salinity), shape = as.factor(Dispersal))) + 
+  geom_point(size=5) + 
+  scale_fill_manual(name="Salinity (psu)", values=c("#E69F00", "#56B4E9", "#009E73","#F0E442")) +
+  scale_shape_manual(name="Dispersal Treatment", values=c(21,24), labels = c("fresh+salt (2)", "salt only (3)"))
+relabun_Cmin <- p + theme_bw() + theme(panel.grid.major = element_blank(), 
+                        panel.grid.minor = element_blank(), 
+                        axis.line = element_line(colour = "black")) + 
+  theme(axis.title=element_text(vjust=1,size=16,face="bold"), 
+        axis.text = element_text(size=16), 
+        axis.text.x = element_text(vjust=0.65, hjust=0.5, size=16), 
+        panel.border = element_rect(colour = "black",size=1)) + 
+  theme(axis.ticks.length=unit(0.3,"cm")) + 
+  labs(x = "Relative Abundance (Indicators)", 
+       y = (expression(paste("C Mineralization (ng CO"[2],
+                             " mL"^-{1},"day"^-{1},")")))) + 
+  theme(strip.text.x = element_text(size=16, face="bold"), 
+        strip.text.y = element_text(size=16, face="bold"), 
+        strip.background = element_rect(colour="black", 
+                                        fill="white", size=1)) +
+  guides(fill = guide_legend(override.aes = list(pch=21, size = 4, colour="black")),
+         shape = guide_legend(override.aes = list(size = 4, fill="black")))
+relabun_Cmin
+ggsave("../figures/Cmin_RelAbund.png", plot=last_plot(), device=NULL, 
+       path=NULL, scale=1, width=7, height=5, dpi=300, limitsize=TRUE)
+
+# Shannon Diversity x Cmin - not in manuscript
 p <- ggplot(csi_otu.div.day45, aes(x=I_H, y=Cmin, fill = as.factor(Salinity), shape = as.factor(Dispersal))) + 
   geom_point(size=5) + 
   scale_fill_manual(name="Salinity (psu)", values=c("#E69F00", "#56B4E9", "#009E73","#F0E442")) +
@@ -816,59 +813,7 @@ p + theme_bw() + theme(panel.grid.major = element_blank(),
 ggsave("../figures/Cmin_shannon.png", plot=last_plot(), device=NULL, 
        path=NULL, scale=1, width=7, height=5, dpi=300, limitsize=TRUE)
 
-# Phylogenetic Diversity x Cmin
-p <- ggplot(csi_otu.div.day45, aes(x=I_PD, y=Cmin, fill = as.factor(Salinity), shape = as.factor(Dispersal))) + 
-  geom_point(size=5) + 
-  scale_fill_manual(name="Salinity (psu)", values=c("#E69F00", "#56B4E9", "#009E73","#F0E442")) +
-  scale_shape_manual(name="Dispersal Treatment", values=c(21,24), labels = c("fresh+salt (2)", "salt only (3)"))
-p + theme_bw() + theme(panel.grid.major = element_blank(), 
-                        panel.grid.minor = element_blank(), 
-                        axis.line = element_line(colour = "black")) + 
-  theme(axis.title=element_text(vjust=1,size=16,face="bold"), 
-        axis.text = element_text(size=16), 
-        axis.text.x = element_text(vjust=0.65, hjust=0.5, size=16), 
-        panel.border = element_rect(colour = "black",size=1)) + 
-  theme(axis.ticks.length=unit(0.3,"cm")) + 
-  labs(x = "Phylogenetic Diversity", 
-       y = (expression(paste("C Mineralization (ng CO"[2],
-                             " mL"^-{1},"day"^-{1},")")))) + 
-  theme(strip.text.x = element_text(size=16, face="bold"), 
-        strip.text.y = element_text(size=16, face="bold"), 
-        strip.background = element_rect(colour="black", 
-                                        fill="white", size=1)) +
-  guides(fill = guide_legend(override.aes = list(pch=21, size = 4, colour="black")),
-         shape = guide_legend(override.aes = list(size = 4, fill="black")))
-
-ggsave("../figures/Cmin_PD.png", plot=last_plot(), device=NULL, 
-       path=NULL, scale=1, width=7, height=5, dpi=300, limitsize=TRUE)
-
-# Relative Abundance x Cmin
-p <- ggplot(csi_otu.div.day45, aes(x=I_rel, y=Cmin, fill = as.factor(Salinity), shape = as.factor(Dispersal))) + 
-  geom_point(size=5) + 
-  scale_fill_manual(name="Salinity (psu)", values=c("#E69F00", "#56B4E9", "#009E73","#F0E442")) +
-  scale_shape_manual(name="Dispersal Treatment", values=c(21,24), labels = c("fresh+salt (2)", "salt only (3)"))
-p + theme_bw() + theme(panel.grid.major = element_blank(), 
-                        panel.grid.minor = element_blank(), 
-                        axis.line = element_line(colour = "black")) + 
-  theme(axis.title=element_text(vjust=1,size=16,face="bold"), 
-        axis.text = element_text(size=16), 
-        axis.text.x = element_text(vjust=0.65, hjust=0.5, size=16), 
-        panel.border = element_rect(colour = "black",size=1)) + 
-  theme(axis.ticks.length=unit(0.3,"cm")) + 
-  labs(x = "Relative Abundance (Indicators)", 
-       y = (expression(paste("C Mineralization (ng CO"[2],
-                             " mL"^-{1},"day"^-{1},")")))) + 
-  theme(strip.text.x = element_text(size=16, face="bold"), 
-        strip.text.y = element_text(size=16, face="bold"), 
-        strip.background = element_rect(colour="black", 
-                                        fill="white", size=1)) +
-  guides(fill = guide_legend(override.aes = list(pch=21, size = 4, colour="black")),
-         shape = guide_legend(override.aes = list(size = 4, fill="black")))
-
-ggsave("../figures/Cmin_RelAbund.png", plot=last_plot(), device=NULL, 
-       path=NULL, scale=1, width=7, height=5, dpi=300, limitsize=TRUE)
-
-# OTU richness (S) x Cmin
+# OTU richness (S) x Cmin - not in manuscript
 p <- ggplot(csi_otu.div.day45, aes(x=I_S, y=Cmin, fill = as.factor(Salinity), shape = as.factor(Dispersal))) + 
   geom_point(size=5) + 
   scale_fill_manual(name="Salinity (psu)", values=c("#E69F00", "#56B4E9", "#009E73","#F0E442")) +
@@ -914,6 +859,11 @@ plot(PD.lm)
 anova(PD.lm)
 summary(PD.lm)
 
+PD.lmer <- lmer(PD ~ Salinity+Dispersal+Date + (1|Replicate), data = csi.phylo.ns)
+plot(PD.lmer)
+summary(PD.lmer, ddf="Kenward-Roger")
+confint(PD.lmer)
+
 PD.lm.45 <- lm(PD ~ Dispersal*Salinity, data = csi.phylo.ns.45)
 anova(PD.lm.45)
 summary(PD.lm.45)
@@ -945,7 +895,7 @@ pcoa.groups <- paste(design.ns.final$Date, design.ns.final$Salinity, sep = "_")
 pcoa.points <- data.frame(CSI_PCoA_BC$points, group = pcoa.groups)
 
 # Calculate Centroids (mean and SE)
-pcoa.L.centroids <- melt(pcoa.points, id="group", measure.vars = c("X1", "X2"))
+pcoa.L.centroids <- reshape2::melt(pcoa.points, id="group", measure.vars = c("X1", "X2"))
 pcoa.centroids <- acast(pcoa.L.centroids, variable ~ group, mean)
 pcoa.centroids.se <- acast(pcoa.L.centroids, variable ~ group, se)
 pcoa.centroids.sd <- acast(pcoa.L.centroids, variable ~ group, sd)
@@ -1157,4 +1107,56 @@ p1=p+geom_smooth(method="lm", se=FALSE)+geom_point(size=4)
 p1 + theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.line = element_line(colour = "black")) +theme(axis.title=element_text(vjust=1,size=16,face="bold"), axis.text=element_text(size=16), axis.text.x = element_text(vjust=0.65, hjust=0.5, size=16), panel.border = element_rect(colour = "black",size=1)) + theme(axis.ticks.length=unit(0.3,"cm")) + labs(x = "Phylogenetic Diversity", y = (expression(paste("C Mineralization (ng CO"[2]," mL"^-{1}," day"^-{1},")")))) + theme(strip.text.x = element_text(size=16, face="bold"), strip.text.y = element_text(size=16, face="bold"), strip.background = element_rect(colour="black", fill="white", size=1))
 
 ggsave("../figures/Cmin_PD.png", plot=last_plot(), device=NULL, path=NULL, scale=1, width=NA, height=NA, dpi=300, limitsize=TRUE)
+```
+#combined Figure 2 PD graphs
+```{r Loading Files, include=FALSE}
+#combining plots
+#UniFrac_PCoA #OTU_PCoA #PD_rain
+
+legend <- get_legend(
+  # create some space to the left of the legend
+  UniFrac_PCoA + theme(legend.box.margin = margin(0, 0, 12))
+)
+# remove legends and axes
+n1 <-UniFrac_PCoA + theme(legend.position="none")
+n2 <- OTU_PCoA + theme(legend.position="none") ### first run OTU PCoA - Bray Curtis (Supp)
+
+# align all plots horizontally
+plots <- align_plots(n1,n2, align = 'h', axis = 'h')
+
+# combine PCoA
+n3 <- plot_grid(plots[[1]],plots[[2]], labels = c("A","B"), label_size = 16, nrow=1, align='h')
+n3 <- plot_grid(n3, legend, rel_widths = c(8, 1.8))
+
+n4 <- PD_rain + theme(legend.position="right")
+n5 <- plot_grid(n4, labels = c("C"), label_size = 16, nrow=1, align='h')
+
+plot_grid(n3,n5, ncol = 1)
+
+ggsave("../figures/Figure_PCoA_PD_Combined.png", plot=last_plot(), device=NULL, path=NULL, scale=1,  width=9, height=7, dpi=500, limitsize=TRUE)
+```
+#combined Figure 4 graphs
+```{r Loading Files, include=FALSE}
+#combining plots
+
+#PD_Cmin #relabun_Cmin 
+
+legend <- get_legend(
+  # create some space to the left of the legend
+  PD_Cmin + theme(legend.box.margin = margin(0, 0, 12))
+)
+# remove legends and axes
+n1 <-PD_Cmin + theme(legend.position="none")
+n2 <- relabun_Cmin + theme(legend.position="none")
+
+# align all plots horizontally
+plots <- align_plots(n1,n2, align = 'h', axis = 'h')
+
+# combine PCoA
+n3 <- plot_grid(plots[[1]],plots[[2]], labels = c("A","B"), label_size = 16, nrow=1, align='h')
+
+n4 <- plot_grid(n3, legend, rel_widths = c(8, 1.8))
+
+n4
+ggsave("../figures/Figure_PD_RelAbun_Cmin_Combined.png", plot=last_plot(), device=NULL, path=NULL, scale=1,  width=10, height=5, dpi=500, limitsize=TRUE)
 ```
