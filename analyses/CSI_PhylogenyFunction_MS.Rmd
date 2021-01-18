@@ -859,6 +859,11 @@ plot(PD.lm)
 anova(PD.lm)
 summary(PD.lm)
 
+PD.lmer <- lmer(PD ~ Salinity+Dispersal+Date + (1|Replicate), data = csi.phylo.ns)
+plot(PD.lmer)
+summary(PD.lmer, ddf="Kenward-Roger")
+confint(PD.lmer)
+
 PD.lm.45 <- lm(PD ~ Dispersal*Salinity, data = csi.phylo.ns.45)
 anova(PD.lm.45)
 summary(PD.lm.45)
