@@ -544,6 +544,18 @@ euler <- plot(euler(inds, shape = "ellipse"), quantities = TRUE, adjust_labels =
            fills = c("#E69F00", "#56B4E9", "#009E73","#F0E442", "gray", "gray"))
 euler
 
+# Save Euler OTUs
+inds.out <- matrix(NA, nrow = length(inds), ncol = 2)
+for(i in 1:length(inds)){
+  temp <- paste(inds[[i]], collapse = ", ")
+  temp.grp <- names(inds)[i]
+  inds.out[i, ] <- c(temp.grp, temp)
+}
+
+write.table(inds.out, file = "../data/Euler-OTUs.csv", sep = ", ", 
+            row.names = F, col.names = F)
+
+
 #dev.copy2pdf(file = "../figures/ConcenTrait.pdf",
 #             width = 6, height = 4, bg = "white")
 
