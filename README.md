@@ -33,12 +33,12 @@ Project (2)
 
 ## Contributors
 
-[Dr. Ariane Peralta](http://www.peraltalab.com): Assistant Professor, Department of Biology, East Carolina University. Principal Investigator of the [Peralta Lab](http://www.peraltalab.com)
+[Dr. Ariane Peralta](http://www.peraltalab.com): Associate Professor, Department of Biology, East Carolina University. Principal Investigator of the [Peralta Lab](http://www.peraltalab.com)
 
-[Dr. Mario Muscarella](http://mmuscarella.github.io/): Postdoc in the [del Giorgio Lab](http://www.gril.uqam.ca/del_Giorgio.html) at Université du Quebéc à Montréal
+[Dr. Mario Muscarella](http://mmuscarella.github.io/): Assistant Professor, Institute or Arctic Biology, University of Alaska Fairbanks. Principal Investigator of the Muscarella Lab. 
 
 Alexandra Stucy: MS Student, Department of Biology, East Carolina University
 
-Jo Werba: PhD Student, Department of Biology, McMaster University (former MS Student at East Carolina University)
+Jo Werba: PhD Candidate, Department of Biology, McMaster University (former MS Student at East Carolina University)
 
 [Dr. Mike McCoy](http://mikemccoylab.weebly.com/): Associate Professor, Department of Biology, East Carolina University. Principal Investigator of the [Mike McCoy Lab](http://mikemccoylab.weebly.com/)
