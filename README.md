@@ -6,7 +6,7 @@ For information regarding the project, please visit:
 
 Project (1) Werba, J.A., A. Stucy, A.L. Peralta, and M.W. McCoy (2020) Effects of diversity and coalescence of species assemblages on ecosystem function at the margins of an environmental shift. PeerJ. 8:e8608 [PDF](https://doi.org/10.7717/peerj.8608)
 
-Project (2) Peralta, A.L. M.E. Muscarella, A. Stucy, J.A. Werba, and M.W. McCoy (In preparation) Bacterial composition reflects fine-scale salinity changes while phylogenetic diversity exhibits a strong salt divide
+Project (2) Peralta, A.L. M.E. Muscarella, A. Stucy, J.A. Werba, and M.W. McCoy (In review) Bacterial composition reflects fine-scale salinity changes while phylogenetic diversity exhibits a strong salt divide. [bioRxiv LINK TBA]
 
 Raw sequence files can be found at NCBI SRA [BioProject ID PRJNA615001](https://www.ncbi.nlm.nih.gov/bioproject/?term=PRJNA615001).
 
