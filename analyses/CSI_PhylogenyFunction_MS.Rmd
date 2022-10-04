@@ -281,7 +281,7 @@ csi.phylo.ns <- cbind(design.ns.final,phylo_final.ns)
 
 # PERMANOVA UniFrac
 str(unifrac.dist)
-adonis <- adonis(unifrac.dist~Salinity*Dispersal*Date, data = design_final, perm=1000, set.seed=42)
+adonis <- adonis2(unifrac.dist~Salinity*Dispersal*Date, data = design_final, perm=1000, set.seed=42)
 adonis
 
 ```
@@ -514,7 +514,7 @@ for(i in 1:dim(sal.inds2)[1]){
 tree <- gheatmap(p, sal.dat, width = 0.5, colnames_angle=90, hjust=1, 
          low = "black", high = "black") + 
   theme(legend.position = "right") + 
-  guides(fill = FALSE)   
+  guides(fill = "none")   
 tree
 ggsave("../figures/indicator.tree.png", width = 10, height = 8, units = "in")
 
@@ -559,7 +559,7 @@ write.table(inds.out, file = "../data/Euler-OTUs.csv", sep = ", ",
 #dev.copy2pdf(file = "../figures/ConcenTrait.pdf",
 #             width = 6, height = 4, bg = "white")
 
-dev.off()
+
 
 ```
 
@@ -568,18 +568,28 @@ dev.off()
 str(inds)
 ind_0 <- inds[["0 psu"]]
 ind_0_tax <- unique(csi.tax$Order[which(csi.tax$OTU %in% ind_0)])
+ind_0_taxonomy <- csi.tax[which(csi.tax$OTU %in% ind_0), ]
+table(ind_0_taxonomy$Class)
 
 ind_5 <- inds[["5 psu"]]
 ind_5_tax <- unique(csi.tax$Class[which(csi.tax$OTU %in% ind_5)])
+ind_5_taxonomy <- csi.tax[which(csi.tax$OTU %in% ind_5), ]
+table(ind_5_taxonomy$Class)
 
 ind_9 <- inds[["9 psu"]]
 ind_9_tax <- unique(csi.tax$Class[which(csi.tax$OTU %in% ind_9)])
+ind_9_taxonomy <- csi.tax[which(csi.tax$OTU %in% ind_9), ]
+table(ind_9_taxonomy$Class)
 
 ind_13 <- inds[["13 psu"]]
 ind_13_tax <- unique(csi.tax$Class[which(csi.tax$OTU %in% ind_13)])
+ind_13_taxonomy <- csi.tax[which(csi.tax$OTU %in% ind_13), ]
+table(ind_13_taxonomy$Class)
 
 ind_S <- inds[[">0 psu"]]
 ind_S_tax <- unique(csi.tax$Class[which(csi.tax$OTU %in% ind_S)])
+ind_S_taxonomy <- csi.tax[which(csi.tax$OTU %in% ind_S), ]
+table(ind_S_taxonomy$Class)
 ```
 
 # ConcenTrait Analysis
@@ -951,7 +961,7 @@ theme(panel.background = element_blank()) +
 ggsave("../figures/Supp_BrayCurtis_Ordination.png", plot=last_plot(), device=NULL, path=NULL, scale=1, width=7, height=5, dpi=500, limitsize=TRUE)
 
 # PERMANOVA OTU
-adonis <- adonis(sampleREL.dist~Salinity*Dispersal*Date, data = design.ns.final, perm=1000, set.seed=42)
+adonis <- adonis2(sampleREL.dist~Salinity*Dispersal*Date, data = design.ns.final, perm=1000, set.seed=42)
 adonis
 ```
 
